@@ -1071,7 +1071,7 @@ export const EmpirionDashboards: React.FC<EmpirionDashboardsProps> = ({
                   <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Políticas Protecionistas</span>
                   <div className="flex justify-between items-center mb-1">
                     <h5 className="text-[10px] font-black text-white uppercase italic">Tarifas de Exportação</h5>
-                    <div className="text-[#00FFFF] cursor-pointer" title="Demonstra as tarifas fiduciárias cobradas na exportação por round">
+                    <div className="text-[#00FFFF] cursor-pointer" title="Demonstra as tarifas fiduciárias cobradas na Exportação por round">
                       <Info size={12} />
                     </div>
                   </div>
@@ -1087,12 +1087,12 @@ export const EmpirionDashboards: React.FC<EmpirionDashboardsProps> = ({
                         {(() => {
                           const targetRounds = computedHistory.slice(0, 5);
                           const regions = [
-                            { name: 'Brasil', key: 'export_tariff_brazil' as const, bg: 'bg-[#00FFEF]/10 text-[#00FFEF]' },
-                            { name: 'EUA', key: 'export_tariff_usa' as const, bg: 'bg-[#FF5F1F]/10 text-[#FF5F1F]' },
-                            { name: 'Euro', key: 'export_tariff_euro' as const, bg: 'bg-[#9D00FF]/10 text-[#9D00FF]' },
-                            { name: 'UK', key: 'export_tariff_uk' as const, bg: 'bg-[#0FF0FC]/10 text-[#0FF0FC]' },
-                            { name: 'China', key: 'export_tariff_china' as const, bg: 'bg-red-500/10 text-red-400' },
-                            { name: 'Bitcoin', key: 'export_tariff_btc' as const, bg: 'bg-[#9D00FF]/10 text-[#9D00FF]' }
+                            { name: 'Brasil', key: 'import_tariff_brazil' as const, bg: 'bg-[#00FFEF]/10 text-[#00FFEF]' },
+                            { name: 'EUA', key: 'import_tariff_usa' as const, bg: 'bg-[#FF5F1F]/10 text-[#FF5F1F]' },
+                            { name: 'Euro', key: 'import_tariff_euro' as const, bg: 'bg-[#9D00FF]/10 text-[#9D00FF]' },
+                            { name: 'UK', key: 'import_tariff_uk' as const, bg: 'bg-[#0FF0FC]/10 text-[#0FF0FC]' },
+                            { name: 'China', key: 'import_tariff_china' as const, bg: 'bg-red-500/10 text-red-400' },
+                            { name: 'Bitcoin', key: 'import_tariff_btc' as const, bg: 'bg-[#9D00FF]/10 text-[#9D00FF]' }
                           ];
 
                           return regions.map((row, i) => {

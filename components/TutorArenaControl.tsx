@@ -180,7 +180,7 @@ const TutorArenaControl: React.FC<{ championship: Championship; onUpdate: (confi
                           </div>
                           <div className="text-right">
                              <p className="text-[9px] text-blue-300 font-bold uppercase italic leading-relaxed max-w-[300px]">
-                                "O motor Oracle converte {calcFrom} para {championship.currency || 'BRL'} (Base) e depois para {calcTo}. A precisão é vital para o cálculo de margens de exportação."
+                                "O motor Oracle converte {calcFrom} para {championship.currency || 'BRL'} (Base) e depois para {calcTo}. A precisão é vital para o cálculo de margens de Exportação."
                              </p>
                           </div>
                        </div>

@@ -668,8 +668,8 @@ export const calculateKpisFromStatements = (params: {
     percentual_divida_curto_prazo: totalLiabilities > 0 ? (currentLiabilities / totalLiabilities) * 100 : 100,
     brl_rate: indicators.BRL || 5.0,
     gbp_rate: indicators.GBP || 6.2,
-    export_tariff_brazil: indicators.export_tariff_brazil || 0,
-    export_tariff_uk: indicators.export_tariff_uk || 0,
+    import_tariff_brazil: indicators.import_tariff_brazil || 0,
+    import_tariff_uk: indicators.import_tariff_uk || 0,
     supplier_interest_expenses: supplierInterestExpenses,
     emergency_purchase_expenses: emergencyPurchaseExpenses,
     emergency_units_total: emergencyUnitsTotal

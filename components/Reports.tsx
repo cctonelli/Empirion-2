@@ -362,8 +362,8 @@ const Reports: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => {
                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                         <KpiCard label="Câmbio BRL" val={activeTeam?.kpis?.brl_rate?.toFixed(2) || '1.00'} desc="Real Brasileiro" icon={<Globe size={20} />} color="text-emerald-400" />
                         <KpiCard label="Câmbio GBP" val={activeTeam?.kpis?.gbp_rate?.toFixed(2) || '0.00'} desc="Libra Esterlina" icon={<PoundSterling size={20} />} color="text-blue-400" />
-                        <KpiCard label="Tarifa Brasil" val={`${activeTeam?.kpis?.export_tariff_brazil || 0}%`} desc="Exportação p/ BR" icon={<Scale size={20} />} color="text-orange-400" />
-                        <KpiCard label="Tarifa UK" val={`${activeTeam?.kpis?.export_tariff_uk || 0}%`} desc="Exportação p/ UK" icon={<Scale size={20} />} color="text-blue-400" />
+                        <KpiCard label="Tarifa Brasil" val={`${activeTeam?.kpis?.import_tariff_brazil || 0}%`} desc="Exportação p/ BR" icon={<Scale size={20} />} color="text-orange-400" />
+                        <KpiCard label="Tarifa UK" val={`${activeTeam?.kpis?.import_tariff_uk || 0}%`} desc="Exportação p/ UK" icon={<Scale size={20} />} color="text-blue-400" />
                      </div>
                   </motion.div>
                )}

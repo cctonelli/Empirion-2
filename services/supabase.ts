@@ -149,7 +149,7 @@ export const mapHistoryItemSynthetically = (item: any) => {
   const accessorFields = [
     'tsr', 'nlcdg', 'ebitda', 'solvency_score_kanitz', 'dcf_valuation',
     'total_assets', 'fixed_assets_value', 'stock_value', 'fixed_assets_depreciation',
-    'ccc', 'interest_coverage', 'export_tariff_brazil', 'export_tariff_uk',
+    'ccc', 'interest_coverage', 'import_tariff_brazil', 'import_tariff_uk',
     'brl_rate', 'gbp_rate', 'compulsory_loan_balance', 'compulsory_loan_interest_paid',
     'scissors_effect', 'liquidity_current', 'solvency_index', 'inventory_turnover',
     'avg_receivable_days', 'avg_payable_days', 'price_elasticity', 'carbon_footprint',

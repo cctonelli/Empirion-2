@@ -3944,35 +3944,35 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                         <CompactMatrixRow
                           periods={totalPeriods}
                           label="TARIFA EXPORTAÇÃO BRAZIL (%)"
-                          macroKey="export_tariff_brazil"
+                          macroKey="import_tariff_brazil"
                           rules={roundRules}
                           update={updateRoundMacro}
                         />
                         <CompactMatrixRow
                           periods={totalPeriods}
                           label="TARIFA EXPORTAÇÃO EUA (%)"
-                          macroKey="export_tariff_usa"
+                          macroKey="import_tariff_usa"
                           rules={roundRules}
                           update={updateRoundMacro}
                         />
                         <CompactMatrixRow
                           periods={totalPeriods}
                           label="TARIFA EXPORTAÇÃO EURO (%)"
-                          macroKey="export_tariff_euro"
+                          macroKey="import_tariff_euro"
                           rules={roundRules}
                           update={updateRoundMacro}
                         />
                         <CompactMatrixRow
                           periods={totalPeriods}
                           label="TARIFA EXPORTAÇÃO UK (%)"
-                          macroKey="export_tariff_uk"
+                          macroKey="import_tariff_uk"
                           rules={roundRules}
                           update={updateRoundMacro}
                         />
                         <CompactMatrixRow
                           periods={totalPeriods}
                           label="TARIFA EXPORTAÇÃO CHINA (%)"
-                          macroKey="export_tariff_china"
+                          macroKey="import_tariff_china"
                           rules={roundRules}
                           update={updateRoundMacro}
                           icon={<Globe size={10} />}
@@ -3980,7 +3980,7 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                         <CompactMatrixRow
                           periods={totalPeriods}
                           label="TARIFA EXPORTAÇÃO BTC (%)"
-                          macroKey="export_tariff_btc"
+                          macroKey="import_tariff_btc"
                           rules={roundRules}
                           update={updateRoundMacro}
                           icon={<Bitcoin size={10} />}

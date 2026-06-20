@@ -107,8 +107,8 @@ export interface KPIs {
   avg_payable_days?: number;
   ccc?: number;
   interest_coverage?: number;
-  export_tariff_brazil?: number;
-  export_tariff_uk?: number;
+  import_tariff_brazil?: number;
+  import_tariff_uk?: number;
   brl_rate?: number;
   gbp_rate?: number;
   amortization_schedule?: any[];
@@ -406,8 +406,8 @@ export interface TutorTeamView {
   dcf: number;
   ccc?: number;
   interest_coverage?: number;
-  export_tariff_brazil?: number;
-  export_tariff_uk?: number;
+  import_tariff_brazil?: number;
+  import_tariff_uk?: number;
   brl_rate?: number;
   gbp_rate?: number;
   auditLogs: AuditLog[];

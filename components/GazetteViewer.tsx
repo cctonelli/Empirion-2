@@ -28,12 +28,12 @@ const translateTransparency = (level?: string) => {
 };
 
 const regionsTariffs = [
-  { name: 'BRA', key: 'export_tariff_brazil' as const },
-  { name: 'USA', key: 'export_tariff_usa' as const },
-  { name: 'EUR', key: 'export_tariff_euro' as const },
-  { name: 'UK', key: 'export_tariff_uk' as const },
-  { name: 'CHN', key: 'export_tariff_china' as const },
-  { name: 'BTC', key: 'export_tariff_btc' as const },
+  { name: 'BRA', key: 'import_tariff_brazil' as const },
+  { name: 'USA', key: 'import_tariff_usa' as const },
+  { name: 'EUR', key: 'import_tariff_euro' as const },
+  { name: 'UK', key: 'import_tariff_uk' as const },
+  { name: 'CHN', key: 'import_tariff_china' as const },
+  { name: 'BTC', key: 'import_tariff_btc' as const },
 ];
 
 const getTariffHeatmapColor = (val: number) => {

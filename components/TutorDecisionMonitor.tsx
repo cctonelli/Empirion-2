@@ -94,8 +94,8 @@ const TutorDecisionMonitor: React.FC<MonitorProps> = ({ championshipId, round, i
             dcf: proj?.kpis?.dcf_valuation || t.kpis?.dcf_valuation || ((proj?.kpis?.equity || t.kpis?.equity || 7252171) * 1.1 / 1000000),
             ccc: proj?.kpis?.ccc || t.kpis?.ccc || 0,
             interest_coverage: proj?.kpis?.interest_coverage || t.kpis?.interest_coverage || 0,
-            export_tariff_brazil: proj?.kpis?.export_tariff_brazil || t.kpis?.export_tariff_brazil || 0,
-            export_tariff_uk: proj?.kpis?.export_tariff_uk || t.kpis?.export_tariff_uk || 0,
+            import_tariff_brazil: proj?.kpis?.import_tariff_brazil || t.kpis?.import_tariff_brazil || 0,
+            import_tariff_uk: proj?.kpis?.import_tariff_uk || t.kpis?.import_tariff_uk || 0,
             brl_rate: proj?.kpis?.brl_rate || t.kpis?.brl_rate || 1,
             gbp_rate: proj?.kpis?.gbp_rate || t.kpis?.gbp_rate || 0,
             auditLogs: (decision?.data?.audit_logs || []) as AuditLog[],
@@ -126,8 +126,8 @@ const TutorDecisionMonitor: React.FC<MonitorProps> = ({ championshipId, round, i
           dcf: h.dcf_valuation || h.kpis?.dcf_valuation || ((h.kpis?.equity || 7252171) * 1.1 / 1000000),
           ccc: h.ccc || h.kpis?.ccc || 0,
           interest_coverage: h.interest_coverage || h.kpis?.interest_coverage || 0,
-          export_tariff_brazil: h.export_tariff_brazil || h.kpis?.export_tariff_brazil || 0,
-          export_tariff_uk: h.export_tariff_uk || h.kpis?.export_tariff_uk || 0,
+          import_tariff_brazil: h.import_tariff_brazil || h.kpis?.import_tariff_brazil || 0,
+          import_tariff_uk: h.import_tariff_uk || h.kpis?.import_tariff_uk || 0,
           brl_rate: h.brl_rate || h.kpis?.brl_rate || 1,
           gbp_rate: h.gbp_rate || h.kpis?.gbp_rate || 0,
           auditLogs: [],
@@ -426,11 +426,11 @@ const TeamCardDetailed = memo(({ team, index, isLive, arena }: { team: TutorTeam
             </div>
             <div className="px-3 py-1.5 bg-slate-950/80 border border-white/5 rounded-lg flex items-center gap-2">
                <Scale size={10} className="text-orange-400"/>
-               <span className="text-[7px] font-black text-slate-400 uppercase tracking-tighter">Tarifa BR: {team.export_tariff_brazil}%</span>
+               <span className="text-[7px] font-black text-slate-400 uppercase tracking-tighter">Tarifa BR: {team.import_tariff_brazil}%</span>
             </div>
             <div className="px-3 py-1.5 bg-slate-950/80 border border-white/5 rounded-lg flex items-center gap-2">
                <Scale size={10} className="text-blue-400"/>
-               <span className="text-[7px] font-black text-slate-400 uppercase tracking-tighter">Tarifa UK: {team.export_tariff_uk}%</span>
+               <span className="text-[7px] font-black text-slate-400 uppercase tracking-tighter">Tarifa UK: {team.import_tariff_uk}%</span>
             </div>
          </div>
       </div>
