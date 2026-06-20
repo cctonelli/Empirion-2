@@ -127,7 +127,7 @@ export const INITIAL_FINANCIAL_TREE: { balance_sheet: AccountNode[], dre: Accoun
         { id: 'cf.outflow.maintenance', label: 'MANUTENÇÃO MÁQUINAS', value: 146402.50, type: 'expense', isEditable: true },
         { id: 'cf.outflow.amortization', label: 'AMORTIZAÇÃO EMPRÉSTIMOS', value: 125000.00, type: 'expense', isEditable: true },
         { id: 'cf.outflow.late_penalties', label: 'MULTAS POR ATRASO', value: 0.00, type: 'expense', isEditable: true },
-        { id: 'cf.outflow.interest', label: 'JUROS/SPREAD BANCÁRIOS', value: 2500.00, type: 'expense', isEditable: true },
+        { id: 'cf.outflow.interest', label: 'JUROS/SPREAD BANCÁRIO', value: 2500.00, type: 'expense', isEditable: true },
         { id: 'cf.outflow.taxes', label: 'IMPOSTO DE RENDA', value: 0.00, type: 'expense', isEditable: true },
         { id: 'cf.outflow.dividends', label: 'DISTRIBUIÇÃO DIVIDENDOS', value: 0.00, type: 'expense', isEditable: true },
         { id: 'cf.investment_apply', label: 'APLICAÇÃO FINANCEIRA', value: 0.00, type: 'expense', isEditable: true }

@@ -287,3 +287,19 @@ Para garantir a absoluta **fidelidade e rastreabilidade contábil** do simulador
 ### 3. Sinceridade na Depuração (Rastreabilidade)
 - Quando houver quebra de testes ou compilação, o programador ou contador deve focar em **corrigir a consulta ou a lógica de carregamento do estado** e **nunca** remendar o componente visual para "passar de ano" adicionando uma cascata de operadores coalescentes (`??` ou `||`) com dados fictícios de mercado por fora.
 - Todos os campos e estados estruturados no front-end devem, preferencialmente, carregar dados tipados originados das APIs e submetidos à validação prévia. Se um fallback temporário de segurança for inserido para blindar falha crítica de compilação, ele deve ser de curtíssimo alcance (ex: `0` para números e `""` para textos), e documentado explicitamente com um comentário `// TODO: Investigar causa raiz contábil em...` e reportado imediatamente ao PMP e ao time de desenvolvimento.
+
+---
+
+## 11. 👥 Força de Trabalho & Diretrizes de Governança de RH (Nível de Treinamento Inicial)
+
+O **Nível de Treinamento Inicial** de operadores dita o ponto de partida organizacional e a maturidade de RH da simulação industrial. Ele modula diretamente o tempo e o capital de investimento em folha que as equipes concorrentes precisarão destinar para sanar gargalos de ociosidade, fadiga e perdas produtivas por refugo de manufatura.
+
+### 1. Definições Técnicas e Implicações Operacionais:
+- **NÍVEL 1 (BÁSICO) - Equipe Recruta:** Colaboradores sem experiência prévia. Apresentam alta taxa de fadiga inicial e exigem investimento urgente em capacitação básica de RH acima de 5% da folha.
+- **NÍVEL 2 (OPERACIONAL) - Força Comum:** Colaboradores com maturidade regular de mercado, habituados ao manuseio padrão da máquina Alpha. Requisição conservadora de 3% a 4% de investimento para manter produtividade estável.
+- **NÍVEL 3 (ESPECIALIZADO) - Equipe Técnica:** Operadores com treinamento consolidado, capazes de extrair o máximo do maquinário intermediário Beta. Ponto de partida equilibrado para arenas competitivas.
+- **NÍVEL 4 (MASTER) - Operários de Elite:** Corpo de manufatura altamente letrado tecnologicamente, pronto para lidar com plantas industriais de alta performance de nível Gamma. Minimiza severamente custos por refugo de matérias-primas.
+- **NÍVEL 5 (ORACLE) - Manufatura Autônoma:** Especialistas certificados com máximo nível e capacitação fiduciária contábil de fábrica. Alta produtividade Greenfield imediata.
+
+### 2. Orientação Estratégica de Governança para o Tutor:
+- **Dosagem de Dificuldade:** Definir níveis menores (1 e 2) exige que as equipes debatam profundamente a gestão de pessoas, horas-extras e a adequação do salário base contra as médias de inflação do mercado. Níveis maiores (4 e 5) são recomendados para sprints rápidas de ritmo acelerado focados prioritariamente em tesouraria avançada, finanças mundiais e M&A.

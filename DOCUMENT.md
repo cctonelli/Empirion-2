@@ -2519,13 +2519,13 @@ project-root/
 
 ---
 
-## Decisão Arquitetural & Versionamento - Visualização da Conta de Juros e Ágios Bancários na Agenda Financeira e Exibição do Torneio Disputado no Terminal - v2026.114
+## Decisão Arquitetural & Versionamento - Visualização da Conta de Juros e Spreads Bancários na Agenda Financeira e Exibição do Torneio Disputado no Terminal - v2026.114
 
 **Data:** 12 de Junho de 2026 às 14:45 UTC  
-**Motivo:** Atender ao pedido estratégico do Contador Sênior para listar as despesas financeiras de juros e ágios bancários (decorrentes da compra de maquinários BDI e empréstimos contratados) na Agenda Financeira (Deveres Comprometidos), evitando compromissos fiscais/financeiros ocultos que prejudiquem as projeções dos participantes. Adicionalmente, exibir de forma proeminente o nome do torneio disputado antes do nome da equipe no cabeçalho do Terminal de Decisões, aumentando a ambientação competitiva.  
+**Motivo:** Atender ao pedido estratégico do Contador Sênior para listar as despesas financeiras de juros e spreads bancários (decorrentes da compra de maquinários BDI e empréstimos contratados) na Agenda Financeira (Deveres Comprometidos), evitando compromissos fiscais/financeiros ocultos que prejudiquem as projeções dos participantes. Adicionalmente, exibir de forma proeminente o nome do torneio disputado antes do nome da equipe no cabeçalho do Terminal de Decisões, aumentando a ambientação competitiva.  
 **Principais diferenças:**  
 - **Agenda Financeira Reativa (Deveres Comprometidos) (`services/supabase.ts` e `services/simulation-core.ts`):** 
-  - Acrescentada a conta `interests` com o rótulo **JUROS E ÁGIOS BANCÁRIOS** ao array de passivos comprometidos (`payables`) de saída contábil.
+  - Acrescentada a conta `interests` com o rótulo **JUROS E SPREADS BANCÁRIOS** ao array de passivos comprometidos (`payables`) de saída contábil.
   - O valor da conta é extraído em tempo real a partir do somatório de despesas financeiras (`fin.exp` do DRE): `Math.abs(findAccountValue(statements.dre, 'fin.exp'))` no motor de simulação e herda o saldo adequado reativo ou o valor inicial de juros pagos na base na inicialização.
 - **Identificação do Torneio Disputado (`components/DecisionForm.tsx`):**
   - O cabeçalho do console de decisão do participante foi adaptado para verificar dinamicamente a presença do campeonato carregado (`activeArena`).

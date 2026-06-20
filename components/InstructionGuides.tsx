@@ -8,7 +8,7 @@ import {
 import { StudentManual } from './StudentManual';
 
 export const TutorGuide: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'credit' | 'rj' | 'valuation' | 'solvency'>('credit');
+  const [activeTab, setActiveTab] = useState<'credit' | 'rj' | 'valuation' | 'solvency' | 'training'>('credit');
 
   return (
     <div className="max-w-5xl mx-auto space-y-16 animate-in fade-in slide-in-from-bottom-8 duration-1000 pb-20">
@@ -82,12 +82,13 @@ export const TutorGuide: React.FC = () => {
          </div>
 
          {/* Tabs Header */}
-         <div className="grid grid-cols-2 md:grid-cols-4 gap-2 border-b border-white/10 pb-4">
+         <div className="grid grid-cols-2 md:grid-cols-5 gap-2 border-b border-white/10 pb-4">
            {[
              { id: 'credit', label: 'Crédito & Compulsório', desc: 'Análise de limites e taxas' },
              { id: 'rj', label: 'Recuperação & Falência', desc: 'Regras de RJ e quebra técnica' },
              { id: 'valuation', label: 'Valuation com Piso', desc: 'Regulação de perpetuidade e ativos' },
-             { id: 'solvency', label: 'Tríplice de Solvência', desc: 'E-SDS vs Altman vs Kanitz' }
+             { id: 'solvency', label: 'Tríplice de Solvência', desc: 'E-SDS vs Altman vs Kanitz' },
+             { id: 'training', label: 'Treinamento de RH', desc: 'Níveis de treinamento inicial' }
            ].map(tab => (
              <button
                key={tab.id}
@@ -200,7 +201,97 @@ export const TutorGuide: React.FC = () => {
              </div>
            )}
 
-           {activeTab === 'solvency' && (
+           {activeTab === 'training' && (
+              <div className="space-y-6">
+                <div className="flex items-start gap-4">
+                  <div className="p-3 bg-blue-600/20 text-blue-500 rounded-xl shrink-0">
+                    <Users size={24} />
+                  </div>
+                  <div>
+                    <h4 className="text-lg font-black uppercase tracking-tight mb-2">Configuração do Nível de Treinamento Inicial</h4>
+                    <p className="text-sm text-slate-400 leading-relaxed font-bold">
+                      O <strong>Nível de Treinamento Inicial</strong> de operadores dita o ponto de partida organizacional e a maturidade de RH da simulação industrial. Ele modula diretamente o tempo e o capital de investimento em folha que as equipes concorrentes precisarão destinar para sanar gargalos de ociosidade, fadiga e perdas produtivas por refugo de manufatura.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+                  <div className="p-5 bg-white/5 border border-white/10 rounded-2xl space-y-2">
+                    <div className="flex items-center gap-2">
+                      <span className="w-2.5 h-2.5 rounded-full bg-rose-500"></span>
+                      <h5 className="font-black text-[10px] uppercase tracking-wider text-slate-200">Nível 1: Básico</h5>
+                    </div>
+                    <p className="text-[11px] text-slate-400 leading-relaxed font-bold">
+                      <strong>Equipe Recruta:</strong> Colaboradores sem experiência prévia. Exige alto investimento em treinamento de RH para atingir eficiência operacional mínima.
+                    </p>
+                    <div className="text-[10px] text-slate-500 border-t border-white/5 pt-2">
+                      <strong>Implicação:</strong> Alta taxa de fadiga inicial, necessidade urgente de capacitação inicial de RH acima de 5% da folha.
+                    </div>
+                  </div>
+
+                  <div className="p-5 bg-white/5 border border-white/10 rounded-2xl space-y-2">
+                    <div className="flex items-center gap-2">
+                      <span className="w-2.5 h-2.5 rounded-full bg-orange-400"></span>
+                      <h5 className="font-black text-[10px] uppercase tracking-wider text-slate-200">Nível 2: Operacional</h5>
+                    </div>
+                    <p className="text-[11px] text-slate-400 leading-relaxed font-bold">
+                      <strong>Força Comum:</strong> Colaboradores com maturidade regular de mercado, habituados ao manuseio padrão corporativo básico da máquina Alpha.
+                    </p>
+                    <div className="text-[10px] text-slate-500 border-t border-white/5 pt-2">
+                      <strong>Implicação:</strong> Regime conservador. Necessidade média de 3% a 4% de investimento para manter produtividade estável.
+                    </div>
+                  </div>
+
+                  <div className="p-5 bg-white/5 border border-white/10 rounded-2xl space-y-2">
+                    <div className="flex items-center gap-2">
+                      <span className="w-2.5 h-2.5 rounded-full bg-yellow-400"></span>
+                      <h5 className="font-black text-[10px] uppercase tracking-wider text-slate-200">Nível 3: Especializado</h5>
+                    </div>
+                    <p className="text-[11px] text-slate-400 leading-relaxed font-bold">
+                      <strong>Equipe Técnica:</strong> Operadores com treinamento consolidado, capazes de extrair o máximo do maquinário intermediário Beta.
+                    </p>
+                    <div className="text-[10px] text-slate-500 border-t border-white/5 pt-2">
+                      <strong>Implicação:</strong> Ponto de partida equilibrado para arenas competitivas. Excelente resiliência sob regime de múltiplos turnos.
+                    </div>
+                  </div>
+
+                  <div className="p-5 bg-white/5 border border-white/10 rounded-2xl space-y-2">
+                    <div className="flex items-center gap-2">
+                      <span className="w-2.5 h-2.5 rounded-full bg-emerald-400"></span>
+                      <h5 className="font-black text-[10px] uppercase tracking-wider text-slate-200">Nível 4: Master</h5>
+                    </div>
+                    <p className="text-[11px] text-slate-400 leading-relaxed font-bold">
+                      <strong>Operários de Elite:</strong> Corpo de manufatura altamente letrado tecnologicamente, pronto para lidar com plantas industriais de alta performance de nível Gamma.
+                    </p>
+                    <div className="text-[10px] text-slate-500 border-t border-white/5 pt-2">
+                      <strong>Implicação:</strong> Curva de aprendizado rápida sob maquinários Gamma. Minimiza severamente custos por refugo de matérias-primas.
+                    </div>
+                  </div>
+
+                  <div className="p-5 bg-white/5 border border-white/10 rounded-2xl space-y-2">
+                    <div className="flex items-center gap-2">
+                      <span className="w-2.5 h-2.5 rounded-full bg-blue-400"></span>
+                      <h5 className="font-black text-[10px] uppercase tracking-wider text-slate-200">Nível 5: Oracle</h5>
+                    </div>
+                    <p className="text-[11px] text-slate-400 leading-relaxed font-bold">
+                      <strong>Manufatura Autônoma:</strong> Especialistas certificados com máximo nível e capacitação fiduciária contábil de fábrica.
+                    </p>
+                    <div className="text-[10px] text-slate-500 border-t border-white/5 pt-2">
+                      <strong>Implicação:</strong> Alta produtividade Greenfield imediata. Indicado para campeonatos de nível executivo arrojados.
+                    </div>
+                  </div>
+                </div>
+
+                <div className="p-6 bg-slate-950/40 border border-white/5 rounded-2xl space-y-3">
+                  <h5 className="text-xs font-black uppercase text-amber-400 tracking-wider">💡 Orientação Estratégica de Governança para o Tutor:</h5>
+                  <p className="text-[11px] text-slate-300 font-medium leading-relaxed">
+                    <strong>Maturação de RH v2026:</strong> O tutor pode dosar a dificuldade didática da tomada de decisão. Definir níveis menores (1 e 2) exige que as equipes debatam profundamente a gestão de pessoas, balanceamento de bônus produtivos, horas-extras e o dimensionamento estratégico do salário base contra as médias de inflação do mercado. Níveis maiores (4 e 5) são recomendados para sprints de ritmo acelerado focados prioritariamente em tesouraria avançada, finanças mundiais corporativas e M&amp;A.
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {activeTab === 'solvency' && (
              <div className="space-y-6">
                <div className="flex items-start gap-4">
                  <div className="p-3 bg-blue-600/20 text-blue-500 rounded-xl shrink-0">

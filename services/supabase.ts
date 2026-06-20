@@ -405,7 +405,7 @@ export const createChampionshipWithTeams = async (config: any, teams: any[], isT
         { id: 'dividends', label: 'Dividendos a Pagar', value: isZeroMode ? 0 : (findAccount(balanceSheet, 'liabilities.current.dividends')?.value ?? 11153.49) },
         { id: 'ppr', label: 'PPR a Pagar', value: isZeroMode ? 0 : (findAccount(balanceSheet, 'liabilities.current.ppr_payable')?.value ?? 0) },
         { id: 'vat_payable', label: 'IVA a Recolher', value: isZeroMode ? 0 : (findAccount(balanceSheet, 'liabilities.current.vat_payable')?.value ?? 0) },
-        { id: 'interests', label: 'JUROS E ÁGIOS BANCÁRIOS', value: isZeroMode ? 0 : (Math.abs(findAccountValue(dreNodes, 'fin.exp')) || jurosPagos) }
+        { id: 'interests', label: 'JUROS/SPREAD BANCÁRIO', value: isZeroMode ? 0 : (Math.abs(findAccountValue(dreNodes, 'fin.exp')) || jurosPagos) }
       ]
     }
   };

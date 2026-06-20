@@ -561,7 +561,7 @@ const FinancialReportMatrix: React.FC<MatrixProps> = ({
       { id: "dividends", label: "Dividendos a Pagar" },
       { id: "ppr", label: "PPR a Pagar" },
       { id: "vat_payable", label: "IVA a Recolher" },
-      { id: "interests", label: "JUROS E ÁGIOS BANCÁRIOS" },
+      { id: "interests", label: "JUROS/SPREAD BANCÁRIO" },
     ];
 
     return (

@@ -604,7 +604,7 @@ export const calculateKpisFromStatements = (params: {
         { id: 'dividends', label: 'Dividendos a Pagar', value: findAccountValue(finalBS, 'liabilities.current.dividends') },
         { id: 'ppr', label: 'PPR a Pagar', value: findAccountValue(finalBS, 'liabilities.current.ppr_payable') },
         { id: 'vat_payable', label: 'IVA a Recolher', value: findAccountValue(finalBS, 'liabilities.current.vat_payable') },
-        { id: 'interests', label: 'JUROS E ÁGIOS BANCÁRIOS', value: Math.abs(findAccountValue(statements.dre, 'fin.exp')) }
+        { id: 'interests', label: 'JUROS/SPREAD BANCÁRIO', value: Math.abs(findAccountValue(statements.dre, 'fin.exp')) }
       ]
     },
     machines: currentMachines,
