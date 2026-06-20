@@ -752,6 +752,13 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
         updated.taxes_initial = 0;
         updated.dividends_initial = 0;
         updated.wip_stock_value = 0;
+        // Calibrações contábeis e físicas imobiliárias para o Greenfield do zero
+        updated.building_mode = "rented";
+        updated.building_value = 0.0;
+        updated.land_value = 0.0;
+        updated.building_age = 0;
+        updated.installations_value = 500000.0;
+        updated.admin_sales_installations = 500000.0;
       } else if (mode === "start_with_base") {
         updated.caixa_inicial = 1500000.0;
         updated.capital_social = 7200000.0;
@@ -775,6 +782,13 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
         updated.taxes_initial = 15000.0;
         updated.dividends_initial = 5000.0;
         updated.wip_stock_value = 50000.0;
+        // Calibrações contábeis e físicas imobiliárias para o modo de Base
+        updated.building_mode = "owned";
+        updated.building_value = 2000000.0;
+        updated.land_value = 10000000.0;
+        updated.building_age = 2;
+        updated.installations_value = 500000.0;
+        updated.admin_sales_installations = 500000.0;
       } else {
         // start_with_running
         updated.caixa_inicial = 1500000.0;
@@ -799,6 +813,13 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
         updated.taxes_initial = 14871.31;
         updated.dividends_initial = 11153.49;
         updated.wip_stock_value = 500000.0;
+        // Calibrações contábeis e físicas imobiliárias para o modo Corporativo Ativo
+        updated.building_mode = "owned";
+        updated.building_value = 5440000.0;
+        updated.land_value = 1200000.0;
+        updated.building_age = 10;
+        updated.installations_value = 10000000.0;
+        updated.admin_sales_installations = 10000000.0;
       }
       return updated as TutorP0Config;
     });
