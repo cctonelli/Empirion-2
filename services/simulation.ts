@@ -865,8 +865,8 @@ export const calculateProjections = (
   const isRented = ((ecosystem as any).building_mode ?? (isZeroMode ? 'rented' : 'owned')) === 'rented';
   const rentVal = isRented ? ((ecosystem as any).monthly_rent_value !== undefined ? Number((ecosystem as any).monthly_rent_value) : 50000.00) : 0;
   const pProd = (ecosystem as any).rent_allocation_productive !== undefined ? Number((ecosystem as any).rent_allocation_productive) : 70;
-  const pAdm = (ecosystem as any).rent_allocation_administrative !== undefined ? Number((ecosystem as any).rent_allocation_administrative) : 10;
-  const pSales = (ecosystem as any).rent_allocation_sales !== undefined ? Number((ecosystem as any).rent_allocation_sales) : 20;
+  const pAdm = (ecosystem as any).rent_allocation_administrative !== undefined ? Number((ecosystem as any).rent_allocation_administrative) : 20;
+  const pSales = (ecosystem as any).rent_allocation_sales !== undefined ? Number((ecosystem as any).rent_allocation_sales) : 10;
 
   const valCif = rentVal * (pProd / 100);
   const valAdm = rentVal * (pAdm / 100);

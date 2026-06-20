@@ -627,8 +627,8 @@ export function generatePureP0(config: TutorP0Config): {
     // DRE e Fluxos de Caixa coerentes de PME
     const rentVal = buildingMode === 'rented' ? (config.monthly_rent_value ?? 50000.00) : 0;
     const pProd = config.rent_allocation_productive ?? 70;
-    const pAdm = config.rent_allocation_administrative ?? 10;
-    const pSales = config.rent_allocation_sales ?? 20;
+    const pAdm = config.rent_allocation_administrative ?? 20;
+    const pSales = config.rent_allocation_sales ?? 10;
 
     const valCif = rentVal * (pProd / 100);
     const valAdm = rentVal * (pAdm / 100);
@@ -672,8 +672,8 @@ export function generatePureP0(config: TutorP0Config): {
     // S.A. Running: Restaura o DRE complexo histórico herdado do Simulador Sênior
     const rentVal = buildingMode === 'rented' ? (config.monthly_rent_value ?? 50000.00) : 0;
     const pProd = config.rent_allocation_productive ?? 70;
-    const pAdm = config.rent_allocation_administrative ?? 10;
-    const pSales = config.rent_allocation_sales ?? 20;
+    const pAdm = config.rent_allocation_administrative ?? 20;
+    const pSales = config.rent_allocation_sales ?? 10;
 
     const valCif = rentVal * (pProd / 100);
     const valAdm = rentVal * (pAdm / 100);
