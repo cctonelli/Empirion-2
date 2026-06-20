@@ -884,7 +884,9 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
         (tutorConfig.machines[1]?.qty || 0) * betaInstallCost +
         (tutorConfig.machines[2]?.qty || 0) * gammaInstallCost;
 
-    const installationsVal = installationsMachinesVal + (tutorConfig.admin_sales_installations || 0);
+    const installationsVal = tutorConfig.installations_value !== undefined && tutorConfig.installations_value !== null
+      ? Number(tutorConfig.installations_value)
+      : (installationsMachinesVal + (tutorConfig.admin_sales_installations || 0));
 
     const parsed_deprec_rate =
       (tutorConfig.buildings_depreciation_rate !== undefined
@@ -3943,35 +3945,35 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                         />
                         <CompactMatrixRow
                           periods={totalPeriods}
-                          label="TARIFA EXPORTAÇÃO BRAZIL (%)"
+                          label="TARIFA IMPORTAÇÃO BRASIL (%)"
                           macroKey="import_tariff_brazil"
                           rules={roundRules}
                           update={updateRoundMacro}
                         />
                         <CompactMatrixRow
                           periods={totalPeriods}
-                          label="TARIFA EXPORTAÇÃO EUA (%)"
+                          label="TARIFA IMPORTAÇÃO EUA (%)"
                           macroKey="import_tariff_usa"
                           rules={roundRules}
                           update={updateRoundMacro}
                         />
                         <CompactMatrixRow
                           periods={totalPeriods}
-                          label="TARIFA EXPORTAÇÃO EURO (%)"
+                          label="TARIFA IMPORTAÇÃO EURO (%)"
                           macroKey="import_tariff_euro"
                           rules={roundRules}
                           update={updateRoundMacro}
                         />
                         <CompactMatrixRow
                           periods={totalPeriods}
-                          label="TARIFA EXPORTAÇÃO UK (%)"
+                          label="TARIFA IMPORTAÇÃO REINO UNIDO (%)"
                           macroKey="import_tariff_uk"
                           rules={roundRules}
                           update={updateRoundMacro}
                         />
                         <CompactMatrixRow
                           periods={totalPeriods}
-                          label="TARIFA EXPORTAÇÃO CHINA (%)"
+                          label="TARIFA IMPORTAÇÃO CHINA (%)"
                           macroKey="import_tariff_china"
                           rules={roundRules}
                           update={updateRoundMacro}
@@ -3979,7 +3981,7 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                         />
                         <CompactMatrixRow
                           periods={totalPeriods}
-                          label="TARIFA EXPORTAÇÃO BTC (%)"
+                          label="TARIFA IMPORTAÇÃO BLOCO BTC (%)"
                           macroKey="import_tariff_btc"
                           rules={roundRules}
                           update={updateRoundMacro}

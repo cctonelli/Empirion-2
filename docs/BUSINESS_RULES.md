@@ -312,7 +312,7 @@ Empresas que incorrerem em quebra de caixa e requererem **Empréstimo Compulsór
 - DRE: Juros + Depreciação (CIF).
 - DFC: Saída de juros durante carência; juros + amortização depois.
 
-### 10.3 Limites Bancários
+### 10.3 Empréstimos Compulsórios
 
 - Ativados automaticamente quando caixa projetado < 0, após esgotados os recursos das Aplicações Financeiras disponíveis.
 - Taxa punitiva: Taxa Base + Spread Rating + 5.0% flat de sobretaxa.
@@ -407,7 +407,7 @@ O sistema de simulação do Empirion incorpora uma lógica estrita de comportame
 - **v19.82** (06/06/2026) – Documentação das regras de ativação de greves para operários baseadas no Índice de Motivação consecutivos (< 0.75 por 2 rounds) e o respectivo impacto operacional de 50% de redução na fabricação.
 - **v19.25** (28/05/2026) – Introdução de travas fiduciárias reativas com validador de rateio (soma = 100% mandatória), breakdown analítico expandido de aluguel por CIF x OPEX no drawer de preview e documentação oficial completa de locação em BUSINESS_RULES.md.
 - **v19.12** (25/05/2026) – Harmonização completa do Fluxo de Caixa pelo Comitê Contábil (v19.12), introdução da Redoma de Caixa (resgate preventivo de aplicações financeiras para preservação de rating de crédito) e ativação rigorosa de Treinamento e Estocagem no CIF contábil (Absorção).
-- **v19.10** (25/05/2026) – Diferenciação analítica de Empréstimos Normais vs. Limites Bancários, taxas por Rating Spreads, cap punitivo no rating corporativo e novo Cronograma de Amortização de Dívidas projetado (3 rounds).
+- **v19.10** (25/05/2026) – Diferenciação analítica de Empréstimos Normais vs. Empréstimos Compulsórios, taxas por Rating Spreads, cap punitivo no rating corporativo e novo Cronograma de Amortização de Dívidas projetado (3 rounds).
 - **v19.9** (24/05/2026) – Desmembramento completo de MOD e CIF + regras de Absorção.
 - **v19.8** – Implementação do Kardex-WAC.
 - **v19.5** – Validação tripla contábil.

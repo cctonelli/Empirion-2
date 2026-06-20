@@ -26,7 +26,7 @@ export const FinanceStep: React.FC<FinanceStepProps> = ({
         icon={<Landmark size={32} strokeWidth={2.5} />} 
         title="Finanças & Mercado de Capitais" 
         desc="Gerencie liquidez, alavancagem e aplicações financeiras. Decisões aqui definem a saúde de caixa, custo de capital e capacidade de investimento nos próximos rounds. Equilíbrio entre endividamento e aplicações é chave para evitar crises ou perda de oportunidade." 
-        help="Limites Bancários ocorrem automaticamente se o caixa fechar negativo (com ágio maior). Aplicações rendem no próximo período."
+        help="Empréstimos Compusórios ocorrem automaticamente se o caixa fechar negativo (com ágio maior). Aplicações rendem no próximo período."
       />
 
       {/* Seção 1: Mercado de Capitais – Empréstimo + Aplicação */}

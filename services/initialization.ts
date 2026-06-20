@@ -424,14 +424,19 @@ export function generatePureP0(config: TutorP0Config): {
 
   const initialAdminSalesInstallations = Number(config.admin_sales_installations || 0);
 
-  // Instalações de abertura: iniciadas com os investimentos de admin/vendas, e incrementadas dinamicamente com base nas máquinas em frota para outros modos
-  let installationsVal = initialAdminSalesInstallations;
-  if (!isZeroMode) {
-    actualMachines.forEach(mac => {
-      const normalizedModel = (mac.model as string) === 'alfa' ? 'alpha' : (mac.model as string) === 'gama' ? 'gamma' : mac.model;
-      const macInstallCost = normalizedModel === 'alpha' ? alphaInstallCost : normalizedModel === 'beta' ? betaInstallCost : gammaInstallCost;
-      installationsVal += macInstallCost * mac.qty;
-    });
+  // Instalações de abertura: iniciadas com os investimentos de admin/vendas ou valor explícito do Tutor se houver, e incrementadas dinamicamente com base nas máquinas em frota para outros modos
+  let installationsVal = config.installations_value !== undefined && config.installations_value !== null
+    ? Number(config.installations_value)
+    : initialAdminSalesInstallations;
+
+  if (config.installations_value === undefined || config.installations_value === null) {
+    if (!isZeroMode) {
+      actualMachines.forEach(mac => {
+        const normalizedModel = (mac.model as string) === 'alfa' ? 'alpha' : (mac.model as string) === 'gama' ? 'gamma' : mac.model;
+        const macInstallCost = normalizedModel === 'alpha' ? alphaInstallCost : normalizedModel === 'beta' ? betaInstallCost : gammaInstallCost;
+        installationsVal += macInstallCost * mac.qty;
+      });
+    }
   }
 
   // Cálculo de Depreciação ou Amortização acumulada em P0:
