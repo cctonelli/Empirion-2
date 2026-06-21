@@ -40,6 +40,10 @@ const TutorDecisionMonitor: React.FC<MonitorProps> = ({ championshipId, round, i
   const [arena, setArena] = useState<Championship | null>(null);
   const [showGazette, setShowGazette] = useState(false);
 
+  useEffect(() => {
+    setActiveTimelineNode(round);
+  }, [round]);
+
   const fetchLiveState = async (targetNode: number) => {
     setLoading(true);
     try {
@@ -177,7 +181,7 @@ const TutorDecisionMonitor: React.FC<MonitorProps> = ({ championshipId, round, i
   );
 
   return (
-    <div className="space-y-12 animate-in fade-in duration-700 pb-40">
+    <div className="space-y-12 animate-in fade-in duration-700 pb-12">
       <header className="px-4 flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
          <div className="flex flex-col md:flex-row md:items-end gap-6">
             <div>
@@ -287,7 +291,7 @@ const TutorDecisionMonitor: React.FC<MonitorProps> = ({ championshipId, round, i
         </div>
       )}
 
-      <footer className="fixed bottom-0 left-0 right-0 h-32 bg-slate-950/90 backdrop-blur-3xl border-t border-white/10 z-[3000] flex items-center justify-center px-12">
+      <footer className="w-full h-32 bg-slate-950/90 backdrop-blur-3xl border border-white/10 rounded-2xl z-[3000] flex items-center justify-center px-12 mt-12 shadow-2xl">
          <div className="max-w-7xl w-full flex items-center justify-between relative">
             <div className="absolute top-1/2 left-0 right-0 h-1 bg-slate-800 -translate-y-1/2 z-0" />
             {Array.from({ length: (arena?.total_rounds || 12) + 1 }).map((_, i) => {
