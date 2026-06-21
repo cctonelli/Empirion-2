@@ -2,9 +2,21 @@
 
 ## 📋 Controle de Governança
 - **Produto:** EMPIRION ORACLE
-- **Versão Ativa:** v2026.174 Sincronização Temporal do Cálculo de Preços de Insumos no Round Ativo.
+- **Versão Ativa:** v2026.175 Sincronização de Ajuste de Piso Salarial Inflacionado com Período Corrente.
 - **Tipo de Documento:** Master Index & Diretrizes de Engenharia Contínua
 - **Status da Documentação:** Sincronizado com o PRD.md, BUSINESS_RULES.md & ROADMAP.md
+
+---
+
+## Decisão Arquitetural: Sincronização de Ajuste de Piso Salarial Inflacionado com Período Corrente - v2026.175
+
+**Data:** 21 de Junho de 2026 às 23:35 UTC  
+**Motivo:** Sanar a disparidade de cálculo do reajuste inflacionário cumulativo aplicado ao salário-base de referência. O painel de recursos humanos recalculava o piso estritamente usando o índice retroativo do período anterior (`currentRound - 1`), o que gerava desencontros com o motor de turnover principal que adota a taxa cumulativa atualizada do próprio período sob decisão.
+
+**Detalhamento Técnico de Planejamento e Modificações:**
+- **Sincronização Estrita do Piso Salarial (`HRStep.tsx`)**:
+  - Atualizou-se o ganho acumulado em `adjustedBaseSalary` recorrendo a `currentRound` diretamente ao invés do decremento arbitrário `currentRound - 1`.
+  - Revisou-se e corrigiu-se também a constante `lastRoundCumulative` de cálculo da média fallback salarial do setor do período anterior (`targetRound`), retirando a redução para `targetRound - 1` e restabelecendo precisão matemática de 100% entre interface e inteligência central.
 
 ---
 

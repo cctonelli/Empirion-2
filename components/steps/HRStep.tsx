@@ -39,7 +39,7 @@ export const HRStep: React.FC<HRStepProps> = ({
     if (!activeArena) return 2500;
     const chronogram = activeArena.round_rules || DEFAULT_INDUSTRIAL_CHRONOGRAM;
     // O reajuste acumulado aplicado ao round atual
-    const inflationMult = getCumulativeAdjust(chronogram, currentRound - 1, 'inflation_rate');
+    const inflationMult = getCumulativeAdjust(chronogram, currentRound, 'inflation_rate');
     const baseSal = activeArena.market_indicators?.hr_base?.salary || 2500;
     return baseSal * inflationMult;
   }, [activeArena, currentRound]);
@@ -85,7 +85,7 @@ export const HRStep: React.FC<HRStepProps> = ({
         }
 
         const chronogram = activeArena.round_rules || DEFAULT_INDUSTRIAL_CHRONOGRAM;
-        const lastRoundCumulative = getCumulativeAdjust(chronogram, targetRound - 1, 'inflation_rate');
+        const lastRoundCumulative = getCumulativeAdjust(chronogram, targetRound, 'inflation_rate');
         const baseSal = activeArena.market_indicators?.hr_base?.salary || 2500;
         setSectorAvgSalary(baseSal * lastRoundCumulative);
       } catch (err) {
