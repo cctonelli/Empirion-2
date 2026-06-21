@@ -153,7 +153,7 @@ export const AssetsStep: React.FC<AssetsStepProps> = ({
         <div className="flex items-center justify-between">
           <h4 className="text-2xl font-black text-white uppercase italic tracking-tight flex items-center gap-4 font-sans">
             <Warehouse size={28} className="text-blue-400" />
-            Parque Operacional Atual (P-{round})
+            Parque Fabril Atual (R-{round})
           </h4>
           <span className="text-sm font-medium text-slate-400 italic">
             {machinesList.length} unidades instaladas
