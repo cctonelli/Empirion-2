@@ -421,7 +421,7 @@ const DecisionForm: React.FC<{
         next.production = {
           ...next.production,
           activityLevel: 100,
-          extraProductionPercent: 40,
+          extraProductionPercent: 25,
           rd_investment: 6.5,
         };
         next.hr = {

@@ -2,9 +2,21 @@
 
 ## 📋 Controle de Governança
 - **Produto:** EMPIRION ORACLE
-- **Versão Ativa:** v2026.173 Higienização de Redundâncias de Matrizes e Correção Contábil de Fallbacks de Juros de Fornecedores.
+- **Versão Ativa:** v2026.174 Sincronização Temporal do Cálculo de Preços de Insumos no Round Ativo.
 - **Tipo de Documento:** Master Index & Diretrizes de Engenharia Contínua
 - **Status da Documentação:** Sincronizado com o PRD.md, BUSINESS_RULES.md & ROADMAP.md
+
+---
+
+## Decisão Arquitetural: Sincronização Temporal do Cálculo de Preços de Insumos no Round Ativo - v2026.174
+
+**Data:** 21 de Junho de 2026 às 17:34 UTC  
+**Motivo:** Corrigir a defasagem temporal na exibição e projeção dos custos das matérias-primas A e B nas telas de tomada de decisão, assegurando que o aumento ou reajuste proposto para o próprio período sob decisão seja faturado e visualizado de imediato, em vez de reter fallbacks e valores defasados correspondentes ao período anterior.
+
+**Detalhamento Técnico de Planejamento e Modificações:**
+- **Sincronização Estrita do Ajuste em Andamento (`getAdjustedPrice`)**:
+  - Refatorou-se a função utilitária `getAdjustedPrice` em `services/simulation.ts` para computar a taxa acumulada do cronograma usando o parâmetro `round` (período atualmente em decisão) diretamente em vez do decrementador arbitrário `round - 1`.
+  - Esta alteração corrige de forma homogênea a amostragem de custos unitários e totais nas abas de Suprimentos (`SupplyStep.tsx`), Imobilizados (`AssetsStep.tsx`), Marketing (`MarketingStep.tsx`) e Gazette de Mercado (`GazetteViewer.tsx`), unificando a projeção em tempo real com as regras vigentes do torneio.
 
 ---
 

@@ -93,10 +93,8 @@ const injectValues = (tree: AccountNode[], values: Record<string, number>, zeroO
  * @param chronogram Cronograma de regras
  */
 export const getAdjustedPrice = (basePrice: number, key: string, round: number, chronogram: any): number => {
-  // O reajuste aplicado aos resultados do Round N é o acumulado até Round N-1.
-  // Ex: Resultados de P1 usam reajuste de P0.
-  // Ex: Resultados de P0 usam reajuste de P-1 (nenhum).
-  return basePrice * getCumulativeAdjust(chronogram, round - 1, key);
+  // Ajuste para o round em andamento (referência ativa ou sendo decidido)
+  return basePrice * getCumulativeAdjust(chronogram, round, key);
 };
 
 export const calculateProjections = (
