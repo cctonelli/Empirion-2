@@ -485,9 +485,9 @@ export const fetchPageContent = async (slug: string, lang: string) => {
   return data?.content;
 };
 
-export const getPublicReports = async (champId: string, round: number) => {
-  const isTrial = localStorage.getItem('is_trial_session') === 'true';
-  const table = isTrial ? 'trial_companies' : 'companies';
+export const getPublicReports = async (champId: string, round: number, isTrial?: boolean) => {
+  const isTrialSession = isTrial !== undefined ? isTrial : (localStorage.getItem('is_trial_session') === 'true');
+  const table = isTrialSession ? 'trial_companies' : 'companies';
   const res = await supabase.from(table).select('*').eq('championship_id', champId).eq('round', round);
   if (res.data) {
     res.data = res.data.map(mapHistoryItemSynthetically);

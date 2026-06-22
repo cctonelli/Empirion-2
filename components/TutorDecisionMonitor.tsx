@@ -356,6 +356,7 @@ const TeamCardDetailed = memo(({ team, index, isLive, arena }: { team: TutorTeam
          localStorage.setItem('active_team_id', team.id);
          localStorage.setItem('active_champ_id', arena.id);
          localStorage.setItem('tutor_viewing_student_cockpit', 'true');
+         localStorage.setItem('is_trial_session', arena.is_trial ? 'true' : 'false');
          navigate('/app/dashboard');
       }
    };

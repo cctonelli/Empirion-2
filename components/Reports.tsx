@@ -33,7 +33,7 @@ const Reports: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => {
         if (team) {
           setActiveTeam(team);
           try {
-            const hist = await getTeamSimulationHistory(team.id);
+            const hist = await getTeamSimulationHistory(team.id, !!arena.is_trial);
             setHistory(hist || []);
           } catch (err) {
             console.error("Error fetching history in reports:", err);

@@ -47,7 +47,7 @@ export const EmpirionDashboards: React.FC<EmpirionDashboardsProps> = ({
   useEffect(() => {
     if (activeArena?.id) {
       setIsLoadingAllHistory(true);
-      getChampionshipSimulationHistory(activeArena.id)
+      getChampionshipSimulationHistory(activeArena.id, !!activeArena.is_trial)
         .then(data => {
           setAllTeamsHistory(data || []);
         })

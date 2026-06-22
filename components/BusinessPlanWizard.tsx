@@ -17,7 +17,7 @@ import {
 import { motion as _motion, AnimatePresence } from 'framer-motion';
 const motion = _motion as any;
 import { DEFAULT_PAGE_CONTENT } from '../constants';
-import { fetchPageContent, getActiveBusinessPlan, saveBusinessPlan, getTeamSimulationHistory, supabase } from '../services/supabase';
+import { fetchPageContent, getActiveBusinessPlan, saveBusinessPlan, getTeamSimulationHistory, supabase, getChampionships } from '../services/supabase';
 import { generateBusinessPlanField, auditBusinessPlan } from '../services/gemini';
 import EmpireParticles from './EmpireParticles';
 import { BusinessPlan, Branch, KPIs, BMCBlocks, EmpathyMap } from '../types';
@@ -74,7 +74,9 @@ const BusinessPlanWizard: React.FC<IntegratedWizardProps> = ({ championshipId, t
           if (data.data?.empathy) setEmpathyData(data.data.empathy);
           if (data.data?.epicenter) setEpicenter(data.data.epicenter);
         }
-        const history = await getTeamSimulationHistory(teamId!);
+        const { data: champs } = await getChampionships();
+        const found = champs?.find(c => c.id === championshipId);
+        const history = await getTeamSimulationHistory(teamId!, found ? !!found.is_trial : undefined);
         setSimHistory(history);
       }
     };

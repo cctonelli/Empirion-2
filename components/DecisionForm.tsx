@@ -176,11 +176,11 @@ const DecisionForm: React.FC<{
       setLoadedKey(null); 
       try {
         const champsRes = await getChampionships();
-        const historyRes = await getTeamSimulationHistory(teamId);
-        
-        setHistory(historyRes);
         const found = champsRes.data?.find(a => a.id === champId);
         if (found) setActiveArena(found);
+
+        const historyRes = await getTeamSimulationHistory(teamId, found ? !!found.is_trial : undefined);
+        setHistory(historyRes);
 
         let team = found?.teams?.find((t: Team) => t.id === teamId);
         

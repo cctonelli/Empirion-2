@@ -32,7 +32,7 @@ const CommunityView: React.FC<CommunityViewProps> = ({ championship, onBack }) =
   useEffect(() => {
     const fetchReports = async () => {
       setLoading(true);
-      const { data } = await getPublicReports(championship.id, championship.current_round);
+      const { data } = await getPublicReports(championship.id, championship.current_round, !!championship.is_trial);
       setReports(data || []);
       setLoading(false);
     };

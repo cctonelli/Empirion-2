@@ -159,15 +159,17 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
         const arena = data?.find(a => a.id === champId);
         if (arena) {
           setActiveArena(arena);
+          localStorage.setItem('is_trial_session', arena.is_trial ? 'true' : 'false');
           const team = arena.teams?.find((t: any) => t.id === teamId);
           if (team) setActiveTeam(team);
 
-          const currentRound = (arena.current_round || 0) + 1;
+          const isFinished = arena.current_round >= (arena.total_rounds || 6);
+          const currentRound = isFinished ? arena.current_round : (arena.current_round || 0) + 1;
           setSelectedRound(currentRound);
           const { data: bp } = await getActiveBusinessPlan(teamId, currentRound);
           if (bp) setBpStatus(bp.status);
           
-          let teamHistory = await getTeamSimulationHistory(teamId);
+          let teamHistory = await getTeamSimulationHistory(teamId, !!arena.is_trial);
           
           // v19.15 Sincronização Fiduciária de KPIs de Histórico na inicialização do Cockpit
           // Mescla os dados do campo kpis do time (trial_teams/teams) para o registro histórico correspondente,
@@ -367,7 +369,7 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
                 currentTeamForKpis = updatedTeam;
               }
 
-              let teamHistory = await getTeamSimulationHistory(teamId);
+              let teamHistory = await getTeamSimulationHistory(teamId, !!isTrial);
               
               // Sincroniza o Kardex e o CPV Details do time do banco sobre a linha de histórico correspondente
               if (currentTeamForKpis?.kpis) {
@@ -462,7 +464,8 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
               }
               setHistory(activeHistory);
               
-              const newRound = currentRoundVal + 1;
+              const isFinished = currentRoundVal >= (activeArena.total_rounds || 6);
+              const newRound = isFinished ? currentRoundVal : currentRoundVal + 1;
               setSelectedRound(newRound);
               setIsExpiredWaiting(false);
               setSummaryRoundNumber(prevRoundRef.current ?? 0);
@@ -979,15 +982,20 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
                         const isSelected = i === selectedRound;
                         const isPast = i < currentRound;
                         
+                        const isFinished = activeArena && activeArena.current_round >= (activeArena.total_rounds || 6);
+                        const maxSelectableRound = isFinished ? activeArena.current_round : currentRound;
+                        const isClickable = i <= maxSelectableRound;
+                        
                         return (
                             <div key={i} className="relative flex flex-col items-center">
                               <button 
-                                onClick={() => setSelectedRound(i)} 
+                                onClick={() => { if (isClickable) setSelectedRound(i); }} 
+                                disabled={!isClickable}
                                 className={`relative z-10 w-6 h-6 rounded-full border-2 transition-all flex items-center justify-center group ${
                                   isSelected ? 'bg-orange-600 border-orange-400 scale-110 shadow-[0_0_15px_#f97316]' : 
                                   isCurrent ? 'bg-slate-800 border-orange-500 animate-pulse' :
                                   isPast ? 'bg-slate-800 border-blue-500/50' : 
-                                  'bg-slate-950 border-white/5 opacity-40'
+                                  isClickable ? 'bg-slate-950 border-white/5 opacity-40 hover:opacity-80' : 'bg-slate-950 border-white/5 opacity-25 cursor-not-allowed'
                                 }`}
                               >
                                   <span className={`text-[8px] font-black font-mono ${isSelected ? 'text-white' : 'text-slate-500'}`}>P{i < 10 ? `${i}` : i}</span>
