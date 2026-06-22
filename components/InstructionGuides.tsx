@@ -114,7 +114,7 @@ export const TutorGuide: React.FC = () => {
                    <h4 className="text-lg font-black uppercase tracking-tight mb-2">Liberação Automática e Limites de Crédito</h4>
                    <p className="text-sm text-slate-400 leading-relaxed">
                      No <strong>EMPIRION ORACLE</strong>, as equipes têm liberdade para solicitar empréstimos manuais no menu financeiro de acordo com a sua necessidade (sujeito ao spread do seu Rating corrente).
-                     No entanto, caso a empresa projete ou feche um round com <strong>Saldo de Caixa Negativo</strong> (insuficiência de tesouraria), o motor ativa o mecanismo de <strong>Empréstimo Compulsório com ágio e juros</strong> de forma automática.
+                     No entanto, caso a empresa projete ou feche um round com <strong>Saldo de Caixa Negativo</strong> (insuficiência de ST (Saldo de Tesouraria), o motor ativa o mecanismo de <strong>Empréstimo Compulsório com ágio e juros</strong> de forma automática.
                    </p>
                  </div>
                </div>
@@ -132,7 +132,7 @@ export const TutorGuide: React.FC = () => {
                  <div>
                    <span className="text-[10px] font-black text-orange-500 uppercase tracking-widest">Capitulação de Rating</span>
                    <p className="text-xl font-black mt-1">Rebaixamento para "Rating D"</p>
-                   <p className="text-[10px] text-slate-500 mt-1">A insolvência e default momentâneos de tesouraria rebaixam de imediato o rating corporativo das equipes.</p>
+                   <p className="text-[10px] text-slate-500 mt-1">A insolvência e default momentâneos de ST (Saldo de Tesouraria) rebaixam de imediato o rating corporativo das equipes.</p>
                  </div>
                </div>
              </div>
@@ -195,7 +195,7 @@ export const TutorGuide: React.FC = () => {
                    <span>dcfValuation = EBITDA &gt; 0 ? (EBITDA / WACC) : Math.max(1M, (Patrimônio Líquido * 1.1))</span>
                  </div>
                  <p className="text-xs text-slate-500">
-                   Dessa forma, mesmo que a empresa invista em P&amp;D e marketing massivo gerando EBITDA neutro na largada, seu Valuation reflete o valor estritamente justo do parque fabril e tesouraria integralizada, eliminando os erráticos valuations nulos.
+                   Dessa forma, mesmo que a empresa invista em P&amp;D e marketing massivo gerando EBITDA neutro na largada, seu Valuation reflete o valor estritamente justo do parque fabril e ST (Saldo de Tesouraria) integralizada, eliminando os erráticos valuations nulos.
                  </p>
                </div>
              </div>

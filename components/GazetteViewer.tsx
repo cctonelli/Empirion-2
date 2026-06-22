@@ -599,8 +599,8 @@ const GazetteViewer: React.FC<GazetteViewerProps> = ({ arena, aiNews, round, act
                   <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3.5">
                      <MacroLedgerBox label="ICE (Confiança Empresarial)" val={`${currentMacro.ice}%`} icon={<Activity size={18} className="text-emerald-400" />} desc="Como o setor vê o mercado" />
                      <MacroLedgerBox label="Inflação Setorial" val={`${currentMacro.inflation_rate}%`} icon={<Flame size={18} className="text-red-400" />} desc="Flutuação geral de preços" />
-                     <MacroLedgerBox label="Juros+TR (BDI)" val={`${currentMacro.interest_rate_tr}%`} icon={<Landmark size={18} className="text-blue-400" />} desc="Financiamentos e Crédito" />
-                     <MacroLedgerBox label="Taxa de Inadimplência (PECLD)" val={`${currentMacro.customer_default_rate}%`} icon={<ShieldAlert size={18} className="text-orange-400" />} desc="Risco de venda a prazo" />
+                     <MacroLedgerBox label="Juros/Spread Bancários" val={`${currentMacro.interest_rate_tr}%`} icon={<Landmark size={18} className="text-blue-400" />} desc="Financiamentos e Crédito" />
+                     <MacroLedgerBox label="Inadimplência (PECLD)" val={`${currentMacro.customer_default_rate}%`} icon={<ShieldAlert size={18} className="text-orange-400" />} desc="Risco de venda a prazo" />
                      <MacroLedgerBox label="Juros s/ Empréstimo Compulsório" val={`${currentMacro.compulsory_loan_agio}%`} icon={<ShieldAlert size={18} className="text-red-400" />} desc="Risco de falta de Liquidez" />
                      <MacroLedgerBox label="Ágio s/ Compras Extras" val={`${currentMacro.special_purchase_premium}%`} icon={<ShieldAlert size={18} className="text-orange-400" />} desc="Risco de compra errada" />
                      <MacroLedgerBox label="Juros Fornecedor" val={`${currentMacro.supplier_interest}%`} icon={<Truck size={18} className="text-amber-400" />} desc="Acréscimos em compra prazo" />

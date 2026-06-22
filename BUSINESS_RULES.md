@@ -264,7 +264,7 @@ O **Efeito Tesoura** (ou fenômeno do *Overtrading*) surge quando o crescimento 
   $$\text{CCP} = \text{Patrimônio Líquido} - \text{Ativo Não Circulante}$$
 
 ### 2. Comportamento e Diagnóstico nos Gráficos:
-1. **Tesouraria Positiva (Folga Segura):** CDG > NCG. O Saldo de Tesouraria se mantém no quadrante positivo. O crescimento operacional está totalmente sustentado pelo capital de giro próprio ou dívidas de longo prazo sadias.
+1. **Tesouraria Positiva (Folga Segura):** CDG > NCG. O ST (Saldo de Tesouraria) se mantém no quadrante positivo. O crescimento operacional está totalmente sustentado pelo capital de giro próprio ou dívidas de longo prazo sadias.
 2. **Efeito Tesoura Clássico (Vulnerabilidade de Liquidez):** NCG cresce exponencialmente (devido ao faturamento em alta que expande contas a receber e requisições massivas de estocagem) enquanto o CDG se mantém estável ou é reduzido por baixa lucratividade líquida ou pagamento agressivo de dividendos. As curvas de NCG e CDG cruzam-se, empurrando o Saldo de Tesouraria (ST) para o negativo. A empresa sobrevive captando empréstimos bancários táticos de curtíssimo prazo (ECP), gerando risco de insolvência severo.
 
 ---

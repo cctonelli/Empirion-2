@@ -257,8 +257,8 @@ export const EmpirionDashboards: React.FC<EmpirionDashboardsProps> = ({
       // NCG (Necessidade de Capital de Giro) = Ativo Circulante Operacional - Passivo Circulante Operacional
       const ncgVal = acoVal - pcoVal;
 
-      // Tesouraria: ST = CDG - NCG
-      const tesourariaVal = cdgVal - ncgVal;
+      // ST: ST = CDG - NCG
+      const stVal = cdgVal - ncgVal;
 
       // Capital Circulante Próprio: CCP = PL - ANC
       const ccpVal = equityVal - ancVal;
@@ -285,11 +285,11 @@ export const EmpirionDashboards: React.FC<EmpirionDashboardsProps> = ({
         assets: assetsVal,
         liabilities: liabilitiesVal,
         
-        // Atributos de Equilíbrio de Tesouraria contábil real
+        // Atributos de Equilíbrio de ST (Saldo Tesouraria) contábil real
         cdg: cdgVal,
         ccl: cclVal,
         ncg: ncgVal,
-        tesouraria: tesourariaVal,
+        st: stVal,
         ccp: ccpVal,
         ecp: ecpVal,
         elp: elpVal,
@@ -1460,7 +1460,7 @@ export const EmpirionDashboards: React.FC<EmpirionDashboardsProps> = ({
                             colors: [
                               '#FF5F1F', // Orange (NCG)
                               '#00FFFF', // Cyan (CDG)
-                              '#FF00FF', // Magenta (Tesouraria)
+                              '#FF00FF', // Magenta (ST)
                               '#FFFF33', // Yellow (ELP)
                               '#FF2400', // Red (ECP)
                               '#8F00FF', // Violet (CCP)
@@ -1514,8 +1514,8 @@ export const EmpirionDashboards: React.FC<EmpirionDashboardsProps> = ({
                           series: [
                             { name: 'NCG', data: computedHistory.map(h => parseFloat((h.ncg || 0).toFixed(0))) },
                             { name: 'CDG', data: computedHistory.map(h => parseFloat((h.cdg || 0).toFixed(0))) },
-                            { name: 'TESOURARIA', data: computedHistory.map(h => parseFloat((h.tesouraria || 0).toFixed(0))) },
-                            { name: 'Lucro Líquido', data: computedHistory.map(h => parseFloat((h.net_profit || 0).toFixed(0))) },
+                            { name: 'ST', data: computedHistory.map(h => parseFloat((h.st || 0).toFixed(0))) },
+                            { name: 'LL', data: computedHistory.map(h => parseFloat((h.net_profit || 0).toFixed(0))) },
                             //{ name: 'ELP', data: computedHistory.map(h => parseFloat((h.elp || 0).toFixed(0))) },
                             //{ name: 'ECP', data: computedHistory.map(h => parseFloat((h.ecp || 0).toFixed(0))) },
                             //{ name: 'CCP', data: computedHistory.map(h => parseFloat((h.ccp || 0).toFixed(0))) },
@@ -1536,7 +1536,7 @@ export const EmpirionDashboards: React.FC<EmpirionDashboardsProps> = ({
                         colors: [
                           '#FF5F1F', // Orange (NCG)
                           '#00FFFF', // Cyan (CDG)
-                          '#FF00FF', // Magenta (Tesouraria)
+                          '#FF00FF', // Magenta (ST)
                           '#FFFF33', // Yellow (ELP)
                           '#FF2400', // Red (ECP)
                           '#8F00FF', // Violet (CCP)
@@ -1596,8 +1596,8 @@ export const EmpirionDashboards: React.FC<EmpirionDashboardsProps> = ({
                       series={[
                         { name: 'NCG', data: computedHistory.map(h => parseFloat((h.ncg || 0).toFixed(0))) },
                         { name: 'CDG', data: computedHistory.map(h => parseFloat((h.cdg || 0).toFixed(0))) },
-                        { name: 'TESOURARIA', data: computedHistory.map(h => parseFloat((h.tesouraria || 0).toFixed(0))) },
-                        { name: 'Lucro Líquido', data: computedHistory.map(h => parseFloat((h.net_profit || 0).toFixed(0))) },
+                        { name: 'ST', data: computedHistory.map(h => parseFloat((h.st || 0).toFixed(0))) },
+                        { name: 'LL', data: computedHistory.map(h => parseFloat((h.net_profit || 0).toFixed(0))) },
                         //{ name: 'ELP', data: computedHistory.map(h => parseFloat((h.elp || 0).toFixed(0))) },
                         //{ name: 'ECP', data: computedHistory.map(h => parseFloat((h.ecp || 0).toFixed(0))) },
                         //{ name: 'CCP', data: computedHistory.map(h => parseFloat((h.ccp || 0).toFixed(0))) },

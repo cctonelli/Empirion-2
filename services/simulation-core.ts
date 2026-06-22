@@ -573,7 +573,7 @@ export const calculateKpisFromStatements = (params: {
   // Critérios rígidos para Rating de Crédito Corporativo
   let rating: CreditRating = 'D';
   if (hasCompulsory) {
-    rating = 'D'; // Rebaixamento imediato e capitulação de rating por default de tesouraria flagrante (v19.10)
+    rating = 'D'; // Rebaixamento imediato e capitulação de rating por default de ST (Saldo de Tesouraria) flagrante (v19.10)
   } else if (liquidityCurrent > 1.5 && x5 < 0.8) rating = 'AAA';
   else if (liquidityCurrent > 1.2 && x5 < 1.2) rating = 'AA';
   else if (liquidityCurrent > 1.0 && x5 < 1.5) rating = 'A';
