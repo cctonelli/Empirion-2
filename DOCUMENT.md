@@ -2,9 +2,23 @@
 
 ## 📋 Controle de Governança
 - **Produto:** EMPIRION ORACLE
-- **Versão Ativa:** v2026.175 Sincronização de Ajuste de Piso Salarial Inflacionado com Período Corrente.
+- **Versão Ativa:** v2026.176 Estabilização do Congelamento Lateral de Cabeçalhos de Linha em Matrizes Financeiras.
 - **Tipo de Documento:** Master Index & Diretrizes de Engenharia Contínua
 - **Status da Documentação:** Sincronizado com o PRD.md, BUSINESS_RULES.md & ROADMAP.md
+
+---
+
+## Decisão Arquitetural: Estabilização do Congelamento Lateral de Cabeçalhos de Linha em Matrizes Financeiras - v2026.176
+
+**Data:** 22 de Junho de 2026 às 17:05 UTC  
+**Motivo:** Resolver o comportamento inadequado em que as células cabeçalho da primeira coluna da tabela de Demonstrações Contábeis perdiam a colagem/congelamento (`sticky left-0`) ao rolar os dados para as colunas mais à direita. 
+
+**Detalhamento Técnico de Planejamento e Modificações:**
+- **Identificação da Quebra de Stacking Context (`FinancialReportMatrix.tsx`)**:
+  - Detectou-se que as tags `<tr>` de todas as linhas de dados utilizavam a classe utilitária do Tailwind `transition-all`. Em diversos motores gráficas e navegadores modernos, a transição ativa global cria camadas agregadas e novos contextos de empilhamento gráfico interno (GPU compositing layers), que quebram e desativam o comportamento de posicionamento absoluto/sticky das células filhas `<td>`.
+- **Implementação do Redirecionamento de Transição Mínima**:
+  - Substituiu-se de forma cirúrgica a classe `transition-all` para `transition-colors` de modo a manter as transições sutis e futuristas de cor de hover (`hover:bg-white/[0.03]`) sem demover ou afetar o fluxo estrutural de rolamento e aderência estrita lateral (`left-0 sticky`) de todas as linhas.
+  - Correção aplicada de maneira homogênea nos métodos: `renderStrategicRows()`, `renderCommitmentRows()`, `renderKardexRows()` e na função recursiva principal `renderRows()`.
 
 ---
 

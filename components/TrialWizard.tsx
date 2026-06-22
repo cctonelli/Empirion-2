@@ -130,8 +130,8 @@ const OFFICIAL_PRESETS: any[] = [
       installations_value: 500000,
       monthly_rent_value: 50000,
       rent_allocation_productive: 70,
-      rent_allocation_administrative: 10,
-      rent_allocation_sales: 20,
+      rent_allocation_administrative: 20,
+      rent_allocation_sales: 10,
       machines: [
         {
           model: "alpha",
@@ -654,8 +654,8 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
     building_age: 2,
     monthly_rent_value: 50000.0,
     rent_allocation_productive: 70,
-    rent_allocation_administrative: 10,
-    rent_allocation_sales: 20,
+    rent_allocation_administrative: 20,
+    rent_allocation_sales: 10,
     macroOverrides: {},
   });
 
@@ -1185,8 +1185,8 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
             rent_allocation_productive:
               tutorConfig.rent_allocation_productive ?? 70,
             rent_allocation_administrative:
-              tutorConfig.rent_allocation_administrative ?? 10,
-            rent_allocation_sales: tutorConfig.rent_allocation_sales ?? 20,
+              tutorConfig.rent_allocation_administrative ?? 20,
+            rent_allocation_sales: tutorConfig.rent_allocation_sales ?? 10,
             buildings_depreciation_rate:
               tutorConfig.buildings_depreciation_rate ?? 5,
             property_depreciation_rate:
@@ -5525,7 +5525,7 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                               <span className="text-slate-500">
                                 └── Aluguel OPEX (Adm+Sales) (
                                 {(tutorConfig.rent_allocation_administrative ??
-                                  10) +
+                                  20) +
                                   (tutorConfig.rent_allocation_sales ?? 10)}
                                 %):
                               </span>

@@ -472,7 +472,7 @@ const FinancialReportMatrix: React.FC<MatrixProps> = ({
     return kpiDefinitions.map((kpi) => (
       <tr
         key={kpi.id}
-        className="border-b border-white/5 transition-all hover:bg-white/[0.03] group"
+        className="border-b border-white/5 transition-colors hover:bg-white/[0.03] group"
       >
         <td className="p-1.5 sticky left-0 bg-slate-900 z-30 border-r border-white/10 min-w-[200px] shadow-xl">
           <div className="flex flex-col">
@@ -577,7 +577,7 @@ const FinancialReportMatrix: React.FC<MatrixProps> = ({
         {receivablesSchema.map((item: any) => (
           <tr
             key={item.id}
-            className="border-b border-white/5 transition-all hover:bg-white/[0.03] group"
+            className="border-b border-white/5 transition-colors hover:bg-white/[0.03] group"
           >
             <td className="p-1.5 sticky left-0 bg-slate-900 z-30 border-r border-white/10 min-w-[200px] shadow-xl">
               <span className="text-[10px] uppercase tracking-[0.1em] text-slate-300 group-hover:text-white">
@@ -613,7 +613,7 @@ const FinancialReportMatrix: React.FC<MatrixProps> = ({
         {payablesSchema.map((item: any) => (
           <tr
             key={item.id}
-            className="border-b border-white/5 transition-all hover:bg-white/[0.03] group"
+            className="border-b border-white/5 transition-colors hover:bg-white/[0.03] group"
           >
             <td className="p-1.5 sticky left-0 bg-slate-900 z-30 border-r border-white/10 min-w-[200px] shadow-xl">
               <span className="text-[10px] uppercase tracking-[0.1em] text-slate-300 group-hover:text-white">
@@ -1056,7 +1056,7 @@ const FinancialReportMatrix: React.FC<MatrixProps> = ({
                 </tr>
               )}
               <tr
-                className={`border-b border-white/5 transition-all hover:bg-white/[0.03] group ${row.isClass || ""}`}
+                className={`border-b border-white/5 transition-colors hover:bg-white/[0.03] group ${row.isClass || ""}`}
               >
                 <td className="p-1.5 sticky left-0 bg-slate-900 z-30 border-r border-white/10 min-w-[200px] shadow-xl">
                   <div className="flex flex-col">
@@ -1245,7 +1245,7 @@ const FinancialReportMatrix: React.FC<MatrixProps> = ({
       return (
         <React.Fragment key={node.id}>
           <tr
-            className={`border-b border-white/5 transition-all hover:bg-white/[0.03] group ${isTotalizer ? "bg-white/[0.02] font-black" : ""}`}
+            className={`border-b border-white/5 transition-colors hover:bg-white/[0.03] group ${isTotalizer ? "bg-white/[0.02] font-black" : ""}`}
           >
             <td className="p-3 sticky left-0 bg-slate-900 z-30 border-r border-white/10 min-w-[280px] shadow-xl">
               <div
