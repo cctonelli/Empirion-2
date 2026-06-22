@@ -1441,7 +1441,7 @@ const FinancialReportMatrix: React.FC<MatrixProps> = ({
                       {p.isProjection
                         ? `PROJEÇÃO R-${p.round < 10 ? "0" : ""}${p.round}`
                         : p.round === 0
-                          ? "R-00 (INICIAL)"
+                          ? "R-0 (INICIAL)"
                           : `R-${p.round < 10 ? "0" : ""}${p.round}`}
                     </span>
                   </div>
@@ -1472,7 +1472,7 @@ const FinancialReportMatrix: React.FC<MatrixProps> = ({
         <div className="flex items-center gap-2">
           <div className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-pulse" />
           <span className="text-[8px] font-mono text-slate-600 tracking-tighter">
-            SEQ_ORACLE_SAPP_KARDEX_P0{history.length}
+            SEQ_ORACLE_SAPP_KARDEX_R0{history.length}
           </span>
         </div>
       </footer>

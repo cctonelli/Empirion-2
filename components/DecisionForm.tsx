@@ -10,7 +10,7 @@ import { calculateProjections } from '../services/simulation';
 import { calculateESDS } from '../services/gemini';
 import { motion as _motion, AnimatePresence } from 'framer-motion';
 const motion = _motion as any;
-import { DEFAULT_MACRO, DEFAULT_INDUSTRIAL_CHRONOGRAM, INITIAL_MACHINES_P00 } from '../constants';
+import { DEFAULT_MACRO, DEFAULT_INDUSTRIAL_CHRONOGRAM, INITIAL_MACHINES_R0 } from '../constants';
 import { formatCurrency } from '../utils/formatters';
 
 // Imports de Componentes Modulares de Steps
@@ -194,7 +194,7 @@ const DecisionForm: React.FC<{
         if (team) {
            const isZeroMode = found?.config?.starting_mode === 'start_from_zero' || found?.starting_mode === 'start_from_zero';
            if (round === 1 && (!team.kpis?.machines || team.kpis.machines.length === 0) && !isZeroMode) {
-              team.kpis = { ...team.kpis, machines: INITIAL_MACHINES_P00 as MachineInstance[] };
+              team.kpis = { ...team.kpis, machines: INITIAL_MACHINES_R0 as MachineInstance[] };
            }
            setActiveTeam(team);
         }

@@ -19,7 +19,7 @@ import {
 } from '../types';
 import { generateBotDecision, calculateESDS } from './gemini';
 import { calculateProjections } from './simulation';
-import { INITIAL_FINANCIAL_TREE, INITIAL_MACHINES_P00, DEFAULT_INDUSTRIAL_CHRONOGRAM } from '../constants';
+import { INITIAL_FINANCIAL_TREE, INITIAL_MACHINES_R0, DEFAULT_INDUSTRIAL_CHRONOGRAM } from '../constants';
 
 // NOTA SÊNIOR: Suporte híbrido para leitura de envs em Vite e Node Standard (evita quebra em testes offline)
 const getEnvVal = (key: string): string => {
@@ -341,7 +341,7 @@ export const createChampionshipWithTeams = async (config: any, teams: any[], isT
   // Initial KPIs for Round 0 (Individualized)
   const initialKpis = {
     statements: financials,
-    machines: isZeroMode ? [] : (config.initial_machines || INITIAL_MACHINES_P00),
+    machines: isZeroMode ? [] : (config.initial_machines || INITIAL_MACHINES_R0),
     current_cash: currentCash,
     stock_quantities: isZeroMode ? { mp_a: 0, mp_b: 0, finished_goods: 0 } : (config.initial_stock_quantities || { mp_a: 30150, mp_b: 20100, finished_goods: 0 }),
     equity: equity,
@@ -454,8 +454,8 @@ export const createChampionshipWithTeams = async (config: any, teams: any[], isT
   
   const { error: historyError } = await supabase.from(historyTable).insert(historyEntries);
   if (historyError) {
-    console.error(`[ERRO CRÍTICO SUPABASE] Falha ao inserir o histórico contábil de Abertura (R-00) em ${historyTable}:`, historyError);
-    throw new Error(`[ERRO BANCO DE DADOS] Não foi possível persistir o estado contábil inicial (R-00) para as equipes: ${historyError.message}`);
+    console.error(`[ERRO CRÍTICO SUPABASE] Falha ao inserir o histórico contábil de Abertura (R-0) em ${historyTable}:`, historyError);
+    throw new Error(`[ERRO BANCO DE DADOS] Não foi possível persistir o estado contábil inicial (R-0) para as equipes: ${historyError.message}`);
   }
   
   return champ;

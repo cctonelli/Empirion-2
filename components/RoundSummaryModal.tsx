@@ -22,7 +22,7 @@ import { formatCurrency } from '../utils/formatters';
 interface RoundSummaryModalProps {
   isOpen: boolean;
   onClose: () => void;
-  roundNumber: number; // Ex: 0 para P00, 1 para P01, etc.
+  roundNumber: number; // Ex: 0 para R-0, 1 para R-1, etc.
   history: any[];
   isLockedWaiting?: boolean; // Caso o temporizador tenha expirado e as decisões congeladas
 }

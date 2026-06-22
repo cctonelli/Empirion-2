@@ -547,7 +547,7 @@
 
 **Detalhamento Técnico de Planejamento:**
 - **Ponto de Partida Desprovido de Ativos Fixos**: No ecossistema sob o marcador `current_mode === 'start_from_zero'`, as marcas competem sob igualdade absoluta de fundação:
-  1. No Round 0, o Ativo Imobilizado Fixo de Máquinas é nulo. Nenhum imobilizado preexistente (`INITIAL_MACHINES_P00`) é herdado no Balanço de abertura.
+  1. No Round 0, o Ativo Imobilizado Fixo de Máquinas é nulo. Nenhum imobilizado preexistente (`INITIAL_MACHINES_R0`) é herdado no Balanço de abertura.
   2. A conta de contabilidade Ativo Circulante (Disponibilidades / Caixa Geral) é inaugurada com a integralização inteira do Capital em dinheiro.
 - **CAPEX no Round 1 como Elemento Fundacional**: 
   - Toda máquina adquirida e instalada através das decisões de CAPEX no Round 1 passa a ser o bloco mestre pioneiro de infraestrutura fabril.
@@ -568,7 +568,7 @@
 **Detalhamento Técnico de Planejamento:**
 - **Harmonização Relacional e Single Source of Truth**: Reestruturamos prioritariamente a cadeia de herança analítica de regiões nas engines de cockpit (`MarketingStep.tsx`) e fechamento de rodadas (`services/supabase.ts`). O código agora inspeciona e preenche as configurações regionais preferencialmente do nó `config.regions` ou `config.region_configs` (onde residem as modificações consistentes de 110% de peso do Tutor). Somente se estes nós estiverem ausentes, o sistema recorre de forma segura à coluna plana de raiz `region_configs`. Isso resolve definitivamente a assimetria corporativa de pesos.
 - **Auditoria e Desmistificação do Market Size Global (63.000 unidades)**:
-  1. No modo tradicional **Start with Base**, as 3 equipes iniciam o jogo em conformidade com o Balanço Patrimonial Herdado clássico contendo **5 máquinas Alpha** operacionais por equipe (`INITIAL_MACHINES_P00` como premissa de herança de ativos imobilizados no Round 0).
+  1. No modo tradicional **Start with Base**, as 3 equipes iniciam o jogo em conformidade com o Balanço Patrimonial Herdado clássico contendo **5 máquinas Alpha** operacionais por equipe (`INITIAL_MACHINES_R0` como premissa de herança de ativos imobilizados no Round 0).
   2. No decorrer do Round 1, todas as equipes executaram decisões corporativas de aprovação de CAPEX para a compra de **+5 máquinas Alpha** adicionais cada uma.
   3. Portanto, a frota produtiva ativa no início das entregas do Round 1 totalizou **10 máquinas Alpha por equipe** (5 iniciais + 5 adquiridas por CAPEX).
   4. Sabendo que a capacidade nominal de fabricação regulamentar de cada máquina Alpha é de **2.000 unidades físicas / ciclo**, a capacidade total instalada da indústria para as 3 equipes atingiu: `10 máquinas * 2.000 un/máquina * 3 equipes = 60.000 unidades globais` de capacidade acumulada.
@@ -961,7 +961,7 @@
 **Motivo:** Implementação de suporte visual completo e fidedigno aos três principais indicadores de liquidez clássicos (Liquidez Seca, Liquidez Corrente e Liquidez Geral) do simulador, em conformidade com o gráfico proposto em anexo, de padrão EMPIRION de alta fidelidade e em Dark Mode.
 
 **Detalhamento Técnico:**
-- **Exclusão de Rodada Inicial (P-00):** O histórico visual ignora o round fiduciário `P-00` de modo que a volatilidade artificial da largada não destrua a representação da escala de tendências estratégicas operadas pelas equipes.
+- **Exclusão de Rodada Inicial (R-0):** O histórico visual ignora o round fiduciário `R-0` de modo que a volatilidade artificial da largada não destrua a representação da escala de tendências estratégicas operadas pelas equipes.
 - **Busca Resiliente na Árvore de Contas:** Em vez de depender apenas de KPIs parciais pré-calculados, a nova classe modular `EmpirionLiquidityChart.tsx` extrai em tempo de execução os saldos de Ativos Circulantes, Passivos Circulantes, Estoques Agrupados (MP A, MP B, PA, WIP) e Passivos de Longo Prazo da árvore financeira do Balanço Patrimonial de cada round no banco de dados (`history.kpis.statements.balance_sheet`).
 - **Acabamento Visual de Premium Grade:**
   - Estilização em linhas suavizadas em curvas (`smooth`) de espessura 3.5.
@@ -2632,7 +2632,7 @@ project-root/
 ## Decisão Arquitetural & Versionamento - Calibração Fidedigna do Efeito Tesoura, ACO/PCO Reais e Tooltips Sensíveis - v19.79 / v2026.119
 
 **Data:** 18 de Junho de 2026 às 13:00 UTC  
-**Motivo:** Corrigir as distorções visuais no gráfico de "Efeito Tesoura" da aba FINANCIAL & ACCOUNTING, garantindo que os dados expressos reflitam com rigor cientifico/contábil as rodadas tomadas pelas equipes e persistidas fisicamente no banco de dados. Adicionalmente, atende-se à solicitação de prover Tooltips individualizados e rótulos de rounds padronizados no formato "R-00, R-01, R-02..." tanto na interface padrão de cards quanto nos modais de expansão ampliada, de acordo com o `GRAPHICS_STYLE_GUIDE.md`.  
+**Motivo:** Corrigir as distorções visuais no gráfico de "Efeito Tesoura" da aba FINANCIAL & ACCOUNTING, garantindo que os dados expressos reflitam com rigor cientifico/contábil as rodadas tomadas pelas equipes e persistidas fisicamente no banco de dados. Adicionalmente, atende-se à solicitação de prover Tooltips individualizados e rótulos de rounds padronizados no formato "R-0, R-1, R-2..." tanto na interface padrão de cards quanto nos modais de expansão ampliada, de acordo com o `GRAPHICS_STYLE_GUIDE.md`.  
 **Principais diferenças:**  
 - **Rigor Científico Contábil nos Ativos e Passivos Operacionais (vistos pelo Contador Sênior):**
   - **Ativo Circulante Operacional (ACO):** Mapeado diretamente pela consolidação real de Clientes (`assets.current.clients_group` ou `clients`) e Estoque Físico Real (`assets.current.stock` de valor representativo no BP), integrando estoques de Matéria-Prima e Produtos para espelhar a dinâmica financeira operacional legítima.

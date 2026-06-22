@@ -1,5 +1,5 @@
 import { AccountNode, CurrencyType, KPIs, MachineInstance, MachineModel } from '../types';
-import { INITIAL_FINANCIAL_TREE, INITIAL_MACHINES_P00 } from '../constants';
+import { INITIAL_FINANCIAL_TREE, INITIAL_MACHINES_R0 } from '../constants';
 
 export interface AccountingModelTemplate {
   id: string;

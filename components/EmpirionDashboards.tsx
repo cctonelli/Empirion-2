@@ -886,7 +886,7 @@ export const EmpirionDashboards: React.FC<EmpirionDashboardsProps> = ({
                               const r = activeArena?.round_rules?.[h.round] || DEFAULT_INDUSTRIAL_CHRONOGRAM[h.round] || DEFAULT_INDUSTRIAL_CHRONOGRAM[0] || {};
                               const v = r.USD || 5.20;
                               return {
-                                x: `R-0${h.round}`,
+                                x: `R-${h.round}`,
                                 y: [v * 0.99, v * 1.015, v * 0.98, v]
                               };
                             })
@@ -1515,12 +1515,12 @@ export const EmpirionDashboards: React.FC<EmpirionDashboardsProps> = ({
                             { name: 'NCG', data: computedHistory.map(h => parseFloat((h.ncg || 0).toFixed(0))) },
                             { name: 'CDG', data: computedHistory.map(h => parseFloat((h.cdg || 0).toFixed(0))) },
                             { name: 'TESOURARIA', data: computedHistory.map(h => parseFloat((h.tesouraria || 0).toFixed(0))) },
+                            { name: 'Lucro Líquido', data: computedHistory.map(h => parseFloat((h.net_profit || 0).toFixed(0))) },
                             //{ name: 'ELP', data: computedHistory.map(h => parseFloat((h.elp || 0).toFixed(0))) },
                             //{ name: 'ECP', data: computedHistory.map(h => parseFloat((h.ecp || 0).toFixed(0))) },
                             //{ name: 'CCP', data: computedHistory.map(h => parseFloat((h.ccp || 0).toFixed(0))) },
                             //{ name: 'CCL', data: computedHistory.map(h => parseFloat((h.ccl || 0).toFixed(0))) },
                             //{ name: 'Receita Bruta', data: computedHistory.map(h => parseFloat((h.revenue || 0).toFixed(0))) },
-                            //{ name: 'Lucro Líquido', data: computedHistory.map(h => parseFloat((h.net_profit || 0).toFixed(0))) },
                           ]
                         });
                       }}
@@ -1597,12 +1597,13 @@ export const EmpirionDashboards: React.FC<EmpirionDashboardsProps> = ({
                         { name: 'NCG', data: computedHistory.map(h => parseFloat((h.ncg || 0).toFixed(0))) },
                         { name: 'CDG', data: computedHistory.map(h => parseFloat((h.cdg || 0).toFixed(0))) },
                         { name: 'TESOURARIA', data: computedHistory.map(h => parseFloat((h.tesouraria || 0).toFixed(0))) },
+                        { name: 'Lucro Líquido', data: computedHistory.map(h => parseFloat((h.net_profit || 0).toFixed(0))) },
                         //{ name: 'ELP', data: computedHistory.map(h => parseFloat((h.elp || 0).toFixed(0))) },
                         //{ name: 'ECP', data: computedHistory.map(h => parseFloat((h.ecp || 0).toFixed(0))) },
                         //{ name: 'CCP', data: computedHistory.map(h => parseFloat((h.ccp || 0).toFixed(0))) },
                         //{ name: 'CCL', data: computedHistory.map(h => parseFloat((h.ccl || 0).toFixed(0))) },
                         //{ name: 'Receita Bruta', data: computedHistory.map(h => parseFloat((h.revenue || 0).toFixed(0))) },
-                        //{ name: 'Lucro Líquido', data: computedHistory.map(h => parseFloat((h.net_profit || 0).toFixed(0))) },
+
                       ]}
                       type="line"
                       height={272}
@@ -1844,7 +1845,7 @@ export const EmpirionDashboards: React.FC<EmpirionDashboardsProps> = ({
                 {/* 1. Market Share por Equipe (Donut) */}
                 <div className="bg-[#0E1726]/80 p-3 rounded-[2rem] border border-white/5 flex flex-col justify-between overflow-hidden">
                   <div className="flex justify-between items-center mb-1">
-                    <h5 className="text-[10px] font-black text-white uppercase italic">Market Share por Equipe (R-0{currentRound})</h5>
+                    <h5 className="text-[10px] font-black text-white uppercase italic">Market Share por Equipe (R-{currentRound})</h5>
                     <Info size={11} className="text-[#00FFFF]" />
                   </div>
                   <div className="flex-1 flex flex-col justify-center min-h-[190px] w-full mt-2">

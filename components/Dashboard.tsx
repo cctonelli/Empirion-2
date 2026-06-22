@@ -26,7 +26,7 @@ import AuditLogViewer from './AuditLogViewer';
 import { RoundSummaryModal } from './RoundSummaryModal';
 import { supabase, getChampionships, getUserProfile, getActiveBusinessPlan, getTeamSimulationHistory, mapChampionshipSynthetically } from '../services/supabase';
 import { Branch, Championship, UserRole, CreditRating, InsolvencyStatus, Team, KPIs } from '../types';
-import { DEFAULT_INDUSTRIAL_CHRONOGRAM, DEFAULT_MACRO, INITIAL_FINANCIAL_TREE, INITIAL_MACHINES_P00 } from '../constants';
+import { DEFAULT_INDUSTRIAL_CHRONOGRAM, DEFAULT_MACRO, INITIAL_FINANCIAL_TREE, INITIAL_MACHINES_R0 } from '../constants';
 import { generatePureP0 } from '../services/initialization';
 import { TournamentSummary } from './AdminCommandCenter';
 
@@ -422,7 +422,7 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
                   kpis: {
                     statements: statementsFallback,
                     loans: isZeroMode ? [] : (kpis.loans || []),
-                    machines: kpis.machines || (isZeroMode ? [] : INITIAL_MACHINES_P00),
+                    machines: kpis.machines || (isZeroMode ? [] : INITIAL_MACHINES_R0),
                     current_cash: defaultCash,
                     stock_quantities: kpis.stock_quantities || (isZeroMode ? { mp_a: 0, mp_b: 0, finished_goods: 0 } : { mp_a: 30150, mp_b: 20100, finished_goods: 0 }),
                     equity: kpis.equity ?? (isZeroMode ? (activeArena.config?.caixa_inicial ?? 0) : 7252171.74),

@@ -5027,7 +5027,7 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                           <p className="text-xs text-slate-400 leading-relaxed font-sans font-medium text-left text-semibold">
                             Em conformidade rigorosa com os princípios do
                             **Empirion Cooperativo**, uma vez implantados esses
-                            dados fiduciários, a simulação inicial (R-00 / Round
+                            dados fiduciários, a simulação inicial (R-0 / Round
                             0) de cada competidor será congelada e persistida
                             permanently no banco de dados. Qualquer alteração ou
                             reinício no painel do Tutor só poderá ser disparado

@@ -286,7 +286,7 @@ const mapStrategicReport = (periods: any[]): TableData => {
       const pad = p.round < 10 ? '0' : '';
       return p.isProjection
         ? `PROJEÇÃO R-${pad}${p.round}`
-        : p.round === 0 ? 'R-00 (INICIAL)' : `R- ${pad}${p.round}`;
+        : p.round === 0 ? 'R-0 (INICIAL)' : `R- ${pad}${p.round}`;
     })
   ];
   
@@ -342,7 +342,7 @@ const mapCommitmentsReport = (periods: any[]): TableData => {
       const pad = p.round < 10 ? '0' : '';
       return p.isProjection
         ? `PROJEÇÃO R-${pad}${p.round}`
-        : p.round === 0 ? 'R-00 (INICIAL)' : `R- ${pad}${p.round}`;
+        : p.round === 0 ? 'R-0 (INICIAL)' : `R- ${pad}${p.round}`;
     })
   ];
   
@@ -411,7 +411,7 @@ const mapKardexReport = (periods: any[], startingMode?: string): TableData => {
       const pad = p.round < 10 ? '0' : '';
       return p.isProjection
         ? `PROJEÇÃO R-${pad}${p.round}`
-        : p.round === 0 ? 'R-00 (INICIAL)' : `R- ${pad}${p.round}`;
+        : p.round === 0 ? 'R-0 (INICIAL)' : `R- ${pad}${p.round}`;
     })
   ];
   

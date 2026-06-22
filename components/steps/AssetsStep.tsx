@@ -260,7 +260,7 @@ export const AssetsStep: React.FC<AssetsStepProps> = ({
             </span>
           ) : (
             <span className="px-5 py-2 bg-rose-600/20 border border-rose-500/30 rounded-xl text-sm font-semibold text-rose-300 font-sans">
-              {isRoundZeroAndZeroMode ? 'Estágio de Planejamento (Apenas P-0)' : 'Compras Bloqueadas neste Round'}
+              {isRoundZeroAndZeroMode ? 'Estágio de Planejamento (Apenas R-0)' : 'Compras Bloqueadas neste Round'}
             </span>
           )}
         </div>

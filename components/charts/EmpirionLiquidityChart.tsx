@@ -13,7 +13,7 @@ export const EmpirionLiquidityChart: React.FC<EmpirionLiquidityChartProps> = ({
   height = 340
 }) => {
   const chartData = useMemo(() => {
-    // Desconsidere o P-00 (INICIAL) neste gráfico conforme exigência do usuário
+    // Desconsidere o R-0 (INICIAL) neste gráfico conforme exigência do usuário
     const historyWithoutP0 = visibleHistory.filter(h => h.round > 0);
 
     const findNodeVal = (nodes: any[] | undefined | null, targetId: string): number => {
