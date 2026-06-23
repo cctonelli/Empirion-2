@@ -56,6 +56,8 @@ export interface MachineConfig {
   age: number; // em anos (ex: 0-20), impacta depreciação e eficiência
   efficiency: number; // de 0.0 a 1.0 (ex: 0.95 = 95%)
   installation_cost?: number; // custo de instalação individual para formação do imobilizado
+  price?: number; // VALOR DA MÁQUINA
+  capacity_at_100?: number; // CAPACIDADE PRODUTIVA A 100%
 }
 
 export interface WorkforceConfig {
@@ -66,6 +68,9 @@ export interface WorkforceConfig {
   trainingLevel: number; // 1 a 5
   production_hours_period?: number;
   max_shifts?: number;
+  admin_count?: number; // QTDE. COLABORADORES ADMINISTRAÇÃO
+  sales_count?: number; // QTDE. COLABORADORES VENDAS
+  salary_multiplier?: number; // MULTIPLADOR DO SALÁRIO-BASE
 }
 
 export interface RegionP0Config {
@@ -361,7 +366,7 @@ export function generatePureP0(config: TutorP0Config): {
 
   actualMachines.forEach((mac, index) => {
     const normalizedModel = (mac.model as string) === 'alfa' ? 'alpha' : (mac.model as string) === 'gama' ? 'gamma' : mac.model;
-    const modelPrice = normalizedModel === 'alpha' ? ALPHA_PRICE : normalizedModel === 'beta' ? BETA_PRICE : GAMMA_PRICE;
+    const modelPrice = mac.price !== undefined ? Number(mac.price) : (normalizedModel === 'alpha' ? ALPHA_PRICE : normalizedModel === 'beta' ? BETA_PRICE : GAMMA_PRICE);
     for (let q = 0; q < mac.qty; q++) {
       const uniqueId = `m-${normalizedModel}-${index}-${q}`;
       // Deprecação: linear consistente de máquinas baseada na taxa parametrizada (CPC 27)
@@ -615,6 +620,14 @@ export function generatePureP0(config: TutorP0Config): {
   }
 
   // 6. Atualização de DRE e DFC Históricas para P00
+  const adminStaff = config.workforce.admin_count !== undefined ? Number(config.workforce.admin_count) : (isBaseMode ? 10 : 25);
+  const salesStaff = config.workforce.sales_count !== undefined ? Number(config.workforce.sales_count) : (isBaseMode ? 10 : 35);
+  const salaryMultiplier = config.workforce.salary_multiplier !== undefined ? Number(config.workforce.salary_multiplier) : (isBaseMode ? 1.5 : 2.5);
+  const baseSalary = config.workforce.baseSalary ?? 2500.0;
+
+  const calculatedOpexAdm = adminStaff * baseSalary * salaryMultiplier;
+  const calculatedOpexSales = salesStaff * baseSalary * salaryMultiplier;
+
   if (isZeroMode) {
     // Greenfield purista começa de uma árvore fiduciária 100% limpa recursivamente, sem qualquer aluguel no DRE/DFC de P0
     clearFinancialTree(dre);
@@ -641,8 +654,8 @@ export function generatePureP0(config: TutorP0Config): {
     updateNodeValue(dre, 'dre.cif', -(105000.00 + valCif));
     updateNodeValue(dre, 'dre.cpv_mp', -400000.00);
     
-    updateNodeValue(dre, 'opex.sales', -(95000.00 + valSales));
-    updateNodeValue(dre, 'opex.adm', -(85000.00 + valAdm));
+    updateNodeValue(dre, 'opex.sales', -(calculatedOpexSales + valSales + 40000.00));
+    updateNodeValue(dre, 'opex.adm', -(calculatedOpexAdm + valAdm + 35000.00));
     updateNodeValue(dre, 'opex.bad_debt', -15000.00);
     updateNodeValue(dre, 'opex.rd', -20000.00);
     
@@ -685,8 +698,8 @@ export function generatePureP0(config: TutorP0Config): {
     updateNodeValue(dre, 'dre.cif', -(330502.50 + valCif));
     updateNodeValue(dre, 'dre.cpv_mp', -1373328.43);
     
-    updateNodeValue(dre, 'opex.sales', -(873250.00 + valSales));
-    updateNodeValue(dre, 'opex.adm', -(216000.00 + valAdm));
+    updateNodeValue(dre, 'opex.sales', -(calculatedOpexSales + valSales + 300000.00));
+    updateNodeValue(dre, 'opex.adm', -(calculatedOpexAdm + valAdm + 100000.00));
     updateNodeValue(dre, 'opex.bad_debt', -18529.46);
     updateNodeValue(dre, 'opex.rd', -41844.40);
     updateNodeValue(dre, 'fin.exp', -2500.00);

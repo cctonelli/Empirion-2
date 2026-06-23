@@ -53,6 +53,7 @@ import {
   Library,
   Save,
   FolderOpen,
+  Play,
 } from "lucide-react";
 import { motion as _motion, AnimatePresence } from "framer-motion";
 const motion = _motion as any;
@@ -592,6 +593,9 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
       trainingLevel: 3,
       production_hours_period: 176,
       max_shifts: 1,
+      admin_count: 10,
+      sales_count: 10,
+      salary_multiplier: 1.5,
     },
     regions: [
       {
@@ -865,19 +869,23 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
       current_liabilities > 0 ? current_assets / current_liabilities : 99.9;
     const leverage = total_assets > 0 ? total_liabilities / total_assets : 0;
 
+    const alphaCapBase = tutorConfig.machines[0]?.capacity_at_100 !== undefined ? Number(tutorConfig.machines[0].capacity_at_100) : 2000;
+    const betaCapBase = tutorConfig.machines[1]?.capacity_at_100 !== undefined ? Number(tutorConfig.machines[1].capacity_at_100) : 7000;
+    const gamaCapBase = tutorConfig.machines[2]?.capacity_at_100 !== undefined ? Number(tutorConfig.machines[2].capacity_at_100) : 15000;
+
     const capAlpha = isZeroMode
       ? 0
-      : (tutorConfig.machines[0]?.qty || 0) * 2000;
-    const capBeta = isZeroMode ? 0 : (tutorConfig.machines[1]?.qty || 0) * 7000;
+      : (tutorConfig.machines[0]?.qty || 0) * alphaCapBase;
+    const capBeta = isZeroMode ? 0 : (tutorConfig.machines[1]?.qty || 0) * betaCapBase;
     const capGama = isZeroMode
       ? 0
-      : (tutorConfig.machines[2]?.qty || 0) * 15000;
+      : (tutorConfig.machines[2]?.qty || 0) * gamaCapBase;
     const capTotal = capAlpha + capBeta + capGama;
 
     const m_deprec_round = (isZeroMode ? [] : tutorConfig.machines).reduce(
       (acc, m) => {
         const price =
-          m.model === "alpha" ? 500000 : m.model === "beta" ? 1500000 : 3000000;
+          m.price !== undefined ? Number(m.price) : (m.model === "alpha" ? 500000 : m.model === "beta" ? 1500000 : 3000000);
         const rate =
           (tutorConfig.machines_depreciation_rate !== undefined
             ? tutorConfig.machines_depreciation_rate
@@ -1462,46 +1470,127 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
     };
   }, [tutorConfig, totalAssets, totalEquity, roundRules, fiduciaryMetrics]);
 
+  const rentAllocProd = tutorConfig.rent_allocation_productive ?? 70;
+  const rentAllocAdm = tutorConfig.rent_allocation_administrative ?? 20;
+  const rentAllocSales = tutorConfig.rent_allocation_sales ?? 10;
+  const isRentSumValid =
+    tutorConfig.building_mode !== "rented" ||
+    (rentAllocProd + rentAllocAdm + rentAllocSales) === 100;
+  const canGoNext = step !== 6 || isRentSumValid;
+
   return (
     <div
       id="trial_wizard_shell"
-      className="wizard-shell bg-slate-950/95 border border-white/10 shadow-[0_0_100px_rgba(0,0,0,0.8)] relative"
+      className="wizard-shell bg-slate-950/95 relative"
     >
       <EmpireParticles />
       <header
         id="trial_wizard_header"
-        className="wizard-header-fixed px-12 py-10 flex items-center justify-between border-b border-white/5"
+        className="wizard-header-fixed pl-10 pr-5 py-4 grid grid-cols-3 items-center border-b border-white/10 w-full bg-slate-950/80 backdrop-blur-md select-none shrink-0"
       >
-        <div className="flex items-center gap-8">
-          <div className="w-16 h-16 bg-orange-600 rounded-3xl flex items-center justify-center text-white shadow-xl">
-            <Rocket size={32} />
+        {/* Coluna 1: Título & Logo à Esquerda */}
+        <div className="flex items-center gap-4 justify-start">
+          <div className="w-11 h-11 bg-gradient-to-br from-orange-500 to-red-600 rounded-xl flex items-center justify-center text-white shadow-[0_0_20px_rgba(249,115,22,0.3)] shrink-0">
+            <Rocket size={22} className="animate-pulse" />
           </div>
           <div>
-            <h2 className="text-4xl font-black text-white uppercase italic tracking-tighter leading-none">
+            <h2 className="text-xl font-black text-white uppercase italic tracking-tight leading-none">
               INITIAL TOURNAMENT SETUP
             </h2>
-            <p className="text-[11px] font-black uppercase text-orange-500 tracking-[0.5em] mt-2 italic">
+            <p className="text-[9px] font-black uppercase text-orange-500 tracking-[0.3em] mt-1 italic">
               v19.14 SAPPHIRE DIAMOND • MOEDA: {tutorConfig.currency}
             </p>
           </div>
         </div>
-        <div className="flex gap-4">
-          {Array.from({ length: stepsCount }).map((_, i) => (
-            <div
-              key={i}
-              className={`h-2 rounded-full transition-all duration-700 ${step === i + 1 ? "w-20 bg-orange-600 shadow-[0_0_20px_#f97316]" : step > i + 1 ? "w-10 bg-emerald-500" : "w-10 bg-white/5"}`}
-            />
-          ))}
+
+        {/* Coluna 2: Indicador de Step Centralizado e Imponente no Meio */}
+        <div className="flex flex-col justify-center items-center gap-2">
+          <div className="bg-gradient-to-r from-orange-500/10 via-orange-500/25 to-orange-500/10 border border-orange-500/50 px-6 py-1.5 rounded-2xl flex items-center gap-3.5 shadow-[0_0_25px_rgba(249,115,22,0.15)] transition-all hover:scale-105 duration-300">
+            <span className="text-[10px] font-sans font-black text-orange-500 uppercase tracking-[0.2em]">
+              PAINEL ATIVO
+            </span>
+            <div className="w-2 h-2 bg-orange-500 rounded-full animate-pulse" />
+            <span className="text-lg font-black text-white font-mono tracking-widest drop-shadow-[0_0_10px_rgba(255,255,255,0.2)]">
+              {step} <span className="text-orange-500/60 font-sans">/</span> {stepsCount}
+            </span>
+          </div>
+
+          {/* Indicadores de Progresso (Barrinhas) Centralizados logo abaixo do painel ativo */}
+          <div className="flex gap-1.5 items-center justify-center">
+            {Array.from({ length: stepsCount }).map((_, i) => (
+              <div
+                key={i}
+                className={`h-1.5 rounded-full transition-all duration-500 ${
+                  step === i + 1
+                    ? "w-10 bg-gradient-to-r from-orange-500 to-red-600 shadow-[0_0_12px_#f97316]"
+                    : step > i + 1
+                    ? "w-5 bg-emerald-500 shadow-[0_0_6px_rgba(16,185,129,0.3)]"
+                    : "w-5 bg-white/10"
+                }`}
+              />
+            ))}
+          </div>
+        </div>
+
+        {/* Coluna 3: Navegação de Passo Bem à Direita */}
+        <div className="flex items-center justify-end gap-4 translate-x-1">
+          <div className="flex items-center gap-2 bg-slate-900/60 border border-white/5 p-1.5 rounded-xl shadow-2xl backdrop-blur-md">
+            <button
+              onClick={() => setStep((s) => Math.max(1, s - 1))}
+              disabled={step === 1}
+              className="w-10 h-10 bg-slate-950 border border-white/5 hover:border-orange-500/50 text-slate-400 hover:text-white disabled:opacity-20 disabled:cursor-not-allowed hover:bg-orange-600/10 active:scale-95 transition-all flex items-center justify-center rounded-lg"
+              title="Recuar Passo"
+            >
+              <ChevronLeft size={18} />
+            </button>
+
+            {step === stepsCount ? (
+              <button
+                onClick={handleLaunch}
+                disabled={isSubmitting}
+                className="px-6 h-10 bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-500 hover:to-orange-500 text-white rounded-lg font-black text-xs uppercase tracking-widest flex items-center gap-2 shadow-[0_0_20px_rgba(239,68,68,0.4)] active:scale-95 disabled:opacity-50 transition-all border border-red-500/40 font-sans"
+                title="Iniciar Competição Agora"
+              >
+                {isSubmitting ? (
+                  <Loader2 className="animate-spin" size={14} />
+                ) : (
+                  <Play size={14} className="fill-white text-white" />
+                )}
+                <span className="font-sans">{isSubmitting ? "PROCESSANDO..." : "INICIAR ARENA"}</span>
+              </button>
+            ) : (
+              <button
+                onClick={() => {
+                  if (canGoNext) {
+                    setStep((s) => Math.min(stepsCount, s + 1));
+                  }
+                }}
+                disabled={!canGoNext}
+                title={
+                  !canGoNext
+                    ? "O rateio do aluguel deve somar exatamente 100% para prosseguir."
+                    : "Avançar Passo"
+                }
+                className={`w-10 h-10 bg-slate-950 border transition-all flex items-center justify-center active:scale-95 rounded-lg ${
+                  !canGoNext
+                    ? "opacity-20 cursor-not-allowed border-rose-500/30 text-rose-400"
+                    : "border-white/5 text-slate-400 hover:text-white hover:border-orange-500/50 hover:bg-orange-600/10"
+                }`}
+              >
+                <ChevronRight size={18} />
+              </button>
+            )}
+          </div>
         </div>
       </header>
 
       <div ref={scrollRef} className="wizard-content custom-scrollbar">
         <div className="max-w-full">
           <AnimatePresence mode="wait">
-            {/* STEP 1: IDENTIDADE DO TORNEIO */}
-            {step === 1 && (
+            {/* STEP 2: IDENTIDADE DO TORNEIO */}
+            {step === 2 && (
               <motion.div
-                key="s1"
+                key="s2"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -20 }}
@@ -1509,7 +1598,7 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
               >
                 <WizardStepTitle
                   icon={<Globe size={32} />}
-                  title="1. IDENTIDADE DA COMPETIÇÃO"
+                  title="2. IDENTIDADE DA COMPETIÇÃO"
                   desc="Configurações globais de identidade pedagógica externa."
                 />
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 text-left">
@@ -1726,10 +1815,10 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
               </motion.div>
             )}
 
-            {/* STEP 2: MODO DE INÍCIO & TEMPLATE */}
-            {step === 2 && (
+            {/* STEP 1: MODO DE INÍCIO & TEMPLATE */}
+            {step === 1 && (
               <motion.div
-                key="s2"
+                key="s1"
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, x: -25 }}
@@ -1737,7 +1826,7 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
               >
                 <WizardStepTitle
                   icon={<Library size={32} />}
-                  title="2. MODO DE INÍCIO DA ARENA & TEMPLATES"
+                  title="1. MODO DE INÍCIO DA ARENA & TEMPLATES"
                   desc="Selecione o modelo pedagógico de entrada e gerencie templates corporativos."
                 />
 
@@ -2496,13 +2585,40 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                       label="INVESTIMENTO INSTALAÇÃO ($)"
                       type="currency"
                       currency={tutorConfig.currency}
-                      isLocked={tutorConfig.starting_mode === "start_from_zero"}
+                      isLocked={false}
                       val={
                         tutorConfig.machines[0].installation_cost ?? 150000.0
                       }
                       onChange={(v: any) => {
                         const mac = [...tutorConfig.machines];
                         mac[0].installation_cost = parseFloat(v) || 0;
+                        setTutorConfig({ ...tutorConfig, machines: mac });
+                      }}
+                    />
+                    <WizardField
+                      label="VALOR DA MÁQUINA ($)"
+                      type="currency"
+                      currency={tutorConfig.currency}
+                      isLocked={false}
+                      val={
+                        tutorConfig.machines[0].price ?? 500000.0
+                      }
+                      onChange={(v: any) => {
+                        const mac = [...tutorConfig.machines];
+                        mac[0].price = parseFloat(v) || 0;
+                        setTutorConfig({ ...tutorConfig, machines: mac });
+                      }}
+                    />
+                    <WizardField
+                      label="CAPACIDADE PRODUTIVA A 100%"
+                      type="number"
+                      isLocked={false}
+                      val={
+                        tutorConfig.machines[0].capacity_at_100 ?? 2000
+                      }
+                      onChange={(v: any) => {
+                        const mac = [...tutorConfig.machines];
+                        mac[0].capacity_at_100 = parseInt(v) || 0;
                         setTutorConfig({ ...tutorConfig, machines: mac });
                       }}
                     />
@@ -2576,13 +2692,40 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                       label="INVESTIMENTO INSTALAÇÃO ($)"
                       type="currency"
                       currency={tutorConfig.currency}
-                      isLocked={tutorConfig.starting_mode === "start_from_zero"}
+                      isLocked={false}
                       val={
                         tutorConfig.machines[1].installation_cost ?? 600000.0
                       }
                       onChange={(v: any) => {
                         const mac = [...tutorConfig.machines];
                         mac[1].installation_cost = parseFloat(v) || 0;
+                        setTutorConfig({ ...tutorConfig, machines: mac });
+                      }}
+                    />
+                    <WizardField
+                      label="VALOR DA MÁQUINA ($)"
+                      type="currency"
+                      currency={tutorConfig.currency}
+                      isLocked={false}
+                      val={
+                        tutorConfig.machines[1].price ?? 1500000.0
+                      }
+                      onChange={(v: any) => {
+                        const mac = [...tutorConfig.machines];
+                        mac[1].price = parseFloat(v) || 0;
+                        setTutorConfig({ ...tutorConfig, machines: mac });
+                      }}
+                    />
+                    <WizardField
+                      label="CAPACIDADE PRODUTIVA A 100%"
+                      type="number"
+                      isLocked={false}
+                      val={
+                        tutorConfig.machines[1].capacity_at_100 ?? 7000
+                      }
+                      onChange={(v: any) => {
+                        const mac = [...tutorConfig.machines];
+                        mac[1].capacity_at_100 = parseInt(v) || 0;
                         setTutorConfig({ ...tutorConfig, machines: mac });
                       }}
                     />
@@ -2656,13 +2799,40 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                       label="INVESTIMENTO INSTALAÇÃO ($)"
                       type="currency"
                       currency={tutorConfig.currency}
-                      isLocked={tutorConfig.starting_mode === "start_from_zero"}
+                      isLocked={false}
                       val={
                         tutorConfig.machines[2].installation_cost ?? 1500000.0
                       }
                       onChange={(v: any) => {
                         const mac = [...tutorConfig.machines];
                         mac[2].installation_cost = parseFloat(v) || 0;
+                        setTutorConfig({ ...tutorConfig, machines: mac });
+                      }}
+                    />
+                    <WizardField
+                      label="VALOR DA MÁQUINA ($)"
+                      type="currency"
+                      currency={tutorConfig.currency}
+                      isLocked={false}
+                      val={
+                        tutorConfig.machines[2].price ?? 3000000.0
+                      }
+                      onChange={(v: any) => {
+                        const mac = [...tutorConfig.machines];
+                        mac[2].price = parseFloat(v) || 0;
+                        setTutorConfig({ ...tutorConfig, machines: mac });
+                      }}
+                    />
+                    <WizardField
+                      label="CAPACIDADE PRODUTIVA A 100%"
+                      type="number"
+                      isLocked={false}
+                      val={
+                        tutorConfig.machines[2].capacity_at_100 ?? 15000
+                      }
+                      onChange={(v: any) => {
+                        const mac = [...tutorConfig.machines];
+                        mac[2].capacity_at_100 = parseInt(v) || 0;
                         setTutorConfig({ ...tutorConfig, machines: mac });
                       }}
                     />
@@ -2794,6 +2964,49 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                       { v: "2", l: "MÁXIMO DE 2 TURNOS" },
                       { v: "3", l: "MÁXIMO DE 3 TURNOS" },
                     ]}
+                  />
+
+                  <WizardField
+                    label="QTDE. COLABORADORES ADMINISTRAÇÃO"
+                    type="number"
+                    val={tutorConfig.workforce.admin_count ?? 10}
+                    onChange={(v: any) =>
+                      setTutorConfig({
+                        ...tutorConfig,
+                        workforce: {
+                          ...tutorConfig.workforce,
+                          admin_count: parseInt(v) || 0,
+                        },
+                      })
+                    }
+                  />
+                  <WizardField
+                    label="QTDE. COLABORADORES VENDAS"
+                    type="number"
+                    val={tutorConfig.workforce.sales_count ?? 10}
+                    onChange={(v: any) =>
+                      setTutorConfig({
+                        ...tutorConfig,
+                        workforce: {
+                          ...tutorConfig.workforce,
+                          sales_count: parseInt(v) || 0,
+                        },
+                      })
+                    }
+                  />
+                  <WizardField
+                    label="MULTIPLICADOR DO SALÁRIO-BASE"
+                    type="number"
+                    val={tutorConfig.workforce.salary_multiplier ?? 1.5}
+                    onChange={(v: any) =>
+                      setTutorConfig({
+                        ...tutorConfig,
+                        workforce: {
+                          ...tutorConfig.workforce,
+                          salary_multiplier: parseFloat(v) || 0,
+                        },
+                      })
+                    }
                   />
 
                   {/* Resumos de RH */}
@@ -3105,13 +3318,9 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                       <WizardField
                         label="PREÇO UN MPA"
                         type="number"
-                        isLocked={
-                          tutorConfig.starting_mode === "start_from_zero"
-                        }
+                        isLocked={false}
                         val={
-                          tutorConfig.starting_mode === "start_from_zero"
-                            ? 0
-                            : tutorConfig.inventories.mpa_unit_val
+                          tutorConfig.inventories.mpa_unit_val
                         }
                         onChange={(v: any) =>
                           setTutorConfig({
@@ -3149,13 +3358,9 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                       <WizardField
                         label="PREÇO UN MPB"
                         type="number"
-                        isLocked={
-                          tutorConfig.starting_mode === "start_from_zero"
-                        }
+                        isLocked={false}
                         val={
-                          tutorConfig.starting_mode === "start_from_zero"
-                            ? 0
-                            : tutorConfig.inventories.mpb_unit_val
+                          tutorConfig.inventories.mpb_unit_val
                         }
                         onChange={(v: any) =>
                           setTutorConfig({
@@ -4184,12 +4389,6 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                       className="px-8 py-3 bg-emerald-600 text-white rounded-2xl font-black text-xs uppercase tracking-wider hover:bg-white hover:text-emerald-950 transition-all flex items-center gap-2 shadow-2xl active:scale-95"
                     >
                       <Save size={16} /> Salvar como Template
-                    </button>
-                    <button
-                      onClick={handleRecalculate}
-                      className="px-8 py-3 bg-orange-600 text-white rounded-2xl font-black text-xs uppercase tracking-wider hover:bg-white hover:text-orange-950 transition-all flex items-center gap-2 shadow-2xl active:scale-95"
-                    >
-                      <Activity size={16} /> Recalcular P0
                     </button>
                   </div>
                 </div>
@@ -5231,22 +5430,6 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                     </div>
                   </div>
                 </div>
-
-                {/* Financial statements editor preview */}
-                <div className="space-y-4">
-                  <h4 className="text-sm font-black text-white uppercase italic flex items-center gap-2">
-                    <ClipboardList size={16} className="text-orange-500" />{" "}
-                    Demonstrativos Fiduciários do P0
-                  </h4>
-                  <FinancialStructureEditor
-                    initialBalance={editableFinancials.balance_sheet}
-                    initialDRE={editableFinancials.dre}
-                    initialCashFlow={editableFinancials.cash_flow}
-                    onChange={(u) => setEditableFinancials(u as any)}
-                    currency={tutorConfig.currency}
-                    readOnly
-                  />
-                </div>
               </motion.div>
             )}
           </AnimatePresence>
@@ -5256,15 +5439,18 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
       {/* BOTÃO FLUTUANTE DO MONITOR FIDUCIÁRIO REAL-TIME v19.21 (OBISIDIAN MASTERCLASS) */}
       <button
         onClick={() => setShowFiduciaryMonitor(true)}
-        className="fixed right-0 top-[250px] z-[90] bg-orange-600 hover:bg-orange-500 text-white font-black font-sans text-[9px] tracking-[0.2em] py-5 px-3 uppercase rounded-l-2xl shadow-[0_0_30px_rgba(249,115,22,0.4)] transition-all flex flex-col items-center gap-3 hover:pl-5 group"
+        className="fixed right-0 top-[250px] z-[90] bg-orange-600 hover:bg-orange-500 text-white font-black font-sans text-[8px] tracking-[0.1em] py-4 px-1 uppercase rounded-l-xl shadow-[0_0_20px_rgba(249,115,22,0.3)] transition-all flex flex-col items-center gap-2 hover:px-2.5 group w-8 hover:w-11 overflow-hidden"
         id="btn_floating_fiduciary_monitor"
       >
         <Activity
-          size={14}
-          className="animate-pulse text-white group-hover:scale-125 transition-transform"
+          size={12}
+          className="animate-pulse text-white group-hover:scale-110 transition-transform"
         />
-        <span className="writing-mode-vertical uppercase tracking-wider font-mono">
-          Monitor Fiduciário P0
+        <span 
+          style={{ writingMode: "vertical-rl" }}
+          className="uppercase tracking-widest font-mono text-center select-none whitespace-nowrap"
+        >
+          Monitor P0
         </span>
       </button>
 
@@ -5692,60 +5878,7 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
         )}
       </AnimatePresence>
 
-      {(() => {
-        const rentAllocProd = tutorConfig.rent_allocation_productive ?? 70;
-        const rentAllocAdm = tutorConfig.rent_allocation_administrative ?? 20;
-        const rentAllocSales = tutorConfig.rent_allocation_sales ?? 10;
-        const isRentSumValid =
-          tutorConfig.building_mode !== "rented" ||
-          rentAllocProd + rentAllocAdm + rentAllocSales === 100;
-        const canGoNext = step !== 6 || isRentSumValid;
 
-        return (
-          <>
-            <button
-              onClick={() => setStep((s) => Math.max(1, s - 1))}
-              disabled={step === 1}
-              className="floating-nav-btn left-10"
-            >
-              <ChevronLeft size={15} />
-            </button>
-            {step === stepsCount ? (
-              <button
-                onClick={handleLaunch}
-                disabled={isSubmitting}
-                className="floating-nav-btn-primary"
-              >
-                {isSubmitting ? (
-                  <>
-                    <Loader2 className="animate-spin" size={24} />{" "}
-                    PROCESSANDO...
-                  </>
-                ) : (
-                  "INICIAR A COMPETIÇÃO!"
-                )}
-              </button>
-            ) : (
-              <button
-                onClick={() => {
-                  if (canGoNext) {
-                    setStep((s) => s + 1);
-                  }
-                }}
-                disabled={!canGoNext}
-                title={
-                  !canGoNext
-                    ? "O rateio do aluguel deve somar exatamente 100% para prosseguir."
-                    : ""
-                }
-                className={`floating-nav-btn right-10 transition-all ${!canGoNext ? "opacity-30 cursor-not-allowed bg-rose-950/40 border-rose-500/30 text-rose-400" : ""}`}
-              >
-                <ChevronRight size={15} />
-              </button>
-            )}
-          </>
-        );
-      })()}
     </div>
   );
 };
@@ -5816,15 +5949,15 @@ const CompactMatrixRow = ({
 );
 
 const WizardStepTitle = ({ icon, title, desc }: any) => (
-  <div className="flex items-center gap-8 border-b border-white/5 pb-8">
-    <div className="p-6 bg-slate-900 border border-orange-500/30 rounded-[2.5rem] text-orange-500 shadow-2xl flex items-center justify-center">
+  <div className="flex items-center gap-4 border-b border-white/5 pb-4 mb-6">
+    <div className="p-4 bg-slate-900 border border-orange-500/30 rounded-2xl text-orange-500 shadow-2xl flex items-center justify-center shrink-0">
       {icon}
     </div>
     <div className="text-left">
-      <h3 className="text-5xl font-black text-white uppercase italic tracking-tighter leading-none">
+      <h3 className="text-2xl md:text-3xl font-black text-white uppercase italic tracking-tighter leading-none">
         {title}
       </h3>
-      <p className="text-sm font-black text-slate-500 uppercase tracking-[0.4em] mt-3 italic text-left">
+      <p className="text-[10px] md:text-xs font-black text-slate-500 uppercase tracking-[0.3em] mt-1.5 italic text-left">
         {desc}
       </p>
     </div>
@@ -5863,8 +5996,8 @@ const WizardField = ({
   };
 
   return (
-    <div className="space-y-4 text-left group">
-      <label className="text-[12px] font-black uppercase text-slate-500 tracking-[0.3em] ml-2 group-focus-within:text-orange-500 transition-colors italic">
+    <div className="space-y-1.5 text-left group">
+      <label className="text-[10px] font-black uppercase text-slate-500 tracking-[0.2em] ml-1 group-focus-within:text-orange-500 transition-colors italic">
         {label}
       </label>
       <div className="relative">
@@ -5873,11 +6006,11 @@ const WizardField = ({
           value={type === "currency" ? displayValue : val}
           readOnly={isLocked}
           onChange={handleTextChange}
-          className={`w-full bg-slate-950 border-4 border-white/5 rounded-3xl px-10 py-7 text-xl font-bold text-white outline-none transition-all shadow-inner ${isLocked ? "opacity-40 cursor-not-allowed" : "focus:border-orange-500"} font-mono`}
+          className={`w-full bg-slate-950 border-2 border-white/5 rounded-2xl px-5 py-3 text-sm font-bold text-white outline-none transition-all shadow-inner ${isLocked ? "opacity-40 cursor-not-allowed" : "focus:border-orange-500"} font-mono`}
           placeholder={placeholder}
         />
         {(isCurrency || type === "currency") && (
-          <span className="absolute right-8 top-1/2 -translate-y-1/2 text-[10px] font-black text-slate-700">
+          <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[9px] font-black text-slate-600">
             {getCurrencySymbol(currency)}
           </span>
         )}
@@ -5887,15 +6020,15 @@ const WizardField = ({
 };
 
 const WizardSelect = ({ label, val, onChange, options, isLocked }: any) => (
-  <div className="space-y-4 text-left group">
-    <label className="text-[12px] font-black uppercase text-slate-500 tracking-[0.3em] ml-2 group-focus-within:text-orange-500 transition-colors italic">
+  <div className="space-y-1.5 text-left group">
+    <label className="text-[10px] font-black uppercase text-slate-500 tracking-[0.2em] ml-1 group-focus-within:text-orange-500 transition-colors italic">
       {label}
     </label>
     <select
       value={val}
       disabled={isLocked}
       onChange={(e) => onChange(e.target.value)}
-      className={`w-full bg-slate-950 border-4 border-white/5 rounded-3xl px-10 py-7 text-[12px] font-black text-white uppercase outline-none transition-all shadow-inner appearance-none ${isLocked ? "opacity-40 cursor-not-allowed" : "cursor-pointer focus:border-orange-600"}`}
+      className={`w-full bg-slate-950 border-2 border-white/5 rounded-2xl px-5 py-3 text-xs font-black text-white uppercase outline-none transition-all shadow-inner appearance-none ${isLocked ? "opacity-40 cursor-not-allowed" : "cursor-pointer focus:border-orange-600"}`}
     >
       {options.map((o: any) => (
         <option key={o.v} value={o.v} className="bg-slate-900">

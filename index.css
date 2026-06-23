@@ -24,22 +24,19 @@
 
 /* WIZARD STRUCTURAL KERNEL V16.0 - FULL DESKTOP OPTIMIZED */
 .wizard-shell {
-  @apply flex flex-col w-full bg-slate-900/40 backdrop-blur-3xl rounded-[4rem] border border-white/10 shadow-[0_40px_100px_rgba(0,0,0,0.6)] relative overflow-hidden;
-  height: calc(100vh - 120px);
-  max-width: 1600px;
-  margin: 0 auto;
+  @apply flex flex-col w-full h-full bg-slate-950 relative overflow-hidden;
 }
 
 .wizard-content {
-  @apply flex-1 overflow-y-auto p-12 lg:p-20 custom-scrollbar scroll-smooth relative;
+  @apply flex-1 overflow-y-auto p-6 lg:p-8 custom-scrollbar scroll-smooth relative;
 }
 
 .wizard-content > div {
-  @apply pb-48; 
+  @apply pb-24; 
 }
 
 .wizard-header-fixed {
-  @apply shrink-0 bg-slate-900/95 backdrop-blur-3xl border-b border-white/10 z-[50] h-28 flex items-center;
+  @apply shrink-0 bg-slate-900/95 backdrop-blur-3xl border-b border-white/10 z-[50] h-20 flex items-center;
 }
 
 /* BOTÕES FLUTUANTES ORACLE MASTER - DESKTOP ELEVATION */

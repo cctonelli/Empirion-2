@@ -1078,7 +1078,7 @@ const AdminCommandCenter: React.FC<{ preTab?: string }> = ({ preTab = 'tournamen
           </div>
         )}
         {showWizard && (
-          <div className="fixed inset-0 z-[5000] bg-slate-950 p-4 md:p-10 flex items-center justify-center overflow-hidden">
+          <div className="fixed inset-0 z-[5000] bg-slate-950/98 backdrop-blur-2xl p-0 flex items-center justify-center overflow-hidden animate-in fade-in duration-300">
              <TrialWizard onComplete={() => { setShowWizard(false); fetchData(); }} />
           </div>
         )}

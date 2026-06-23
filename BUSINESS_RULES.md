@@ -7,7 +7,7 @@ Este documento centraliza as definições de negócios, fórmulas, restrições 
 ## 📅 Controle de Governança e Versionamento
 
 - **Projeto:** EMPIRION ORACLE
-- **Versão Ativa de Regras:** v2026.130
+- **Versão Ativa de Regras:** v2026.131
 - **Responsável pela Governança:** Project Management Professional (PMP)
 - **Time Multidisciplinar Responsável:**
   - **Contador Sênior:** CPC / IFRS e validação de relatórios contábeis/financeiros.
@@ -18,6 +18,7 @@ Este documento centraliza as definições de negócios, fórmulas, restrições 
 
 | Data | Versão | Autor | Alterações / Decisões Importantes |
 | :--- | :--- | :--- | :--- |
+| **23/06/2026** | `v2026.131` | *PMP & Equipe* | **Criação de Torneio Flexível e Parametrização Greenfield Dinâmica.** Reestruturação do workflow do Tutor no `TrialWizard`: Arena Start & Templates torna-se o primeiro passo estratégico. Em modo *Start From Zero (Greenfield)*, os parâmetros da frota fabril inicial, capacidade das máquinas a 100%, valores monetários de revenda/obtenção, custos de implantação técnica, preços iniciais das matérias-primas e o dimensionamento do setor fiduciário administrativo e comercial (com multiplicador de salário-base) tornam-se 100% editáveis no assistente e integrados de ponta a ponta com o balanço patrimonial teórico, DRE operacional e fluxo de caixa subsequentes. O Monitor Fiduciário em tempo real é compactado na tela para zero-overlap de interface. |
 | **18/06/2026** | `v2026.130` | *PMP & Equipe* | **Diretriz de Integridade Contábil-Financeira e Veto a Fallbacks Silenciosos.** Adicionada política de governança de dados rígida. Fica proibida a injeção unilateral de fallbacks "ocultos" ou geração de dados fictícios para encobrir buracos na simulação ou erros de carregamento na interface. Problemas de dados e erros de simulação devem ser investigados e tratados na raiz contábil, e falhas legítimas na UI devem ser visíveis ou informadas via loaders/warnings sem inventar números. |
 | **18/06/2026** | `v2026.129` | *PMP & Equipe* | **Mapeamento do Efeito Tesoura e Dinâmica de Insolvência por Crescimento Desmedido (Overtrading).** Implementada no dashboard de gestão contábil a monitoração síncrona real-time multilinear a partir do round R-0 para identificar descompassos entre o crescimento de faturamento bruto e lucros e o descasamento dos prazos de financiamentos comerciais. Introduzidas as formulações do Ativo e Passivo Operacionais para determinação exata da Necessidade de Capital de Giro (NCG), do Capital de Giro Líquido (CDG) e do Saldo de Tesouraria (ST), em estrita conformidade com as normas CPC/IFRS. |
 | **16/06/2026** | `v2026.128` | *PMP & Equipe* | **Algoritmo Concorrencial de Spillover por Ruptura de Estoque e Market Share de Entrega.** Corrigida a distorção contábil-operacional onde equipes que captavam demanda regional usando scores elevados de marketing/preço baixo mas falhavam em entregar unidades por inércia operacional (gargalo de operários ou insumos) "evaporavam" faturamento do campeonato e mantinham Market Share injustificado no painel. O simulador re-rateia a demanda não atendida (Ruptura/Stockout) aos demais concorrentes com estoque livre na região e computa o Market Share estritamente com base em volumes físicos de fato faturados e consolidados. |
