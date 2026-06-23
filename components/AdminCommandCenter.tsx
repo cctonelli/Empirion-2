@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import * as Router from 'react-router-dom';
 const { useLocation, useNavigate } = Router as any;
 import { 
@@ -74,6 +74,135 @@ const AdminCommandCenter: React.FC<{ preTab?: string }> = ({ preTab = 'tournamen
   const [showTurnoverErrorModal, setShowTurnoverErrorModal] = useState(false);
   const [turnoverErrorDetails, setTurnoverErrorDetails] = useState<string | null>(null);
   const [turnoverSuccessRound, setTurnoverSuccessRound] = useState<number | null>(null);
+
+  const adminConfettiRef = useRef<HTMLCanvasElement | null>(null);
+  const [triggerConfettiKey, setTriggerConfettiKey] = useState(0);
+
+  useEffect(() => {
+    if (showTurnoverSuccessModal) {
+      setTriggerConfettiKey(prev => prev + 1);
+    }
+  }, [showTurnoverSuccessModal]);
+
+  useEffect(() => {
+    if (selectedArena && selectedArena.current_round >= (selectedArena.total_rounds || 6)) {
+      setTriggerConfettiKey(prev => prev + 1);
+    }
+  }, [selectedArena?.id, selectedArena?.current_round, selectedArena?.total_rounds]);
+
+  // Engine nativa de Confetes (HTML5 Canvas) para o Command Center
+  useEffect(() => {
+    if (triggerConfettiKey === 0 || !adminConfettiRef.current) return;
+
+    const canvas = adminConfettiRef.current;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    let animationFrameId: number;
+    let width = (canvas.width = window.innerWidth);
+    let height = (canvas.height = window.innerHeight);
+
+    const colors = ['#f59e0b', '#10b981', '#3b82f6', '#f43f5e', '#a855f7', '#ffffff'];
+    const particles: Array<{
+      x: number;
+      y: number;
+      size: number;
+      color: string;
+      speedX: number;
+      speedY: number;
+      rotation: number;
+      rotationSpeed: number;
+    }> = [];
+
+    // Populando partículas (origem esquerda e direita na parte inferior para spray triunfal)
+    for (let i = 0; i < 200; i++) {
+      const fromLeft = Math.random() > 0.5;
+      particles.push({
+        x: fromLeft ? 0 : width,
+        y: height * 0.85,
+        size: Math.random() * 8 + 6,
+        color: colors[Math.floor(Math.random() * colors.length)],
+        speedX: (fromLeft ? 1 : -1) * (Math.random() * 18 + 12),
+        speedY: -(Math.random() * 22 + 18),
+        rotation: Math.random() * Math.PI,
+        rotationSpeed: (Math.random() - 0.5) * 0.1,
+      });
+    }
+
+    const handleResize = () => {
+      width = canvas.width = window.innerWidth;
+      height = canvas.height = window.innerHeight;
+    };
+    window.addEventListener('resize', handleResize);
+
+    const updateAndDraw = () => {
+      ctx.clearRect(0, 0, width, height);
+
+      for (let i = particles.length - 1; i >= 0; i--) {
+        const p = particles[i];
+        if (!p) continue;
+        p.x += p.speedX;
+        p.y += p.speedY;
+        
+        // Gravidade e Resistência do Ar
+        p.speedY += 0.55; // gravidade
+        p.speedX *= 0.98; // atrito do ar
+        p.rotation += p.rotationSpeed;
+
+        ctx.save();
+        ctx.translate(p.x, p.y);
+        ctx.rotate(p.rotation);
+        ctx.fillStyle = p.color;
+        
+        // Desenha pequenos cartões/retângulos giratórios
+        ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size / 1.5);
+        ctx.restore();
+
+        // Se sair da tela, remove ou para
+        if (p.y > height) {
+          particles.splice(i, 1);
+        }
+      }
+
+      if (particles.length > 0) {
+        animationFrameId = requestAnimationFrame(updateAndDraw);
+      }
+    };
+
+    updateAndDraw();
+
+    // Som de comemoração de confetes bem sutil ao nascer
+    try {
+      const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+      if (AudioContextClass) {
+        const audioCtx = new AudioContextClass();
+        const duration = 0.5;
+        const osc = audioCtx.createOscillator();
+        const gainNode = audioCtx.createGain();
+        
+        osc.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+        
+        osc.type = 'triangle';
+        // Frequências harmoniosas (Arpejo triunfal em C)
+        osc.frequency.setValueAtTime(523.25, audioCtx.currentTime); // C5
+        osc.frequency.setValueAtTime(659.25, audioCtx.currentTime + 0.1); // E5
+        osc.frequency.setValueAtTime(783.99, audioCtx.currentTime + 0.2); // G5
+        osc.frequency.setValueAtTime(1046.50, audioCtx.currentTime + 0.3); // C6
+        
+        gainNode.gain.setValueAtTime(0.08, audioCtx.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration);
+        
+        osc.start();
+        osc.stop(audioCtx.currentTime + duration);
+      }
+    } catch (_) {}
+
+    return () => {
+      cancelAnimationFrame(animationFrameId);
+      window.removeEventListener('resize', handleResize);
+    };
+  }, [triggerConfettiKey]);
 
   useEffect(() => {
     setIsTimerExpired(false);
@@ -790,6 +919,12 @@ const AdminCommandCenter: React.FC<{ preTab?: string }> = ({ preTab = 'tournamen
               )}
            </AnimatePresence>
         </main>
+        {/* Canvas de Confetes de TURNOVER e TURNEND */}
+        <canvas 
+           ref={adminConfettiRef} 
+           className="fixed inset-0 pointer-events-none z-[100000]"
+           id="admin_confetti_canvas"
+        />
       </div>
     );
   }

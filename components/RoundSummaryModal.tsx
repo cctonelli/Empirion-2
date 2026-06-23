@@ -193,7 +193,7 @@ export const RoundSummaryModal: React.FC<RoundSummaryModalProps> = ({
         {!isLockedWaiting && (
           <canvas 
             ref={canvasRef} 
-            className="absolute inset-0 pointer-events-none z-10"
+            className="fixed inset-0 pointer-events-none z-[100000]"
             id="round_summary_confetti_canvas"
           />
         )}
