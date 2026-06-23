@@ -2,9 +2,26 @@
 
 ## 📋 Controle de Governança
 - **Produto:** EMPIRION ORACLE
-- **Versão Ativa:** v2026.176 Estabilização do Congelamento Lateral de Cabeçalhos de Linha em Matrizes Financeiras.
+- **Versão Ativa:** v2026.177 Detalhamento de Estrutura de Funding Imobiliário e Amortização Linear.
 - **Tipo de Documento:** Master Index & Diretrizes de Engenharia Contínua
 - **Status da Documentação:** Sincronizado com o PRD.md, BUSINESS_RULES.md & ROADMAP.md
+
+---
+
+## Decisão Arquitetural: Detalhamento de Estrutura de Funding Imobiliário Greenfield e Amortização Linear - v2026.177
+
+**Data:** 23 de Junho de 2026 às 20:10 UTC  
+**Motivo:** Documentar estritamente o funcionamento matemático e contábil do financiamento imobiliário Greenfield (`debt`) quando o Tutor seleciona a aquisição de prédios e terrenos próprios por capital de terceiros, diferenciando-o da mecânica BDI tradicional com carência de máquinas.
+
+**Detalhamento Técnico de Planejamento e Modificações:**
+- **Ativação e Estruturação Patrimonial (`services/initialization.ts`)**:
+  - Quando a opção de prédio e terreno próprio é ativada em Greenfield com funding via `debt`, os valores de prédio e terreno são somados (`netBuilding`) e integralizados como Ativo Não Circulante (Imobilizado).
+  - Um passivo de Longo Prazo correspondente de empréstimos (`liabilities.longterm.loans_lt`) é criado. Um objeto de empréstimo do tipo `bdi` com ID `L-INIT-LT` é injetado na carteira de passivos da marca.
+- **Diferenciação Crítica de Carência e Amortização (`services/simulation.ts`)**:
+  - **In-Game BDI (Máquinas):** Possui **4 períodos de carência** (`grace_period_remaining: 3` na rodada de criação), onde só juros são pagos nos primeiros rounds.
+  - **Financiamento de Abertura (`L-INIT-LT`):** Criado com **carência zero (`grace_period_remaining: 0`)**.
+  - No processamento do turnover (`processLoans`), por possuir carência zero, o empréstimo imobiliário de abertura inicia os desembolsos de amortização do principal imediatamente na Rodada 1 (P1).
+  - Adota-se o Sistema de Amortização Linear (compatível com SAC), onde o principal é amortizado dividindo-se o saldo devedor ativo pelas rodadas restantes (`amort = amount / remaining_rounds`), reduzindo a liquidez operacional do caixa a cada período e lançando despesas financeiras (juros) no DRE.
 
 ---
 

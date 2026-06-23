@@ -7,17 +7,18 @@ Este documento centraliza as definições de negócios, fórmulas, restrições 
 ## 📅 Controle de Governança e Versionamento
 
 - **Projeto:** EMPIRION ORACLE
-- **Versão Ativa de Regras:** v2026.131
+- **Versão Ativa de Regras:** v2026.132
 - **Responsável pela Governança:** Project Management Professional (PMP)
 - **Time Multidisciplinar Responsável:**
   - **Contador Sênior:** CPC / IFRS e validação de relatórios contábeis/financeiros.
   - **Coodenador de Inteligência de Mercado:** Análise de concorrência e estratégias de penetração regional.
   - **Engenheiro de Software Sênior:** Arquitetura limpa, segurança e integridade do motor de cálculo.
   - **Engenheiro de Banco de Dados:** Normalização, concorrência e RLS.
-  - **Arquiteto de UI/UX:** Apresentação elegante e acessível com micro-interações.
+  - **Arquiteto de UI/UX:** Apresentação elegante e accessible com micro-interações.
 
 | Data | Versão | Autor | Alterações / Decisões Importantes |
 | :--- | :--- | :--- | :--- |
+| **23/06/2026** | `v2026.132` | *PMP & Equipe* | **Adição da Estrutura de Funding Imobiliário Greenfield & Diferenças BDI.** Documentação estrita do funcionamento financeiro e contábil do empréstimo de abertura imobiliário (`L-INIT-LT`), especificando a taxa nominal (10% a 12,5%), o prazo de amortização de 8 períodos (sistema SAC linear) e a ausência de carência inicial (`grace_period_remaining: 0`) para início imediato dos desembolsos e despesa financeira, diferenciando-se do financiamento de equipamentos industriais. |
 | **23/06/2026** | `v2026.131` | *PMP & Equipe* | **Criação de Torneio Flexível e Parametrização Greenfield Dinâmica.** Reestruturação do workflow do Tutor no `TrialWizard`: Arena Start & Templates torna-se o primeiro passo estratégico. Em modo *Start From Zero (Greenfield)*, os parâmetros da frota fabril inicial, capacidade das máquinas a 100%, valores monetários de revenda/obtenção, custos de implantação técnica, preços iniciais das matérias-primas e o dimensionamento do setor fiduciário administrativo e comercial (com multiplicador de salário-base) tornam-se 100% editáveis no assistente e integrados de ponta a ponta com o balanço patrimonial teórico, DRE operacional e fluxo de caixa subsequentes. O Monitor Fiduciário em tempo real é compactado na tela para zero-overlap de interface. |
 | **18/06/2026** | `v2026.130` | *PMP & Equipe* | **Diretriz de Integridade Contábil-Financeira e Veto a Fallbacks Silenciosos.** Adicionada política de governança de dados rígida. Fica proibida a injeção unilateral de fallbacks "ocultos" ou geração de dados fictícios para encobrir buracos na simulação ou erros de carregamento na interface. Problemas de dados e erros de simulação devem ser investigados e tratados na raiz contábil, e falhas legítimas na UI devem ser visíveis ou informadas via loaders/warnings sem inventar números. |
 | **18/06/2026** | `v2026.129` | *PMP & Equipe* | **Mapeamento do Efeito Tesoura e Dinâmica de Insolvência por Crescimento Desmedido (Overtrading).** Implementada no dashboard de gestão contábil a monitoração síncrona real-time multilinear a partir do round R-0 para identificar descompassos entre o crescimento de faturamento bruto e lucros e o descasamento dos prazos de financiamentos comerciais. Introduzidas as formulações do Ativo e Passivo Operacionais para determinação exata da Necessidade de Capital de Giro (NCG), do Capital de Giro Líquido (CDG) e do Saldo de Tesouraria (ST), em estrita conformidade com as normas CPC/IFRS. |
@@ -304,3 +305,33 @@ O **Nível de Treinamento Inicial** de operadores dita o ponto de partida organi
 
 ### 2. Orientação Estratégica de Governança para o Tutor:
 - **Dosagem de Dificuldade:** Definir níveis menores (1 e 2) exige que as equipes debatam profundamente a gestão de pessoas, horas-extras e a adequação do salário base contra as médias de inflação do mercado. Níveis maiores (4 e 5) são recomendados para sprints rápidas de ritmo acelerado focados prioritariamente em tesouraria avançada, finanças mundiais e M&A.
+
+---
+
+## 12. 🏦 Estrutura de Funding de Abertura & Financiamento Imobiliário Greenfield
+
+No modo *Start from Zero (Greenfield)*, quando o Tutor ou a Equipe opta por prédio e terreno próprios e escolhe a origem de recursos como **Capital de Terceiros (Método de Funding: `debt`)**, o imobilizado de abertura (Prédios e Terrenos Greenfield) é integralizado no Ativo Não Circulante e contrabalançado por uma obrigação correspondente no Passivo Exigível de Longo Prazo (contas de Empréstimos de Longo Prazo - `liabilities.longterm.loans_lt`).
+
+### 1. Inicialização do Empréstimo Imobiliário (`L-INIT-LT`):
+- **Tipo de Empréstimo:** O financiamento é estruturado como tipo **`bdi`** (BDI Loan) dentro do motor de simulação.
+- **Valor Inicial (Principal):** É igual à somatória do custo de aquisição do terreno mais a construção/aquisição do prédio de abertura (`netBuilding` = Terreno + Prédios Greenfield).
+- **Taxa de Juros Nominal:** Definida por padrão como **10,0% ao ano** no modo tradicional/competitivo (ou **12,5%** no modo base de treinamento).
+- **Prazo de Amortização (`term`):** Fixado em **8 rounds (períodos de simulação)**.
+
+### 2. Diferença Fundamental contra o Financiamento de Máquinas (BDI Tradicional):
+- **Carência de Amortização (Grace Period):**
+  - **Financiamento de Máquinas (In-Game BDI):** Projetado com carência de **4 períodos** (`grace_period_remaining: 3` na primeira rodada após a compra). Nesses primeiros 4 rounds, a empresa paga **apenas juros** sobre o principal, iniciando a amortização do principal somente na 5ª rodada.
+  - **Financiamento Imobiliário de Abertura (`L-INIT-LT`):** É inicializado com **carência zero (`grace_period_remaining: 0`)**. Isso significa que a amortização do principal inicia-se **imediatamente na Rodada 1 (P1)**, dividindo o caixa fiduciário do giro do negócio desde o início.
+
+### 3. Mecânica de Cálculo no Motor de Simulação (`services/simulation.ts`):
+- **Sistema de Amortização Linear (SAC - Sistema de Amortização Constante):**
+  A cada round $N$ de simulação:
+  1. **Amortização do Principal:** O valor amortizado do principal é calculado dividindo o saldo devedor atual pelas rodadas remanescentes:
+     $$\text{Amortização} = \frac{\text{Saldo Devedor Ativo}}{\text{Rodadas Restantes (remaining\_rounds)}}$$
+     *(Para a primeira rodada $P1$, onde restam 8 rounds, a amortização é de exatamente $\frac{1}{8}$ do principal total)*.
+  2. **Encargos Financeiros (Juros):** Os juros do período são calculados multiplicando-se o saldo devedor antes da amortização pela taxa contratada, ajustado pelo ágio financeiro de recuperação judicial, se aplicável:
+     $$\text{Juros} = \text{Saldo Devedor Ativo} \times \left( \frac{\text{Taxa de Juros \%}}{100} \right) \times rjInterestAgio$$
+  3. **Saldo Devedor Final (Passivo):** O saldo devedor que transita para o próximo round é o valor líquido deduzido da amortização:
+     $$\text{Saldo Devedor Novo} = \text{Saldo Devedor Ativo} - \text{Amortização}$$
+     O valor consolidado atualiza diretamente a conta `liabilities.longterm.loans_lt` do Balanço Patrimonial (Passivo Não Circulante). Os juros calculados entram como Despesa Financeira no DRE consolidado e geram impacto negativo imediato no Fluxo de Caixa Operacional (`cf.outflow.loan_interest`).
+
