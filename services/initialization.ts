@@ -96,6 +96,7 @@ export interface BaseP0Config {
   tutorName: string;
   institutionName: string;
   tournamentName: string;
+  segmentName?: string;
   currency: CurrencyType;
   round_duration: number;
   total_rounds: number;

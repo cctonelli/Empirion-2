@@ -548,6 +548,7 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
     tutorName: "PROF. CLAUDIO TONELLI",
     institutionName: "UNIVERSIDADE EMPIRION",
     tournamentName: "COPA EMPIRION",
+    segmentName: "SEMICONDUTORES",
     currency: "BRL",
     round_duration: 1,
     total_rounds: 6,
@@ -1486,7 +1487,7 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
       <EmpireParticles />
       <header
         id="trial_wizard_header"
-        className="wizard-header-fixed pl-10 pr-5 py-4 grid grid-cols-3 items-center border-b border-white/10 w-full bg-slate-950/80 backdrop-blur-md select-none shrink-0"
+        className="shrink-0 bg-slate-900/95 backdrop-blur-3xl border-b border-white/10 z-[50] h-20 px-10 grid grid-cols-3 items-center w-full select-none"
       >
         {/* Coluna 1: Título & Logo à Esquerda */}
         <div className="flex items-center gap-4 justify-start">
@@ -1533,12 +1534,12 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
         </div>
 
         {/* Coluna 3: Navegação de Passo Bem à Direita */}
-        <div className="flex items-center justify-end gap-4 translate-x-1">
+        <div className="flex items-center justify-end gap-4 translate-x-5">
           <div className="flex items-center gap-2 bg-slate-900/60 border border-white/5 p-1.5 rounded-xl shadow-2xl backdrop-blur-md">
             <button
               onClick={() => setStep((s) => Math.max(1, s - 1))}
               disabled={step === 1}
-              className="w-10 h-10 bg-slate-950 border border-white/5 hover:border-orange-500/50 text-slate-400 hover:text-white disabled:opacity-20 disabled:cursor-not-allowed hover:bg-orange-600/10 active:scale-95 transition-all flex items-center justify-center rounded-lg"
+              className="w-10 h-10 bg-emerald-500 border border-emerald-400 text-white disabled:bg-slate-950 disabled:border-white/5 disabled:text-slate-500 disabled:opacity-20 disabled:cursor-not-allowed hover:bg-orange-500 hover:border-orange-400 active:scale-95 transition-all duration-300 flex items-center justify-center rounded-lg shadow-[0_0_12px_rgba(16,185,129,0.3)] hover:shadow-[0_0_12px_rgba(249,115,22,0.4)]"
               title="Recuar Passo"
             >
               <ChevronLeft size={18} />
@@ -1571,10 +1572,10 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                     ? "O rateio do aluguel deve somar exatamente 100% para prosseguir."
                     : "Avançar Passo"
                 }
-                className={`w-10 h-10 bg-slate-950 border transition-all flex items-center justify-center active:scale-95 rounded-lg ${
+                className={`w-10 h-10 border transition-all duration-300 flex items-center justify-center active:scale-95 rounded-lg ${
                   !canGoNext
-                    ? "opacity-20 cursor-not-allowed border-rose-500/30 text-rose-400"
-                    : "border-white/5 text-slate-400 hover:text-white hover:border-orange-500/50 hover:bg-orange-600/10"
+                    ? "bg-slate-950 border-white/5 text-slate-500 opacity-20 cursor-not-allowed"
+                    : "bg-emerald-500 border-emerald-400 text-white hover:bg-orange-500 hover:border-orange-400 shadow-[0_0_12px_rgba(16,185,129,0.3)] hover:shadow-[0_0_12px_rgba(249,115,22,0.4)]"
                 }`}
               >
                 <ChevronRight size={18} />
@@ -1601,57 +1602,100 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                   title="2. IDENTIDADE DA COMPETIÇÃO"
                   desc="Configurações globais de identidade pedagógica externa."
                 />
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 text-left">
-                  <div className="lg:col-span-2">
+                <div className="flex flex-col gap-8 text-left">
+                  {/* LINHA 1: Tutor, Faculdade, Torneio com limite de 20 caracteres */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
                     <WizardField
-                      label="NOME DO TUTOR ADMINISTRADOR"
+                      label="NOME DO TUTOR / COORDENADOR"
                       val={tutorConfig.tutorName}
+                      maxLength={20}
                       onChange={(v: any) =>
                         setTutorConfig({ ...tutorConfig, tutorName: v })
                       }
                       placeholder="Ex: PROF. CLAUDIO TONELLI"
                     />
-                  </div>
-                  <WizardField
-                    label="NOME DA FACULDADE / ENTIDADE"
-                    val={tutorConfig.institutionName}
-                    onChange={(v: any) =>
-                      setTutorConfig({ ...tutorConfig, institutionName: v })
-                    }
-                    placeholder="Ex: FGV / FDC"
-                  />
-
-                  <div className="lg:col-span-2">
+                    <WizardField
+                      label="NOME DA FACULDADE / ENTIDADE"
+                      val={tutorConfig.institutionName}
+                      maxLength={20}
+                      onChange={(v: any) =>
+                        setTutorConfig({ ...tutorConfig, institutionName: v })
+                      }
+                      placeholder="Ex: FGV / FDC"
+                    />
                     <WizardField
                       label="NOME DO TORNEIO / ARENA"
                       val={tutorConfig.tournamentName}
+                      maxLength={20}
                       onChange={(v: any) =>
                         setTutorConfig({ ...tutorConfig, tournamentName: v })
                       }
-                      placeholder="Ex: COPA GLOBAL DE SIMULAÇÃO"
+                      placeholder="Ex: COPA GLOBAL"
                     />
                   </div>
-                  <WizardSelect
-                    label="MOEDA PADRÃO"
-                    val={tutorConfig.currency}
-                    onChange={(v: any) =>
-                      setTutorConfig({
-                        ...tutorConfig,
-                        currency: v as CurrencyType,
-                      })
-                    }
-                    options={[
-                      { v: "BRL", l: "REAL (R$)" },
-                      { v: "USD", l: "DÓLAR ($)" },
-                      { v: "EUR", l: "EURO (€)" },
-                      { v: "CNY", l: "YUAN (¥)" },
-                      { v: "BTC", l: "BITCOIN (₿)" },
-                    ]}
-                  />
 
-                  <div className="grid grid-cols-2 gap-4">
+                  {/* LINHA 2: Segmento de Atuação (máx 20 carac), Moeda, Governança Tática, Identidade Gazeta com larguras otimizadas e simétricas */}
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-6 md:gap-8 items-end">
                     <WizardField
-                      label="TEMPO ROUND"
+                      label="SEGMENTO DE ATUAÇÃO"
+                      val={tutorConfig.segmentName}
+                      maxLength={20}
+                      onChange={(v: any) =>
+                        setTutorConfig({ ...tutorConfig, segmentName: v })
+                      }
+                      placeholder="Ex: SEMICONDUTORES"
+                    />
+                    <WizardSelect
+                      label="MOEDA PADRÃO"
+                      val={tutorConfig.currency}
+                      onChange={(v: any) =>
+                        setTutorConfig({
+                          ...tutorConfig,
+                          currency: v as CurrencyType,
+                        })
+                      }
+                      options={[
+                        { v: "BRL", l: "BRL (R$)" },
+                        { v: "USD", l: "USD ($)" },
+                        { v: "GBP", l: "GBP (£)" },
+                        { v: "EUR", l: "EUR (€)" },
+                        { v: "CNY", l: "CNY (¥)" },
+                        { v: "BTC", l: "BTC (₿)" },
+                      ]}
+                    />
+                    <WizardSelect
+                      label="GOVERNANÇA TÁTICA"
+                      val={tutorConfig.transparency_level}
+                      onChange={(v: any) =>
+                        setTutorConfig({
+                          ...tutorConfig,
+                          transparency_level: v as any,
+                        })
+                      }
+                      options={[
+                        { v: "low", l: "SIGILOSA" },
+                        { v: "medium", l: "MÉDIA" },
+                        { v: "high", l: "ALTA" },
+                        { v: "full", l: "OPEN DATA" },
+                      ]}
+                    />
+                    <WizardSelect
+                      label="GAZETA"
+                      val={tutorConfig.gazeta_mode}
+                      onChange={(v: any) =>
+                        setTutorConfig({ ...tutorConfig, gazeta_mode: v as any })
+                      }
+                      options={[
+                        { v: "anonymous", l: "ANÔNIMA" },
+                        { v: "identified", l: "REVELADA" },
+                      ]}
+                    />
+                  </div>
+
+                  {/* LINHA 3: Tempo Round (horas), Total de Rounds, Modelo Contábil / Setorial */}
+                  <div className="grid grid-cols-1 md:grid-cols-[120px_120px_1fr] gap-6 md:gap-8">
+                    <WizardField
+                      label="TEMPO (H)"
                       type="number"
                       val={tutorConfig.round_duration}
                       onChange={(v: any) =>
@@ -1661,74 +1705,35 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                         })
                       }
                     />
-                    <div className="space-y-4 text-left group">
-                      <label className="text-[12px] font-black uppercase text-slate-500 tracking-[0.3em] ml-2 italic">
-                        UNIDADE TEMPO
-                      </label>
-                      <input
-                        className="w-full bg-slate-950/40 border-4 border-white/5 rounded-3xl px-10 py-7 text-xl font-bold text-slate-500 outline-none cursor-not-allowed"
-                        value="HORAS"
-                        readOnly
-                      />
-                    </div>
+                    <WizardField
+                      label="ROUNDS"
+                      type="number"
+                      val={tutorConfig.total_rounds}
+                      onChange={(v: any) =>
+                        setTutorConfig({
+                          ...tutorConfig,
+                          total_rounds: Math.min(
+                            12,
+                            Math.max(1, parseInt(v) || 0),
+                          ),
+                        })
+                      }
+                    />
+                    <WizardSelect
+                      label="MODELO CONTÁBIL / SETORIAL"
+                      val={tutorConfig.accounting_template_id}
+                      onChange={(v: any) =>
+                        setTutorConfig({
+                          ...tutorConfig,
+                          accounting_template_id: v,
+                        })
+                      }
+                      options={SUPPORTED_ACCOUNTING_MODELS.map((m) => ({
+                        v: m.id,
+                        l: `${m.name} (${m.version})`,
+                      }))}
+                    />
                   </div>
-
-                  <WizardSelect
-                    label="GOVERNANÇA TÁTICA"
-                    val={tutorConfig.transparency_level}
-                    onChange={(v: any) =>
-                      setTutorConfig({
-                        ...tutorConfig,
-                        transparency_level: v as any,
-                      })
-                    }
-                    options={[
-                      { v: "low", l: "BAIXA (SIGILOSA)" },
-                      { v: "medium", l: "MÉDIA (PADRÃO)" },
-                      { v: "high", l: "ALTA (TRANSPARENTE)" },
-                      { v: "full", l: "TOTAL (OPEN DATA)" },
-                    ]}
-                  />
-                  <WizardSelect
-                    label="IDENTIDADE GAZETA"
-                    val={tutorConfig.gazeta_mode}
-                    onChange={(v: any) =>
-                      setTutorConfig({ ...tutorConfig, gazeta_mode: v as any })
-                    }
-                    options={[
-                      { v: "anonymous", l: "ANÔNIMA" },
-                      { v: "identified", l: "IDENTIFICADA" },
-                    ]}
-                  />
-
-                  <WizardField
-                    label="TOTAL DE ROUNDS"
-                    type="number"
-                    val={tutorConfig.total_rounds}
-                    onChange={(v: any) =>
-                      setTutorConfig({
-                        ...tutorConfig,
-                        total_rounds: Math.min(
-                          12,
-                          Math.max(1, parseInt(v) || 0),
-                        ),
-                      })
-                    }
-                  />
-                  <WizardSelect
-                    label="MODELO CONTÁBIL / SETORIAL"
-                    val={tutorConfig.accounting_template_id}
-                    onChange={(v: any) =>
-                      setTutorConfig({
-                        ...tutorConfig,
-                        accounting_template_id: v,
-                      })
-                    }
-                    options={SUPPORTED_ACCOUNTING_MODELS.map((m) => ({
-                      v: m.id,
-                      l: `${m.name} (${m.version})`,
-                    }))}
-                  />
                 </div>
 
                 {/* Configuração de Equipes de Lançamento */}
@@ -1768,12 +1773,13 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                         <input
                           key={idx}
                           value={name}
+                          maxLength={20}
                           onChange={(e) => {
                             const next = [...teamNames];
                             next[idx] = e.target.value.toUpperCase();
                             setTeamNames(next);
                           }}
-                          className="w-full bg-slate-950 border border-white/5 rounded-xl px-4 py-2 text-xs font-bold text-white uppercase font-mono"
+                          className="w-full max-w-[240px] bg-slate-950 border border-white/5 rounded-xl px-4 py-2 text-xs font-bold text-white uppercase font-mono transition-all focus:border-orange-500/50 outline-none"
                           placeholder={`NOME TIME ${idx + 1}`}
                         />
                       ))}
@@ -5973,6 +5979,8 @@ const WizardField = ({
   isCurrency,
   currency,
   isLocked,
+  maxLength,
+  className,
 }: any) => {
   const [displayValue, setDisplayValue] = useState("");
 
@@ -5996,16 +6004,17 @@ const WizardField = ({
   };
 
   return (
-    <div className="space-y-1.5 text-left group">
+    <div className={`space-y-1.5 text-left group ${className || ""}`}>
       <label className="text-[10px] font-black uppercase text-slate-500 tracking-[0.2em] ml-1 group-focus-within:text-orange-500 transition-colors italic">
         {label}
       </label>
-      <div className="relative">
+      <div className="relative font-sans">
         <input
           type={type === "currency" ? "text" : type}
           value={type === "currency" ? displayValue : val}
           readOnly={isLocked}
           onChange={handleTextChange}
+          maxLength={maxLength}
           className={`w-full bg-slate-950 border-2 border-white/5 rounded-2xl px-5 py-3 text-sm font-bold text-white outline-none transition-all shadow-inner ${isLocked ? "opacity-40 cursor-not-allowed" : "focus:border-orange-500"} font-mono`}
           placeholder={placeholder}
         />
@@ -6019,8 +6028,8 @@ const WizardField = ({
   );
 };
 
-const WizardSelect = ({ label, val, onChange, options, isLocked }: any) => (
-  <div className="space-y-1.5 text-left group">
+const WizardSelect = ({ label, val, onChange, options, isLocked, className }: any) => (
+  <div className={`space-y-1.5 text-left group ${className || ""}`}>
     <label className="text-[10px] font-black uppercase text-slate-500 tracking-[0.2em] ml-1 group-focus-within:text-orange-500 transition-colors italic">
       {label}
     </label>
