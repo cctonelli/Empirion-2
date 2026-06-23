@@ -1680,7 +1680,7 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                       ]}
                     />
                     <WizardSelect
-                      label="GAZETA"
+                      label="IDENTIDADE DAS EQUIPES"
                       val={tutorConfig.gazeta_mode}
                       onChange={(v: any) =>
                         setTutorConfig({ ...tutorConfig, gazeta_mode: v as any })
@@ -1695,7 +1695,7 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                   {/* LINHA 3: Tempo Round (horas), Total de Rounds, Modelo Contábil / Setorial */}
                   <div className="grid grid-cols-1 md:grid-cols-[120px_120px_1fr] gap-6 md:gap-8">
                     <WizardField
-                      label="TEMPO (H)"
+                      label="TEMPO ROUND"
                       type="number"
                       val={tutorConfig.round_duration}
                       onChange={(v: any) =>
@@ -2940,7 +2940,7 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                   />
 
                   <WizardField
-                    label="HORAS PRODUÇÃO POR TURNO"
+                    label="JORNADA MOD / TURNO (EM HORAS POR ROUND JOGADO)"
                     type="number"
                     val={tutorConfig.workforce.production_hours_period ?? 176}
                     onChange={(v: any) =>
