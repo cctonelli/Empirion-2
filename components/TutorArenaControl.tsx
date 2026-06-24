@@ -381,7 +381,7 @@ const TutorArenaControl: React.FC<{ championship: Championship; onUpdate: (confi
 
       <div className="flex justify-end pt-12 border-t border-white/5">
          <button onClick={handleSave} disabled={isSaving} className="px-24 py-10 bg-orange-600 text-white rounded-full font-black text-sm uppercase tracking-[0.5em] hover:bg-white hover:text-orange-950 transition-all shadow-[0_20px_80px_rgba(249,115,22,0.5)] flex items-center gap-10 active:scale-95 group border-4 border-orange-400/50">
-            {isSaving ? <Loader2 className="animate-spin" size={32} /> : <><Save size={32} strokeWidth={2.5} /> Confirmar Planejamento P0{nextRoundIdx}</>}
+            {isSaving ? <Loader2 className="animate-spin" size={32} /> : <><Save size={32} strokeWidth={2.5} /> Confirmar Intervenção no R-{nextRoundIdx}</>}
          </button>
       </div>
     </div>
