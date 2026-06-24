@@ -285,11 +285,19 @@ export const MarketingStep: React.FC<MarketingStepProps> = ({
     const demandVariation =
       activeArena?.market_indicators?.demand_variation || 0;
 
+    const targetRound = useHistoricalOnly 
+      ? (activeArena?.current_round || 0) 
+      : (round !== undefined ? round : ((activeArena?.current_round || 0) + 1));
+
     let regionConfigs: any[] =
       activeArena?.config?.regions ||
       activeArena?.config?.region_configs ||
       activeArena?.region_configs ||
       [];
+
+    // Filtrar apenas as regiões vigentes na rodada correspondente (targetRound)
+    regionConfigs = regionConfigs.filter((r: any) => !r.start_round || r.start_round <= targetRound);
+
     if (!regionConfigs || regionConfigs.length === 0) {
       const regCount =
         activeArena?.regions_count ||

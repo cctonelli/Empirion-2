@@ -264,16 +264,14 @@ const DecisionForm: React.FC<{
         }
 
         const initialRegions: any = {};
-        for (let i = 1; i <= (found?.regions_count || 1); i++) {
-          const regId = i;
-          const regionConf = 
-            found?.config?.regions?.find((r: any) => r.id === regId) || 
-            found?.config?.region_configs?.find((r: any) => r.id === regId) ||
-            found?.config?.regions?.[i - 1] ||
-            found?.config?.region_configs?.[i - 1];
+        const allRegions = found?.config?.regions || found?.config?.region_configs || found?.region_configs || [];
+        const activeRegionsForRound = allRegions.filter((r: any) => !r.start_round || r.start_round <= round);
+
+        activeRegionsForRound.forEach((regionConf: any, index: number) => {
+          const regId = regionConf.id || (index + 1);
           const defaultSugPrice = regionConf?.suggested_price !== undefined ? Number(regionConf.suggested_price) : 425;
-          initialRegions[i] = finalData?.regions?.[i] || { price: defaultSugPrice, term: 0, marketing: 0 };
-        }
+          initialRegions[regId] = finalData?.regions?.[regId] || { price: defaultSugPrice, term: 0, marketing: 0 };
+        });
 
         if (finalData) {
           setDecisions({ ...finalData, regions: initialRegions });

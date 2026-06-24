@@ -629,6 +629,22 @@
 
 ---
 
+## Decisão Arquitetural, Controle de Vigência de Regiões por start_round (Expansão de Mercado Resiliente) - v2026.140
+
+**Data:** 24 de Junho de 2026 às 22:35 UTC  
+**Motivo:** Corrigir a anomalia visual e de simulação onde, ao tutor cadastrar uma nova região de vendas via intervenção para rodadas futuras (ex: Round 2), as regiões já parametrizadas e vigentes para a rodada atual em andamento (Round 1) sumiam ou eram distorcidas na tela "ESTRATÉGIA COMERCIAL" (`MarketingStep.tsx`) das equipes, diluindo precocemente a demanda competitiva do mercado.
+
+**Detalhamento Técnico de Planejamento:**
+- **Propriedade start_round Dedicada (`TutorArenaControl.tsx`)**: No painel do tutor, ao adicionar uma nova região ao `regionsList` em intervenção, ela é marcada com a propriedade `start_round: nextRoundIdx` para indicar em qual rodada ela de fato passa a existir.
+- **Filtragem Reativa de Inicialização (`DecisionForm.tsx`)**: O cockpit de decisões das equipes de estudantes passa a filtrar a lista global de regiões do campeonato para montar as decisões e rascunhos apenas para as praças cuja existência seja válida no round em andamento (`!r.start_round || r.start_round <= round`).
+- **Apuramento Consistente de Indicadores (`MarketingStep.tsx`)**: A função `calculateRegionStats` foi refatorada para modular a lista de configurações de regiões (`regionConfigs`) de acordo com o round sob análise (seja histórico ou projetado). Isso evita que o market size bruto total seja indevidamente rateado com praças territoriais que ainda não foram inauguradas na simulação.
+
+**Impactos:**
+- **Integridade de Indicadores e Projeções**: Estabilidade total e acurácia contábil nas telas do discente e no simulador para a rodada atual.
+- **Evolução Gradativa de Mercado**: Garante que o recurso pedagógico de expansão de vendas funcione como planejado, habilitando a nova praça de forma suave e sincronizada apenas quando o torneio avançar para a rodada agendada pelo tutor.
+
+---
+
 ## Decisão Arquitetural, Premissa de CRUD e Bypass de Login no Modo TRIAL (MVP Sandbox) - v2026.139
 
 **Data:** 14 de Junho de 2026 às 16:45 UTC  
