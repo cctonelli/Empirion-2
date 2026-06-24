@@ -10,24 +10,33 @@ import {
   User, Calculator, Repeat, Coins
 } from 'lucide-react';
 import { EcosystemConfig, Championship, MacroIndicators, BlackSwanEvent, LaborAvailability, CurrencyType } from '../types';
-import { updateEcosystem, supabase } from '../services/supabase';
+import { updateEcosystem, supabase, mapChampionshipSynthetically } from '../services/supabase';
 import { DEFAULT_MACRO, DEFAULT_INDUSTRIAL_CHRONOGRAM } from '../constants';
 import ChampionshipTimer from './ChampionshipTimer';
 import { motion as _motion, AnimatePresence } from 'framer-motion';
 const motion = _motion as any;
 
 const TutorArenaControl: React.FC<{ championship: Championship; onUpdate: (config: Partial<Championship>) => void }> = ({ championship, onUpdate }) => {
+  const [currentChampionship, setCurrentChampionship] = useState<Championship>(championship);
   const [activeTab, setActiveTab] = useState<'conjuncture' | 'suppliers' | 'market' | 'staffing' | 'international' | 'awards' | 'observers'>('conjuncture');
   const [isSaving, setIsSaving] = useState(false);
   const [hasDecisions, setHasDecisions] = useState(false);
   const [newObserverId, setNewObserverId] = useState('');
   const [observersList, setObserversList] = useState<string[]>(championship.observers || []);
   
-  const nextRoundIdx = championship.current_round + 1;
+  const nextRoundIdx = currentChampionship.current_round + 1;
   const inheritedRules = useMemo(() => {
-     const rules = championship.round_rules?.[nextRoundIdx] || DEFAULT_INDUSTRIAL_CHRONOGRAM[nextRoundIdx] || championship.market_indicators;
-     return { ...championship.market_indicators, ...rules };
-  }, [championship, nextRoundIdx]);
+     const rules = currentChampionship.round_rules?.[nextRoundIdx] || {};
+     const chronogramRules = DEFAULT_INDUSTRIAL_CHRONOGRAM[nextRoundIdx] || {};
+     
+     if (currentChampionship.starting_mode === 'start_from_zero') {
+        // Para "START FROM ZERO", priorizamos totalmente os indicadores customizados da arena,
+        // usando o cronograma padrão apenas como preenchimento secundário para dados ausentes.
+        return { ...chronogramRules, ...currentChampionship.market_indicators, ...rules };
+     }
+     
+     return { ...currentChampionship.market_indicators, ...chronogramRules, ...rules };
+  }, [currentChampionship, nextRoundIdx]);
 
   const [macro, setMacro] = useState<MacroIndicators>(inheritedRules);
 
@@ -36,16 +45,34 @@ const TutorArenaControl: React.FC<{ championship: Championship; onUpdate: (confi
   const [calcFrom, setCalcFrom] = useState<string>('USD');
   const [calcTo, setCalcTo] = useState<string>(championship.currency || 'BRL');
 
+  // Busca reativa dos dados mais recentes da arena no Supabase
+  useEffect(() => {
+    const fetchLatestChampionship = async () => {
+      const table = championship.is_trial ? 'trial_championships' : 'championships';
+      const { data, error } = await supabase
+        .from(table)
+        .select('*')
+        .eq('id', championship.id)
+        .maybeSingle();
+        
+      if (data && !error) {
+        const mapped = mapChampionshipSynthetically(data);
+        setCurrentChampionship({ ...mapped, is_trial: !!championship.is_trial });
+      }
+    };
+    fetchLatestChampionship();
+  }, [championship.id, championship.is_trial]);
+
   useEffect(() => {
     setMacro(inheritedRules);
-    setObserversList(championship.observers || []);
+    setObserversList(currentChampionship.observers || []);
     const checkDecisions = async () => {
-       const table = championship.is_trial ? 'trial_decisions' : 'current_decisions';
-       const { count } = await supabase.from(table).select('*', { count: 'exact', head: true }).eq('championship_id', championship.id).eq('round', nextRoundIdx);
-       setHasDecisions((count || 0) > 0);
+        const table = currentChampionship.is_trial ? 'trial_decisions' : 'current_decisions';
+        const { count } = await supabase.from(table).select('*', { count: 'exact', head: true }).eq('championship_id', currentChampionship.id).eq('round', nextRoundIdx);
+        setHasDecisions((count || 0) > 0);
     };
     checkDecisions();
-  }, [inheritedRules, championship.id, nextRoundIdx, championship.observers]);
+  }, [inheritedRules, currentChampionship.id, nextRoundIdx, currentChampionship.observers]);
 
   const handleSave = async () => {
     setIsSaving(true);
@@ -53,18 +80,25 @@ const TutorArenaControl: React.FC<{ championship: Championship; onUpdate: (confi
       market_indicators: macro,
       observers: observersList,
       round_rules: {
-        ...(championship.round_rules || {}),
+        ...(currentChampionship.round_rules || {}),
         [nextRoundIdx]: macro
       }
     };
-    await updateEcosystem(championship.id, payload, !!championship.is_trial);
+    await updateEcosystem(currentChampionship.id, payload, !!currentChampionship.is_trial);
     onUpdate(payload);
+    
+    // Atualiza o estado local reativamente
+    setCurrentChampionship(prev => ({
+      ...prev,
+      ...payload
+    }));
+    
     setIsSaving(false);
     alert(`INTERVENÇÃO EXECUTADA: Cenário e Câmbio P0${nextRoundIdx} selados no Oracle Node.`);
   };
 
   const calculateCrossRate = (val: number, from: string, to: string) => {
-     const baseCurrency = championship.currency || 'BRL';
+     const baseCurrency = currentChampionship.currency || 'BRL';
      const rates: any = { ...macro.exchange_rates, [baseCurrency]: 1.0 };
      const fromRate = rates[from] || 1.0;
      const toRate = rates[to] || 1.0;

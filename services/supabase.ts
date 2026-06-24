@@ -469,7 +469,58 @@ export const getAllUsers = async (): Promise<UserProfile[]> => {
 export const updateEcosystem = async (id: string, data: any, isTrial?: boolean) => {
   const isTrialSession = isTrial !== undefined ? isTrial : (localStorage.getItem('is_trial_session') === 'true');
   const table = isTrialSession ? 'trial_championships' : 'championships';
-  return await supabase.from(table).update(data).eq('id', id);
+
+  const realCols = [
+    'name', 'branch', 'status', 'current_round', 'total_rounds', 'config',
+    'initial_financials', 'initial_market_data', 'market_indicators', 'tutor_id',
+    'deadline_value', 'deadline_unit', 'description', 'gazeta_mode', 'transparency_level',
+    'observers', 'round_started_at', 'is_public', 'dividend_percent', 'ecosystem_config',
+    'is_trial', 'initial_share_price', 'starting_mode',
+    'products', 'resources', 'team_fee', 'start_date', 'end_date', 'sector', 'master_key_enabled', 'kpis'
+  ];
+
+  // Buscamos a configuração existente para fazer o merge correto
+  const { data: currentChamp } = await supabase
+    .from(table)
+    .select('config')
+    .eq('id', id)
+    .maybeSingle();
+
+  let existingConfig = currentChamp?.config || {};
+  if (typeof existingConfig === 'string') {
+    try {
+      existingConfig = JSON.parse(existingConfig);
+    } catch (e) {
+      existingConfig = {};
+    }
+  }
+
+  const finalPayload: any = {};
+  const newConfig = { ...existingConfig };
+
+  Object.keys(data).forEach(key => {
+    if (realCols.includes(key)) {
+      if (key === 'config') {
+        Object.assign(newConfig, data[key]);
+      } else {
+        finalPayload[key] = data[key];
+      }
+    } else {
+      // Campos virtuais de transporte (como round_rules, region_configs, etc.) vão para dentro do JSONB config
+      newConfig[key] = data[key];
+    }
+  });
+
+  // Higienização fiduciária: remove chaves que correspondem a colunas reais para evitar redundâncias no banco
+  realCols.forEach(col => {
+    if (col !== 'config') {
+      delete newConfig[col];
+    }
+  });
+
+  finalPayload.config = newConfig;
+
+  return await supabase.from(table).update(finalPayload).eq('id', id);
 };
 
 export const updatePageContent = async (slug: string, lang: string, content: any) => {
