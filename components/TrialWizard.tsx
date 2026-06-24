@@ -1692,19 +1692,8 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                     />
                   </div>
 
-                  {/* LINHA 3: Tempo Round (horas), Total de Rounds, Modelo Contábil / Setorial */}
-                  <div className="grid grid-cols-1 md:grid-cols-[120px_120px_1fr] gap-6 md:gap-8">
-                    <WizardField
-                      label="TEMPO ROUND"
-                      type="number"
-                      val={tutorConfig.round_duration}
-                      onChange={(v: any) =>
-                        setTutorConfig({
-                          ...tutorConfig,
-                          round_duration: parseInt(v) || 1,
-                        })
-                      }
-                    />
+                  {/* LINHA 3: Rounds, Tempo Round, Unidade Tempo, Modelo Contábil / Setorial */}
+                  <div className="grid grid-cols-1 md:grid-cols-[120px_120px_220px_1fr] gap-6 md:gap-8">
                     <WizardField
                       label="ROUNDS"
                       type="number"
@@ -1719,6 +1708,23 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                         })
                       }
                     />
+                    <WizardField
+                      label="TEMPO ROUND"
+                      type="number"
+                      val={1}
+                      isLocked={true}
+                      onChange={() => {}}
+                    />
+                    <div className="space-y-1.5 text-left group">
+                      <label className="text-[10px] font-black uppercase text-slate-500 tracking-[0.2em] ml-1 italic">
+                        UNIDADE TEMPO
+                      </label>
+                      <input
+                        className="w-full bg-slate-950/40 border-2 border-white/5 rounded-2xl px-5 py-3 text-sm font-bold text-slate-500 outline-none cursor-not-allowed font-mono"
+                        value="HORAS"
+                        readOnly
+                      />
+                    </div>
                     <WizardSelect
                       label="MODELO CONTÁBIL / SETORIAL"
                       val={tutorConfig.accounting_template_id}

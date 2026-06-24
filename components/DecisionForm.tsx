@@ -322,7 +322,7 @@ const DecisionForm: React.FC<{
   };
 
   const executeSaveDecisions = async () => {
-    if (!teamId || !champId || isReadOnly) return;
+    if (!teamId || !champId || isReadOnly || !!activeArena?.config?.is_paused) return;
     setIsSaving(true);
     try {
       const res = await saveDecisions(teamId, champId, round, decisions) as any;
@@ -339,7 +339,7 @@ const DecisionForm: React.FC<{
   };
 
   const handleTransmit = async () => {
-    if (!teamId || !champId || isReadOnly) return;
+    if (!teamId || !champId || isReadOnly || !!activeArena?.config?.is_paused) return;
 
     const machines = projections?.kpis?.machines || [];
     const specs = currentMacro?.machine_specs as any;
@@ -517,14 +517,14 @@ const DecisionForm: React.FC<{
             <button
                type="button"
                onClick={handleTransmit}
-               disabled={isSaving || isReadOnly || isExpiredWaiting}
+               disabled={isSaving || isReadOnly || isExpiredWaiting || !!activeArena?.config?.is_paused}
                className={`px-6 py-2 rounded-xl font-black text-[9px] uppercase tracking-[0.15em] transition-all flex items-center gap-2 active:scale-95 group ${
-                 (isReadOnly || isExpiredWaiting)
+                 (isReadOnly || isExpiredWaiting || !!activeArena?.config?.is_paused)
                    ? 'bg-slate-800 text-slate-500 border border-white/5 cursor-not-allowed shadow-none'
                    : 'bg-emerald-600 text-white hover:bg-white hover:text-emerald-950 shadow-2xl shadow-emerald-600/20 cursor-pointer'
                }`}
             >
-               {isSaving ? <Loader2 size={14} className="animate-spin" /> : <Rocket size={14} className="group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />} {isExpiredWaiting ? 'Aguardando Turnover' : 'Transmitir Decisão'}
+               {isSaving ? <Loader2 size={14} className="animate-spin" /> : <Rocket size={14} className="group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />} {isExpiredWaiting ? 'Aguardando Turnover' : !!activeArena?.config?.is_paused ? 'Decisões Congeladas' : 'Transmitir Decisão'}
             </button>
          </div>
       </header>
@@ -888,9 +888,14 @@ const DecisionForm: React.FC<{
                                   <button 
                                     type="button"
                                     onClick={executeSaveDecisions}
-                                    className="py-3 bg-transparent hover:bg-white/5 text-rose-400 hover:text-rose-300 font-extrabold text-[10px] uppercase tracking-widest rounded-xl transition-all cursor-pointer flex items-center justify-center gap-2 border border-rose-500/20"
+                                    disabled={!!activeArena?.config?.is_paused}
+                                    className={`py-3 font-extrabold text-[10px] uppercase tracking-widest rounded-xl transition-all flex items-center justify-center gap-2 border border-rose-500/20 w-full ${
+                                      !!activeArena?.config?.is_paused
+                                        ? 'bg-slate-800 text-slate-500 cursor-not-allowed border-none'
+                                        : 'bg-transparent hover:bg-white/5 text-rose-400 hover:text-rose-300 cursor-pointer'
+                                    }`}
                                   >
-                                    <Play size={10} /> Transmitir Mesmo Assim
+                                    <Play size={10} /> {!!activeArena?.config?.is_paused ? 'Decisões Congeladas' : 'Transmitir Mesmo Assim'}
                                   </button>
                                 </div>
                               </motion.div>
