@@ -662,6 +662,8 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
     rent_allocation_administrative: 20,
     rent_allocation_sales: 10,
     macroOverrides: {},
+    storage_mp: 2.00,
+    storage_finished: 5.00,
   });
 
   // Salvar/Carregar templates
@@ -1229,6 +1231,8 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
               mp_b: tutorConfig.inventories.mpb_unit_val ?? 40.0,
               distribution_unit: tutorConfig.regions[0]?.distribution_cost ?? 50.0,
               marketing_campaign: tutorConfig.regions[0]?.marketing_cost ?? 10000.0,
+              storage_mp: tutorConfig.storage_mp !== undefined ? tutorConfig.storage_mp : DEFAULT_MACRO.prices.storage_mp,
+              storage_finished: tutorConfig.storage_finished !== undefined ? tutorConfig.storage_finished : DEFAULT_MACRO.prices.storage_finished,
             },
             machinery_values: {
               alpha: tutorConfig.machines[0]?.price ?? 500000.0,
@@ -3350,7 +3354,7 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                   {/* VALOR DE MATÉRIA PRIMA */}
                   <div className="space-y-6 bg-slate-900/60 p-8 rounded-[3rem] border border-white/5 shadow-2xl relative">
                     <h4 className="text-[10px] font-black text-blue-500 uppercase tracking-[0.4em] italic border-b border-white/5 pb-4">
-                      Carga De Estoques P0
+                      Carga De Estoques R-0
                     </h4>
                     <div className="grid grid-cols-2 gap-4">
                       <WizardField
@@ -3375,7 +3379,7 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                         }
                       />
                       <WizardField
-                        label="PREÇO UN MPA"
+                        label="PREÇO MP-A (UN)"
                         type="number"
                         isLocked={false}
                         val={
@@ -3415,7 +3419,7 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                         }
                       />
                       <WizardField
-                        label="PREÇO UN MPB"
+                        label="PREÇO MP-B (UN)"
                         type="number"
                         isLocked={false}
                         val={
@@ -3434,7 +3438,7 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                       <WizardField
-                        label="PA ACABADO"
+                        label="QTD. PA"
                         type="number"
                         isLocked={
                           tutorConfig.starting_mode === "start_from_zero"
@@ -3455,7 +3459,7 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                         }
                       />
                       <WizardField
-                        label="CUSTO UN PA"
+                        label="CUSTO PA (UN)"
                         type="number"
                         isLocked={
                           tutorConfig.starting_mode === "start_from_zero"
@@ -3476,6 +3480,34 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                         }
                       />
                     </div>
+                    {tutorConfig.starting_mode === "start_from_zero" && (
+                      <div className="grid grid-cols-2 gap-4">
+                        <WizardField
+                          label="CUSTO ESTOCAGEM MP (UN)"
+                          type="number"
+                          isLocked={false}
+                          val={tutorConfig.storage_mp ?? 2.0}
+                          onChange={(v: any) =>
+                            setTutorConfig({
+                              ...tutorConfig,
+                              storage_mp: parseFloat(v) || 0,
+                            })
+                          }
+                        />
+                        <WizardField
+                          label="CUSTO ESTOCAGEM PA (UN)"
+                          type="number"
+                          isLocked={false}
+                          val={tutorConfig.storage_finished ?? 5.0}
+                          onChange={(v: any) =>
+                            setTutorConfig({
+                              ...tutorConfig,
+                              storage_finished: parseFloat(v) || 0,
+                            })
+                          }
+                        />
+                      </div>
+                    )}
                   </div>
 
                   {/* ACIONISTAS E TRIBUTÁRIOS */}

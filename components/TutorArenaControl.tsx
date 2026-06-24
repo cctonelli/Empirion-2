@@ -27,6 +27,9 @@ const TutorArenaControl: React.FC<{ championship: Championship; onUpdate: (confi
   const [newRegionName, setNewRegionName] = useState('');
   const [newRegionCurrency, setNewRegionCurrency] = useState('BRL');
   const [newRegionWeight, setNewRegionWeight] = useState(25);
+  const [newRegionSuggestedPrice, setNewRegionSuggestedPrice] = useState<number>(425.0);
+  const [newRegionDistributionCost, setNewRegionDistributionCost] = useState<number>(50.0);
+  const [newRegionMarketingCost, setNewRegionMarketingCost] = useState<number>(10000.0);
 
   const nextRoundIdx = (currentChampionship.current_round || 0) + 2;
 
@@ -158,13 +161,16 @@ const TutorArenaControl: React.FC<{ championship: Championship; onUpdate: (confi
       name: newRegionName.trim().toUpperCase(),
       currency: newRegionCurrency,
       demand_weight: newRegionWeight,
-      suggested_price: 425.0,
-      distribution_cost: 50.0,
-      marketing_cost: 10000.0
+      suggested_price: newRegionSuggestedPrice,
+      distribution_cost: newRegionDistributionCost,
+      marketing_cost: newRegionMarketingCost
     };
     setRegionsList([...regionsList, newReg]);
     setNewRegionName('');
     setNewRegionWeight(25);
+    setNewRegionSuggestedPrice(425.0);
+    setNewRegionDistributionCost(50.0);
+    setNewRegionMarketingCost(10000.0);
   };
 
   const handleDeleteRegion = (id: number) => {
@@ -458,6 +464,21 @@ const TutorArenaControl: React.FC<{ championship: Championship; onUpdate: (confi
                                   <div>
                                      <label className="text-[9px] font-black uppercase text-slate-500 block mb-1">Peso (%)</label>
                                      <input type="number" value={newRegionWeight} onChange={e => setNewRegionWeight(parseInt(e.target.value) || 0)} className="w-full bg-slate-900 border border-white/10 rounded-xl px-3 py-1.5 text-xs text-white font-mono outline-none focus:border-orange-500" />
+                                  </div>
+                               </div>
+
+                               <div className="grid grid-cols-3 gap-2">
+                                  <div>
+                                     <label className="text-[8px] font-black uppercase text-slate-500 block mb-1">Preço Sugerido ($)</label>
+                                     <input type="number" step="0.1" value={newRegionSuggestedPrice} onChange={e => setNewRegionSuggestedPrice(parseFloat(e.target.value) || 0)} className="w-full bg-slate-900 border border-white/5 rounded-xl px-2 py-1.5 text-[10px] font-mono font-bold text-white outline-none focus:border-orange-500 transition-colors" />
+                                  </div>
+                                  <div>
+                                     <label className="text-[8px] font-black uppercase text-slate-500 block mb-1">Custo Frete ($)</label>
+                                     <input type="number" step="0.1" value={newRegionDistributionCost} onChange={e => setNewRegionDistributionCost(parseFloat(e.target.value) || 0)} className="w-full bg-slate-900 border border-white/5 rounded-xl px-2 py-1.5 text-[10px] font-mono font-bold text-white outline-none focus:border-orange-500 transition-colors" />
+                                  </div>
+                                  <div>
+                                     <label className="text-[8px] font-black uppercase text-slate-500 block mb-1">Mkt Base ($)</label>
+                                     <input type="number" step="100" value={newRegionMarketingCost} onChange={e => setNewRegionMarketingCost(parseFloat(e.target.value) || 0)} className="w-full bg-slate-900 border border-white/5 rounded-xl px-2 py-1.5 text-[10px] font-mono font-bold text-white outline-none focus:border-orange-500 transition-colors" />
                                   </div>
                                </div>
                             </div>

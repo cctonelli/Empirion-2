@@ -153,6 +153,10 @@ export interface BaseP0Config {
   custom_pecld_val?: number;
   wip_stock_value?: number;
 
+  // Custos de estocagem customizados (v2026)
+  storage_mp?: number;
+  storage_finished?: number;
+
   // Step 6: Overrides
   macroOverrides: Record<string, any>;
 

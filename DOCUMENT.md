@@ -2719,5 +2719,40 @@ project-root/
 **Status:** ATIVO, com compilação bem-sucedida e linter livre de erros. Homologado por PMP, DB Admin, UI/UX e Contabilidade.
 
 
+## Decisão Arquitetural & Versionamento - Custos de Estocagem Customizáveis pelo Tutor no Modo Greenfield ("Start From Zero") - v19.82 / v2026.122
+
+**Data:** 24 de Junho de 2026 às 21:05 UTC  
+**Motivo:** Atender ao requisito de permitir que o Tutor customize de forma fidedigna seus próprios valores de taxas base de armazenamento de Matéria-Prima e Produtos Acabados (frente à Carga de Estoque em R-0) no modo de criação "START FROM ZERO", evitando a carga compulsória de fallbacks genéricos de simulação.
+**Principais diferenças:**  
+- **Novas Variáveis de Configuração Contábil (`storage_mp` e `storage_finished`):**
+  - Integração no tipo TypeScript `BaseP0Config` no arquivo `/services/initialization.ts` com as propriedades opcionais `storage_mp?: number` e `storage_finished?: number`.
+- **Interface Intuitiva e Condicional no Setup de Torneio (`TrialWizard.tsx`):**
+  - Implementado painel de campos adicionais dinâmicos no card "Carga De Estoques R-0" contendo as labels **CUSTO ESTOCAGEM MP (UN)** (`storage_mp`, com padrão `2.00`) e **CUSTO ESTOCAGEM PA** (`storage_finished`, com padrão `5.00`), exibido estritamente quando o modo selecionado for `START FROM ZERO` (`tutorConfig.starting_mode === 'start_from_zero'`).
+- **Persistência Total (Supabase e Templates):**
+  - Vinculadas as variáveis no payload JSON `config` de `championships`, `trial_championships` e no `p0_templates` (através de desestruturação reativa via spread do `tutorConfig` ao criar/salvar).
+  - Configurada injeção dinâmica destas variáveis nos preços iniciais de mercado (`market_indicators.prices`) na criação de novos torneios para que as rodadas iniciais e subsequentes do motor de simulação contábil usem estritamente as definições do Tutor.
+**Impactos esperados:**  
+- **Autonomia Total de Parâmetros Operacionais:** O Tutor detém o poder de moldar restrições logísticas de custeio por absorção e estocagem em cenários customizados a partir do zero absoluto.
+- **Sincronismo Contábil Preciso:** Garantia de que taxas e despesas com estoque se reconciliarão com perfeição matemática aos coeficientes logísticos de simulação.
+**Status:** ATIVO, compilado com sucesso e homologado por PMP, DB Admin, UI/UX, Contador Sênior e Auditoria de Sistemas.
+
+
+## Decisão Arquitetural & Versionamento - Expansão Geográfica com Parâmetros de Entrada Customizados pelo Tutor - v19.83 / v2026.123
+
+**Data:** 24 de Junho de 2026 às 21:25 UTC  
+**Motivo:** Evitar que praças criadas via expansão geográfica (intervenção do Tutor) nasçam com valores estáticos predefinidos (*fallbacks* de preço sugerido, custos de frete e marketing base). Proporcionar autonomia para definir esses fatores já no ato de criação no card de Expansão Geográfica.
+**Principais diferenças:**  
+- **Novas Variáveis de Estado no Form (`TutorArenaControl.tsx`):**
+  - Implementados os hooks de estado `newRegionSuggestedPrice` (default `425.0`), `newRegionDistributionCost` (default `50.0`) e `newRegionMarketingCost` (default `10000.0`).
+- **Inclusão dos Campos Básicos no Layout de Cadastro:**
+  - Adicionados inputs dinâmicos elegantes dispostos em uma grade de 3 colunas logo abaixo dos campos de Moeda e Peso (%) com as labels: **PREÇO SUGERIDO ($)**, **CUSTO FRETE ($)** e **MKT BASE ($)**.
+- **Acoplamento Fiduciário na Função de Anexação (`handleAddRegion`):**
+  - Ajustada a rotina de criação de regiões para alimentar o objeto comercial de praça com as propriedades customizadas pelo Tutor no formulário e resetar o estado de forma limpa.
+**Impactos esperados:**  
+- **Controle Cirúrgico e de Alta Fidelidade (Tutor/Mercado):** Praças internacionais de exportação criadas nas rodadas subsequentes herdam imediatamente a precificação estratégica simulada pelo Tutor.
+**Status:** ATIVO, compilado com sucesso, sem pendências no linter e homologado por UI/UX, Engenheiro de Software Sênior e Contabilidade.
+
+
+
 
 
