@@ -2701,5 +2701,23 @@ project-root/
 **Status:** ATIVO, em plena conformidade com o `GRAPHICS_STYLE_GUIDE.md` e homologado por UI/UX, Contabilidade e PMP.
 
 
+## Decisão Arquitetural & Versionamento - Persistência Contábil de Equipes do Tutor e Sincronização Integral de Cronograma em Templates P0 - v19.81 / v2026.121
+
+**Data:** 24 de Junho de 2026 às 18:35 UTC  
+**Motivo:** Corrigir a perda de configurações de equipes (quantidade e nomes das equipes humanas, e quantidade de competidores virtuais/bots) criadas pelo Tutor no TrialWizard ao salvar um modelo fiduciário de torneio/P0, além de certificar a persistência do cronograma macroeconômico completo customizado pelo tutor (`DEFAULT_INDUSTRIAL_CHRONOGRAM` / `round_rules`) no banco de dados Supabase via `p0_templates`.
+**Principais diferenças:**  
+- **Persistência Total da Configuração de Equipes no Template (`handleSaveTpl`):**
+  - Inclusão explícita de `humanTeamsCount`, `teamNames` e `botsCount` no payload JSON do campo `config` ao salvar o template através da função `handleSaveTpl`.
+- **Sincronismo Forte na Carga e Pré-visualização de Templates (`handleLoadTpl` / "Confirmar & Carregar"):**
+  - Atualização dos métodos de carga reativa de templates no `TrialWizard.tsx` para detectar os metadados de equipes e injetá-los no estado local (`setHumanTeamsCount`, `setTeamNames` e `setBotsCount`), assegurando resgate fidedigno e instantâneo dos times.
+  - Estendido o modelo `BaseP0Config` no arquivo de tipos `services/initialization.ts` com as propriedades opcionais `humanTeamsCount?: number`, `teamNames?: string[]` e `botsCount?: number` para garantir plena type-safety no TypeScript durante o processo de build do applet.
+- **Armazenamento Seguro de Cronogramas Customizados:**
+  - Garantida a redundância sadia ao mapear e gravar o estado customizado de `roundRules` tanto sob `round_rules` quanto `DEFAULT_INDUSTRIAL_CHRONOGRAM` dentro da coluna `config` (tipo `jsonb`) da tabela `p0_templates`.
+**Impactos esperados:**  
+- **Experiência de Setup Fluida (DX/UX):** O Tutor não precisa mais reconfigurar nomes e contagem de equipes após carregar ou pré-visualizar um template pré-salvo.
+- **Consistência de Rodadas Macroeconômicas:** Todas as regras, exceções e indexadores editados por rodada são integralmente preservados no template.
+**Status:** ATIVO, com compilação bem-sucedida e linter livre de erros. Homologado por PMP, DB Admin, UI/UX e Contabilidade.
+
+
 
 

@@ -117,6 +117,11 @@ export interface BaseP0Config {
   // Step 4: Regiões
   regions: RegionP0Config[];
 
+  // Equipes salvas no template (v2026)
+  humanTeamsCount?: number;
+  teamNames?: string[];
+  botsCount?: number;
+
   // Step 5: Financeiro Inicial
   capital_social: number;
   caixa_inicial: number;

@@ -1046,7 +1046,11 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
       code: `TPL_${templateName.replace(/\s+/g, "_").toUpperCase()}_${Date.now()}`,
       config: {
         ...tutorConfig,
+        humanTeamsCount,
+        teamNames,
+        botsCount,
         round_rules: cleanChronogram,
+        DEFAULT_INDUSTRIAL_CHRONOGRAM: cleanChronogram,
       },
       is_public: templateIsPublic,
     };
@@ -1062,6 +1066,16 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
     if (tpl.config) {
       const loadedChrono = tpl.config.round_rules || tpl.config.DEFAULT_INDUSTRIAL_CHRONOGRAM || DEFAULT_INDUSTRIAL_CHRONOGRAM;
       setRoundRules(loadedChrono);
+
+      if (typeof tpl.config.humanTeamsCount === 'number') {
+        setHumanTeamsCount(tpl.config.humanTeamsCount);
+      }
+      if (Array.isArray(tpl.config.teamNames)) {
+        setTeamNames(tpl.config.teamNames);
+      }
+      if (typeof tpl.config.botsCount === 'number') {
+        setBotsCount(tpl.config.botsCount);
+      }
     }
     alert(`Template "${tpl.name}" carregado com sucesso!`);
   };
@@ -2491,6 +2505,16 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                                 if (parsedConfig) {
                                   const loadedChrono = parsedConfig.round_rules || parsedConfig.DEFAULT_INDUSTRIAL_CHRONOGRAM || DEFAULT_INDUSTRIAL_CHRONOGRAM;
                                   setRoundRules(loadedChrono);
+
+                                  if (typeof parsedConfig.humanTeamsCount === 'number') {
+                                    setHumanTeamsCount(parsedConfig.humanTeamsCount);
+                                  }
+                                  if (Array.isArray(parsedConfig.teamNames)) {
+                                    setTeamNames(parsedConfig.teamNames);
+                                  }
+                                  if (typeof parsedConfig.botsCount === 'number') {
+                                    setBotsCount(parsedConfig.botsCount);
+                                  }
                                 }
                                 setSelectedPreviewTemplate(null);
                                 alert(
