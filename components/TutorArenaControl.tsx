@@ -28,11 +28,11 @@ const TutorArenaControl: React.FC<{ championship: Championship; onUpdate: (confi
   const [newRegionCurrency, setNewRegionCurrency] = useState('BRL');
   const [newRegionWeight, setNewRegionWeight] = useState(25);
 
-  const nextRoundIdx = currentChampionship.current_round + 1;
+  const nextRoundIdx = (currentChampionship.current_round || 0) + 2;
 
   // 1. Memorizar as regras herdadas com mesclagem profunda segura
   const inheritedRules = useMemo(() => {
-     const rules = currentChampionship.round_rules?.[nextRoundIdx] || {};
+     const rules = currentChampionship.round_rules?.[nextRoundIdx] || currentChampionship.config?.round_rules?.[nextRoundIdx] || {};
      const chronogramRules = DEFAULT_INDUSTRIAL_CHRONOGRAM[nextRoundIdx] || {};
      const baseIndicators = currentChampionship.market_indicators || {};
      
@@ -121,7 +121,13 @@ const TutorArenaControl: React.FC<{ championship: Championship; onUpdate: (confi
     setMacro(inheritedRules);
     setObserversList(currentChampionship.observers || []);
 
-    const list = currentChampionship.config?.regions || currentChampionship.config?.region_configs || currentChampionship.region_configs || [];
+    const list = currentChampionship.round_rules?.[nextRoundIdx]?.regions || 
+                 currentChampionship.round_rules?.[nextRoundIdx]?.region_configs ||
+                 currentChampionship.config?.round_rules?.[nextRoundIdx]?.regions ||
+                 currentChampionship.config?.round_rules?.[nextRoundIdx]?.region_configs ||
+                 currentChampionship.config?.regions || 
+                 currentChampionship.config?.region_configs || 
+                 currentChampionship.region_configs || [];
     if (list.length > 0) {
        setRegionsList(list);
     } else {
