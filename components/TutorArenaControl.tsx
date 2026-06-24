@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useMemo } from 'react';
 import { 
   Zap, Globe, Shield, TrendingUp, Save, RefreshCw, 
@@ -23,29 +22,84 @@ const TutorArenaControl: React.FC<{ championship: Championship; onUpdate: (confi
   const [hasDecisions, setHasDecisions] = useState(false);
   const [newObserverId, setNewObserverId] = useState('');
   const [observersList, setObserversList] = useState<string[]>(championship.observers || []);
-  
+
+  const [regionsList, setRegionsList] = useState<any[]>([]);
+  const [newRegionName, setNewRegionName] = useState('');
+  const [newRegionCurrency, setNewRegionCurrency] = useState('BRL');
+  const [newRegionWeight, setNewRegionWeight] = useState(25);
+
   const nextRoundIdx = currentChampionship.current_round + 1;
+
+  // 1. Memorizar as regras herdadas com mesclagem profunda segura
   const inheritedRules = useMemo(() => {
      const rules = currentChampionship.round_rules?.[nextRoundIdx] || {};
      const chronogramRules = DEFAULT_INDUSTRIAL_CHRONOGRAM[nextRoundIdx] || {};
+     const baseIndicators = currentChampionship.market_indicators || {};
      
-     if (currentChampionship.starting_mode === 'start_from_zero') {
-        // Para "START FROM ZERO", priorizamos totalmente os indicadores customizados da arena,
-        // usando o cronograma padrão apenas como preenchimento secundário para dados ausentes.
-        return { ...chronogramRules, ...currentChampionship.market_indicators, ...rules };
-     }
-     
-     return { ...currentChampionship.market_indicators, ...chronogramRules, ...rules };
+     const isZeroMode = currentChampionship.starting_mode === 'start_from_zero';
+     const firstSource = isZeroMode ? chronogramRules : baseIndicators;
+     const secondSource = isZeroMode ? baseIndicators : chronogramRules;
+
+     const merged: MacroIndicators = {
+        ...DEFAULT_MACRO,
+        ...firstSource,
+        ...secondSource,
+        ...rules,
+        
+        prices: {
+           ...DEFAULT_MACRO.prices,
+           ...(firstSource.prices || {}),
+           ...(secondSource.prices || {}),
+           ...(rules.prices || {})
+        },
+        machinery_values: {
+           ...DEFAULT_MACRO.machinery_values,
+           ...(firstSource.machinery_values || {}),
+           ...(secondSource.machinery_values || {}),
+           ...(rules.machinery_values || {})
+        },
+        staffing: {
+           ...DEFAULT_MACRO.staffing,
+           ...(firstSource.staffing || {}),
+           ...(secondSource.staffing || {}),
+           ...(rules.staffing || {})
+        },
+        hr_base: {
+           ...DEFAULT_MACRO.hr_base,
+           ...(firstSource.hr_base || {}),
+           ...(secondSource.hr_base || {}),
+           ...(rules.hr_base || {})
+        },
+        award_values: {
+           ...DEFAULT_MACRO.award_values,
+           ...(firstSource.award_values || {}),
+           ...(secondSource.award_values || {}),
+           ...(rules.award_values || {})
+        },
+        exchange_rates: {
+           ...DEFAULT_MACRO.exchange_rates,
+           ...(firstSource.exchange_rates || {}),
+           ...(secondSource.exchange_rates || {}),
+           ...(rules.exchange_rates || {})
+        },
+        machine_specs: {
+           ...DEFAULT_MACRO.machine_specs,
+           ...(firstSource.machine_specs || {}),
+           ...(secondSource.machine_specs || {}),
+           ...(rules.machine_specs || {})
+        }
+     };
+
+     return merged;
   }, [currentChampionship, nextRoundIdx]);
 
   const [macro, setMacro] = useState<MacroIndicators>(inheritedRules);
 
-  // States para a calculadora de paridade interna
   const [calcValue, setCalcValue] = useState(100);
   const [calcFrom, setCalcFrom] = useState<string>('USD');
   const [calcTo, setCalcTo] = useState<string>(championship.currency || 'BRL');
 
-  // Busca reativa dos dados mais recentes da arena no Supabase
+  // Sincronização reativa e carga segura das regiões reais configuradas
   useEffect(() => {
     const fetchLatestChampionship = async () => {
       const table = championship.is_trial ? 'trial_championships' : 'championships';
@@ -66,6 +120,19 @@ const TutorArenaControl: React.FC<{ championship: Championship; onUpdate: (confi
   useEffect(() => {
     setMacro(inheritedRules);
     setObserversList(currentChampionship.observers || []);
+
+    const list = currentChampionship.config?.regions || currentChampionship.config?.region_configs || currentChampionship.region_configs || [];
+    if (list.length > 0) {
+       setRegionsList(list);
+    } else {
+       setRegionsList([
+         { id: 1, name: "BRASIL (LOCAL)", currency: "BRL", demand_weight: 40, suggested_price: 425.0, distribution_cost: 50.0, marketing_cost: 10000.0 },
+         { id: 2, name: "EUA (EXPORT)", currency: "USD", demand_weight: 20, suggested_price: 425.0, distribution_cost: 50.0, marketing_cost: 10000.0 },
+         { id: 3, name: "EUROPA (EXPORT)", currency: "EUR", demand_weight: 20, suggested_price: 425.0, distribution_cost: 50.0, marketing_cost: 10000.0 },
+         { id: 4, name: "CHINA (EXPORT)", currency: "CNY", demand_weight: 20, suggested_price: 425.0, distribution_cost: 50.0, marketing_cost: 10000.0 }
+       ]);
+    }
+
     const checkDecisions = async () => {
         const table = currentChampionship.is_trial ? 'trial_decisions' : 'current_decisions';
         const { count } = await supabase.from(table).select('*', { count: 'exact', head: true }).eq('championship_id', currentChampionship.id).eq('round', nextRoundIdx);
@@ -74,327 +141,484 @@ const TutorArenaControl: React.FC<{ championship: Championship; onUpdate: (confi
     checkDecisions();
   }, [inheritedRules, currentChampionship.id, nextRoundIdx, currentChampionship.observers]);
 
+  const handleAddRegion = () => {
+    if (!newRegionName.trim()) {
+      alert("Por favor, digite o nome da nova praça comercial.");
+      return;
+    }
+    const newId = regionsList.length > 0 ? Math.max(...regionsList.map(r => r.id)) + 1 : 1;
+    const newReg = {
+      id: newId,
+      name: newRegionName.trim().toUpperCase(),
+      currency: newRegionCurrency,
+      demand_weight: newRegionWeight,
+      suggested_price: 425.0,
+      distribution_cost: 50.0,
+      marketing_cost: 10000.0
+    };
+    setRegionsList([...regionsList, newReg]);
+    setNewRegionName('');
+    setNewRegionWeight(25);
+  };
+
+  const handleDeleteRegion = (id: number) => {
+    if (regionsList.length <= 1) {
+      alert("A arena de torneio precisa reter no mínimo 1 praça comercial ativa.");
+      return;
+    }
+    const targetReg = regionsList.find(r => r.id === id);
+    if (confirm(`Remover praça '${targetReg?.name}'? Todas as decisões de marketing enviadas para esta praça perderão as configurações associadas.`)) {
+      setRegionsList(regionsList.filter(r => r.id !== id));
+    }
+  };
+
+  const handleUpdateRegionField = (id: number, field: string, val: any) => {
+    setRegionsList(prev => prev.map(r => r.id === id ? { ...r, [field]: val } : r));
+  };
+
   const handleSave = async () => {
     setIsSaving(true);
-    const payload = { 
-      market_indicators: macro,
-      observers: observersList,
-      round_rules: {
-        ...(currentChampionship.round_rules || {}),
-        [nextRoundIdx]: macro
+    
+    // Assegura retrocompatibilidade injetando o primeiro registro de praça na raiz das variáveis do macro global
+    const primaryRegion = regionsList[0] || { suggested_price: 425.0, distribution_cost: 50.0, marketing_cost: 10000.0 };
+    
+    const finalMacro = {
+      ...macro,
+      avg_selling_price: primaryRegion.suggested_price,
+      prices: {
+        ...macro.prices,
+        distribution_unit: primaryRegion.distribution_cost,
+        marketing_campaign: primaryRegion.marketing_cost
       }
     };
-    await updateEcosystem(currentChampionship.id, payload, !!currentChampionship.is_trial);
-    onUpdate(payload);
-    
-    // Atualiza o estado local reativamente
-    setCurrentChampionship(prev => ({
-      ...prev,
-      ...payload
-    }));
-    
-    setIsSaving(false);
-    alert(`INTERVENÇÃO EXECUTADA: Cenário e Câmbio P0${nextRoundIdx} selados no Oracle Node.`);
+
+    const payload = { 
+      market_indicators: finalMacro,
+      observers: observersList,
+      config: {
+        ...(currentChampionship.config || {}),
+        regions: regionsList,
+        region_configs: regionsList.map(r => ({
+           id: r.id,
+           name: r.name,
+           currency: r.currency,
+           demand_weight: r.demand_weight,
+           suggested_price: r.suggested_price,
+           distribution_cost: r.distribution_cost,
+           marketing_cost: r.marketing_cost
+        }))
+      },
+      round_rules: {
+        ...(currentChampionship.round_rules || {}),
+        [nextRoundIdx]: {
+           ...finalMacro,
+           regions: regionsList,
+           region_configs: regionsList.map(r => ({
+              id: r.id,
+              name: r.name,
+              currency: r.currency,
+              demand_weight: r.demand_weight,
+              suggested_price: r.suggested_price,
+              distribution_cost: r.distribution_cost,
+              marketing_cost: r.marketing_cost
+           }))
+        }
+      }
+    };
+
+    try {
+      await updateEcosystem(currentChampionship.id, payload, !!currentChampionship.is_trial);
+      onUpdate(payload);
+      
+      // Atualiza estado local de visualização reativa instantaneamente
+      setCurrentChampionship(prev => ({
+        ...prev,
+        ...payload
+      }));
+      
+      alert(`CONEXÃO ESTABELECIDA: Alterações no mercado e regiões do R-${nextRoundIdx} propagadas com sucesso.`);
+    } catch (err: any) {
+      alert(`Falha no salvamento: ${err.message}`);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
-  const calculateCrossRate = (val: number, from: string, to: string) => {
-     const baseCurrency = currentChampionship.currency || 'BRL';
-     const rates: any = { ...macro.exchange_rates, [baseCurrency]: 1.0 };
-     const fromRate = rates[from] || 1.0;
-     const toRate = rates[to] || 1.0;
-     return (val * fromRate) / toRate;
-  };
-
-  const addObserver = () => {
+  const handleAddObserver = () => {
     if (!newObserverId.trim()) return;
-    if (observersList.includes(newObserverId.trim())) return;
+    if (observersList.includes(newObserverId.trim())) {
+      alert("Este observador já está registrado na arena.");
+      return;
+    }
     setObserversList([...observersList, newObserverId.trim()]);
     setNewObserverId('');
   };
 
-  const removeObserver = (id: string) => {
-    setObserversList(observersList.filter(o => o !== id));
+  const handleRemoveObserver = (obs: string) => {
+    setObserversList(observersList.filter(o => o !== obs));
   };
 
+  const totalDemandWeights = regionsList.reduce((sum, r) => sum + (Number(r.demand_weight) || 0), 0);
+
   return (
-    <div className="space-y-12 animate-in fade-in duration-700 pb-20 relative z-10">
-      
-      <div className={`p-8 rounded-[3rem] border flex flex-col md:flex-row items-center justify-between shadow-2xl transition-all gap-6 ${hasDecisions ? 'bg-indigo-600/10 border-indigo-500/30' : 'bg-slate-900/40 border-white/5'}`}>
-         <div className="flex items-center gap-6">
-            <div className={`w-16 h-16 rounded-2xl flex items-center justify-center shadow-lg ${hasDecisions ? 'bg-indigo-600 text-white animate-pulse' : 'bg-slate-800 text-slate-500'}`}>
-               <BrainCircuit size={32}/>
-            </div>
-            <div>
-               <div className="flex items-center gap-4 mb-1">
-                  <h4 className="text-xl font-black text-white uppercase italic tracking-tight">
-                     {hasDecisions ? 'Intervenção Tática Ativa' : 'Aguardando Inteligência'}
-                  </h4>
-               </div>
-               <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest mt-1 italic flex items-center gap-2">
-                  {hasDecisions ? <><CheckCircle2 size={12} className="text-emerald-500" /> Equipes já operando. Choques econômicos afetarão o fechamento P0{nextRoundIdx}.</> : <><Info size={12} /> Dados sincronizados do Wizard. Nenhuma equipe enviou decisões ainda.</>}
-               </p>
-            </div>
-         </div>
-         <div className="flex flex-wrap gap-2">
-            <TabBtn active={activeTab === 'conjuncture'} onClick={() => setActiveTab('conjuncture')} label="Conjuntura" icon={<TrendingUp size={14}/>} />
-            <TabBtn active={activeTab === 'suppliers'} onClick={() => setActiveTab('suppliers')} label="Insumos & CAPEX" icon={<Package size={14}/>} />
-            <TabBtn active={activeTab === 'market'} onClick={() => setActiveTab('market')} label="Mercado" icon={<ShoppingCart size={14}/>} />
-            <TabBtn active={activeTab === 'staffing'} onClick={() => setActiveTab('staffing')} label="Staffing" icon={<Briefcase size={14}/>} />
-            <TabBtn active={activeTab === 'awards'} onClick={() => setActiveTab('awards')} label="Premiações" icon={<Award size={14}/>} />
-            <TabBtn active={activeTab === 'international'} onClick={() => setActiveTab('international')} label="Câmbio Oracle" icon={<Globe size={14}/>} />
-            <TabBtn active={activeTab === 'observers'} onClick={() => setActiveTab('observers')} label="Observadores" icon={<Eye size={14}/>} />
-         </div>
-      </div>
+    <div className="space-y-10">
+       <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6 p-8 bg-slate-900/60 rounded-[3rem] border border-white/10 shadow-xl">
+          <div className="space-y-2">
+             <div className="flex items-center gap-3">
+                <span className="flex h-3 w-3 relative">
+                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                   <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
+                </span>
+                <span className="text-[10px] font-black uppercase tracking-[0.25em] text-emerald-400">Canal de Intervenção Ativo</span>
+             </div>
+             <h2 className="text-3xl font-black text-white italic tracking-tight">{currentChampionship.name}</h2>
+             <p className="text-xs text-slate-400 font-medium">Configure os indexadores macroeconômicos e simulações para a rodada <strong className="text-orange-500 font-black">Round {nextRoundIdx}</strong>.</p>
+          </div>
+          <div className="flex items-center gap-4">
+             <ChampionshipTimer 
+                roundStartedAt={currentChampionship.round_started_at}
+                deadlineValue={currentChampionship.deadline_value}
+                deadlineUnit={currentChampionship.deadline_unit}
+                createdAt={currentChampionship.created_at}
+                isPaused={currentChampionship.config?.is_paused}
+                remainingMsAtPause={currentChampionship.config?.remaining_ms_at_pause}
+                isTournamentFinished={(currentChampionship as any).status === 'finished'}
+             />
+          </div>
+       </div>
 
-      <AnimatePresence mode="wait">
-        <motion.div key={activeTab} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}>
-           
-           {activeTab === 'international' && (
-              <div className="space-y-10">
-                 <div className="bg-slate-900 p-10 rounded-[4rem] border border-white/10 shadow-2xl space-y-12 relative overflow-hidden">
-                    <div className="absolute top-0 right-0 p-20 opacity-5 pointer-events-none rotate-12">
-                       <Globe size={300} />
-                    </div>
+       {hasDecisions && (
+          <div className="flex items-center gap-4 p-6 bg-red-950/20 border border-red-500/20 text-red-400 rounded-3xl text-xs font-semibold">
+             <AlertCircle size={18} />
+             <span>Atenção: Já existem decisões enviadas por equipes de estudantes para esta rodada! Alterar as regras do mercado agora pode causar discrepâncias e divergências de cálculo na rodada corrente.</span>
+          </div>
+       )}
 
-                    <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 relative z-10">
-                       <div className="flex items-center gap-6">
-                          <div className="p-4 bg-blue-600 rounded-2xl text-white shadow-xl shadow-blue-500/20"><Globe size={32}/></div>
-                          <div>
-                             <h3 className="text-2xl font-black text-white uppercase italic tracking-tight">Matriz de Paridade Cambial</h3>
-                             <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest mt-1 italic">
-                                Moeda Base da Arena (Pivot Node): <span className="text-orange-500">{championship.currency || 'BRL'}</span>.
-                             </p>
-                          </div>
-                       </div>
-                       <div className="flex items-center gap-3 px-6 py-2 bg-blue-600/10 border border-blue-500/20 text-blue-400 rounded-xl text-[10px] font-black uppercase italic tracking-widest">
-                          <Calculator size={14}/> Oracle Cross-Rate Engine Ativo
-                       </div>
-                    </div>
+       {/* Menu de Abas de Intervenção */}
+       <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-none">
+          <TabBtn active={activeTab === 'conjuncture'} onClick={() => setActiveTab('conjuncture')} label="Conjuntura" icon={<TrendingUp size={12}/>} />
+          <TabBtn active={activeTab === 'suppliers'} onClick={() => setActiveTab('suppliers')} label="Insumos & CAPEX" icon={<Package size={12}/>} />
+          <TabBtn active={activeTab === 'market'} onClick={() => setActiveTab('market')} label="Mercado & Praças" icon={<ShoppingCart size={12}/>} />
+          <TabBtn active={activeTab === 'staffing'} onClick={() => setActiveTab('staffing')} label="Staffing" icon={<Briefcase size={12}/>} />
+          <TabBtn active={activeTab === 'international'} onClick={() => setActiveTab('international')} label="Câmbio Oracle" icon={<Coins size={12}/>} />
+          <TabBtn active={activeTab === 'awards'} onClick={() => setActiveTab('awards')} label="Premiações" icon={<Award size={12}/>} />
+          <TabBtn active={activeTab === 'observers'} onClick={() => setActiveTab('observers')} label="Observadores" icon={<Eye size={12}/>} />
+       </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 relative z-10">
-                       <ParamCard label="Dólar (USD)" val={macro.exchange_rates?.USD || 5.2} suffix={`/${championship.currency}`} onChange={(v: number) => setMacro({...macro, exchange_rates: {...macro.exchange_rates, USD: v}})} icon={<DollarSign className="text-emerald-500" />} />
-                       <ParamCard label="Euro (EUR)" val={macro.exchange_rates?.EUR || 5.5} suffix={`/${championship.currency}`} onChange={(v: number) => setMacro({...macro, exchange_rates: {...macro.exchange_rates, EUR: v}})} icon={<Landmark className="text-blue-500" />} />
-                       <ParamCard label="Yuan (CNY)" val={macro.exchange_rates?.CNY || 0.72} suffix={`/${championship.currency}`} onChange={(v: number) => setMacro({...macro, exchange_rates: {...macro.exchange_rates, CNY: v}})} icon={<Globe className="text-red-400" />} />
-                       <ParamCard label="Bitcoin (BTC)" val={macro.exchange_rates?.BTC || 0.00002} suffix={`/${championship.currency}`} onChange={(v: number) => setMacro({...macro, exchange_rates: {...macro.exchange_rates, BTC: v}})} icon={<Coins className="text-amber-500" />} />
-                    </div>
+       <AnimatePresence mode="wait">
+          <motion.div
+             key={activeTab}
+             initial={{ opacity: 0, y: 15 }}
+             animate={{ opacity: 1, y: 0 }}
+             exit={{ opacity: 0, y: -15 }}
+             transition={{ duration: 0.2 }}
+             className="min-h-[400px]"
+          >
+             {activeTab === 'conjuncture' && (
+                <div className="bg-slate-900 p-10 rounded-[4rem] border border-white/10 shadow-2xl space-y-12">
+                   <h3 className="text-2xl font-black text-white uppercase italic flex items-center gap-4"><TrendingUp className="text-orange-500"/> Conjuntura Macroeconômica</h3>
+                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+                      <ParamCard label="Índice ICE (Confiança)" val={macro.ice} onChange={(v: number) => setMacro({...macro, ice: v})} suffix="pts" icon={<Activity size={16}/>} />
+                      <ParamCard label="Taxa de Inflação" val={macro.inflation_rate} onChange={(v: number) => setMacro({...macro, inflation_rate: v})} suffix="%" icon={<Flame size={16}/>} />
+                      <ParamCard label="Taxa Básica TR" val={macro.interest_rate_tr} onChange={(v: number) => setMacro({...macro, interest_rate_tr: v})} suffix="%" icon={<Landmark size={16}/>} />
+                      <ParamCard label="Retorno dos Investimentos" val={macro.investment_return_rate} onChange={(v: number) => setMacro({...macro, investment_return_rate: v})} suffix="%" icon={<Percent size={16}/>} />
+                      <ParamCard label="Produtividade Média Trab." val={macro.labor_productivity || 1.0} onChange={(v: number) => setMacro({...macro, labor_productivity: v})} suffix="x" icon={<Cpu size={16}/>} />
+                      <ParamCard label="Encargos Sociais" val={macro.social_charges} onChange={(v: number) => setMacro({...macro, social_charges: v})} suffix="%" icon={<Scale size={16}/>} />
+                   </div>
+                </div>
+             )}
 
-                    {/* Simulador de Paridade Cruzada */}
-                    <div className="bg-slate-950/60 p-10 rounded-[3rem] border border-white/5 space-y-8 relative z-10">
-                       <div className="flex items-center gap-4 text-blue-400">
-                          <Calculator size={20} />
-                          <h4 className="text-sm font-black uppercase tracking-widest italic">Simulador de Transação Internacional</h4>
-                       </div>
-                       
-                       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 items-end">
-                          <div className="space-y-3">
-                             <label className="text-[9px] font-black text-slate-600 uppercase italic ml-2">Valor da Ordem</label>
-                             <input type="number" value={calcValue} onChange={e => setCalcValue(Number(e.target.value))} className="w-full bg-slate-900 border border-white/10 rounded-2xl p-4 text-white font-mono font-black outline-none focus:border-blue-500" />
-                          </div>
-                          <div className="space-y-3">
-                             <label className="text-[9px] font-black text-slate-600 uppercase italic ml-2">Moeda de Origem</label>
-                             <select value={calcFrom} onChange={e => setCalcFrom(e.target.value)} className="w-full bg-slate-900 border border-white/10 rounded-2xl p-4 text-white font-black uppercase outline-none focus:border-blue-500">
-                                {Object.keys({...macro.exchange_rates, [championship.currency || 'BRL']: 1}).map(m => <option key={m} value={m}>{m}</option>)}
-                             </select>
-                          </div>
-                          <div className="flex justify-center pb-4 text-slate-700"><Repeat size={24}/></div>
-                          <div className="space-y-3">
-                             <label className="text-[9px] font-black text-slate-600 uppercase italic ml-2">Moeda de Destino</label>
-                             <select value={calcTo} onChange={e => setCalcTo(e.target.value)} className="w-full bg-slate-900 border border-white/10 rounded-2xl p-4 text-white font-black uppercase outline-none focus:border-blue-500">
-                                {Object.keys({...macro.exchange_rates, [championship.currency || 'BRL']: 1}).map(m => <option key={m} value={m}>{m}</option>)}
-                             </select>
-                          </div>
-                       </div>
+             {activeTab === 'suppliers' && (
+                <div className="bg-slate-900 p-10 rounded-[4rem] border border-white/10 shadow-2xl space-y-12">
+                   <h3 className="text-2xl font-black text-white uppercase italic flex items-center gap-4"><Package className="text-orange-500"/> Insumos & CAPEX Máquinas</h3>
+                   <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
+                      <MacroInput label="Preço Matéria-Prima A ($)" val={macro.prices.mp_a} onChange={(v: number) => setMacro({...macro, prices: {...macro.prices, mp_a: v}})} />
+                      <MacroInput label="Preço Matéria-Prima B ($)" val={macro.prices.mp_b} onChange={(v: number) => setMacro({...macro, prices: {...macro.prices, mp_b: v}})} />
+                      <MacroInput label="Premium Pedido Especial (%)" val={macro.special_purchase_premium} onChange={(v: number) => setMacro({...macro, special_purchase_premium: v})} />
+                      <MacroInput label="Custo Estocagem MP ($)" val={macro.prices.storage_mp || 1.40} onChange={(v: number) => setMacro({...macro, prices: {...macro.prices, storage_mp: v}})} />
+                      <MacroInput label="Custo Estocagem Acabado ($)" val={macro.prices.storage_finished || 20.00} onChange={(v: number) => setMacro({...macro, prices: {...macro.prices, storage_finished: v}})} />
+                   </div>
 
-                       <div className="p-8 bg-blue-600/5 border border-blue-500/20 rounded-[2.5rem] flex flex-col md:flex-row justify-between items-center gap-8">
-                          <div className="space-y-2">
-                             <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest italic">Resultado da Conversão Oracle</span>
-                             <div className="text-5xl font-black text-white italic tracking-tighter">
-                                {calcTo} {calculateCrossRate(calcValue, calcFrom, calcTo).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 4 })}
-                             </div>
-                          </div>
-                          <div className="text-right">
-                             <p className="text-[9px] text-blue-300 font-bold uppercase italic leading-relaxed max-w-[300px]">
-                                "O motor Oracle converte {calcFrom} para {championship.currency || 'BRL'} (Base) e depois para {calcTo}. A precisão é vital para o cálculo de margens de Exportação."
-                             </p>
-                          </div>
-                       </div>
-                    </div>
-                 </div>
-              </div>
-           )}
+                   <div className="pt-8 border-t border-white/5 space-y-6">
+                      <h4 className="text-lg font-bold text-white uppercase tracking-wider">Investimento em Ativos Fixos (CAPEX Máquinas)</h4>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                         <MacroInput label="Preço Máquina Alfa ($)" val={macro.machinery_values.alpha} onChange={(v: number) => setMacro({...macro, machinery_values: {...macro.machinery_values, alpha: v}})} />
+                         <MacroInput label="Preço Máquina Beta ($)" val={macro.machinery_values.beta} onChange={(v: number) => setMacro({...macro, machinery_values: {...macro.machinery_values, beta: v}})} />
+                         <MacroInput label="Preço Máquina Gama ($)" val={macro.machinery_values.gamma} onChange={(v: number) => setMacro({...macro, machinery_values: {...macro.machinery_values, gamma: v}})} />
+                      </div>
+                   </div>
+                </div>
+             )}
 
-           {activeTab === 'conjuncture' && (
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-                 <div className="lg:col-span-8 grid grid-cols-1 md:grid-cols-2 gap-8">
-                    <ParamCard label="ICE (Confiança)" val={macro.ice} suffix="%" onChange={(v: number) => setMacro({...macro, ice: v})} icon={<Target className="text-blue-400" />} />
-                    <ParamCard label="Inflação" val={macro.inflation_rate} suffix="%" onChange={(v: number) => setMacro({...macro, inflation_rate: v})} icon={<Flame className="text-orange-500" />} />
-                    <ParamCard label="Taxa TR" val={macro.interest_rate_tr} suffix="%" onChange={(v: number) => setMacro({...macro, interest_rate_tr: v})} icon={<Landmark className="text-emerald-500" />} />
-                    <ParamCard label="Rendimento Aplicação" val={macro.investment_return_rate} suffix="%" onChange={(v: number) => setMacro({...macro, investment_return_rate: v})} icon={<TrendingUp className="text-amber-500" />} />
-                 </div>
-                 <div className="lg:col-span-4 bg-slate-900/50 p-10 rounded-[4rem] border border-white/10 shadow-2xl">
-                    <h3 className="text-xl font-black text-white uppercase italic mb-8 flex items-center gap-3"><Users size={20} className="text-indigo-400"/> Sensibilidade Humana</h3>
-                    <MacroInput dark label="Produtividade Média" val={macro.labor_productivity || 1.0} onChange={(v: number) => setMacro({...macro, labor_productivity: v})} />
-                    <div className="mt-8 space-y-4">
-                       <label className="text-[9px] font-black uppercase tracking-widest text-slate-500 italic">Disponibilidade</label>
-                       <div className="grid grid-cols-3 gap-2">
-                          {['BAIXA', 'MEDIA', 'ALTA'].map(lvl => (
-                             <button key={lvl} onClick={() => setMacro({...macro, labor_availability: lvl as LaborAvailability})} className={`py-3 rounded-xl text-[9px] font-black uppercase border transition-all ${macro.labor_availability === lvl ? 'bg-indigo-600 text-white border-indigo-400' : 'bg-white/5 border-white/10 text-slate-500'}`}>{lvl}</button>
-                          ))}
-                       </div>
-                    </div>
-                    <div className="mt-8">
-                       <MacroInput dark label="Encargos Sociais (%)" val={macro.social_charges || 35.0} onChange={(v: number) => setMacro({...macro, social_charges: v})} />
-                    </div>
-                 </div>
-              </div>
-           )}
+             {activeTab === 'market' && (
+                <div className="bg-slate-900 p-10 rounded-[4rem] border border-white/10 shadow-2xl space-y-12">
+                   <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                      <div className="space-y-1">
+                         <h3 className="text-2xl font-black text-white uppercase italic flex items-center gap-4"><ShoppingCart className="text-orange-500"/> Mercado e Operações Globais</h3>
+                         <p className="text-xs text-slate-400">Configure os indexadores corporativos gerais de comercialização.</p>
+                      </div>
+                      <div className={`text-xs font-black px-4 py-2 rounded-full flex items-center gap-2 ${totalDemandWeights === 100 ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'}`}>
+                         {totalDemandWeights === 100 ? <CheckCircle2 size={14}/> : <AlertCircle size={14}/>}
+                         Soma dos Pesos de Demanda: {totalDemandWeights}% {totalDemandWeights !== 100 && '(Sugerido: 100%)'}
+                      </div>
+                   </div>
 
-           {activeTab === 'observers' && (
-              <div className="bg-slate-900 p-10 rounded-[4rem] border border-white/10 shadow-2xl space-y-12">
-                 <div className="flex items-center gap-6">
-                    <div className="p-4 bg-indigo-600 rounded-2xl text-white shadow-xl shadow-indigo-500/20"><Eye size={32}/></div>
-                    <div>
-                       <h3 className="text-2xl font-black text-white uppercase italic tracking-tight">Observadores Nominados</h3>
-                       <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest mt-1 italic">Conceda acesso de leitura (Audit-Only) a usuários específicos via UUID.</p>
-                    </div>
-                 </div>
+                   <div className="grid grid-cols-1 md:grid-cols-3 gap-10 pb-8 border-b border-white/5">
+                      <MacroInput label="Juros Fornecedor (%)" val={macro.supplier_interest ?? 1.5} onChange={(v: number) => setMacro({...macro, supplier_interest: v})} />
+                      <MacroInput label="Ágio Compulsório (%)" val={macro.compulsory_loan_agio || 3.0} onChange={(v: number) => setMacro({...macro, compulsory_loan_agio: v})} />
+                      <MacroInput label="Variação Demanda Geral (%)" val={macro.demand_variation || 0} onChange={(v: number) => setMacro({...macro, demand_variation: v})} />
+                      <MacroInput label="Multa Atraso Compras (%)" val={macro.late_penalty_rate || 5.0} onChange={(v: number) => setMacro({...macro, late_penalty_rate: v})} />
+                      <MacroInput label="Alíquota IRPJ (%)" val={macro.tax_rate_ir || 25.0} onChange={(v: number) => setMacro({...macro, tax_rate_ir: v})} />
+                   </div>
 
-                 <div className="flex gap-4">
-                    <input 
-                      value={newObserverId}
-                      onChange={e => setNewObserverId(e.target.value)}
-                      placeholder="Insira o UUID do usuário..."
-                      className="flex-1 bg-slate-950 border-2 border-white/10 rounded-2xl px-8 py-4 text-white font-mono text-sm outline-none focus:border-indigo-500"
-                    />
-                    <button onClick={addObserver} className="px-10 py-4 bg-indigo-600 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-white hover:text-indigo-900 transition-all flex items-center gap-3">
-                       <Plus size={18}/> Adicionar
-                    </button>
-                 </div>
+                   {/* Lista de Praças Comerciais */}
+                   <div className="space-y-6">
+                      <div className="flex items-center justify-between">
+                         <h4 className="text-lg font-bold text-white uppercase tracking-wider flex items-center gap-2"><Globe size={18} className="text-orange-500"/> Praças Comerciais Ativas</h4>
+                         <span className="text-xs font-mono text-slate-400">{regionsList.length} Praças Ativas</span>
+                      </div>
 
-                 <div className="grid grid-cols-1 gap-4 max-h-[300px] overflow-y-auto pr-4 custom-scrollbar">
-                    {observersList.length === 0 ? (
-                       <div className="py-12 text-center bg-white/5 border border-dashed border-white/10 rounded-3xl opacity-40">
-                          <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 italic">Nenhum observador nominado.</p>
-                       </div>
-                    ) : (
-                       observersList.map(id => (
-                          <div key={id} className="flex justify-between items-center p-6 bg-slate-950/50 border border-white/5 rounded-2xl group hover:border-indigo-500/30 transition-all">
-                             <div className="flex items-center gap-4">
-                                <div className="w-8 h-8 rounded-lg bg-indigo-600/20 text-indigo-400 flex items-center justify-center"><User size={16}/></div>
-                                <span className="text-xs font-mono text-slate-300">{id}</span>
-                             </div>
-                             <button onClick={() => removeObserver(id)} className="p-2 text-slate-600 hover:text-rose-500 transition-colors"><X size={18}/></button>
-                          </div>
-                       ))
-                    )}
-                 </div>
-              </div>
-           )}
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                         {regionsList.map((r) => (
+                            <div key={r.id} className="bg-slate-950 p-6 rounded-[2.5rem] border border-white/10 flex flex-col justify-between shadow-2xl relative overflow-hidden group hover:border-orange-500/40 transition-all">
+                               <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-orange-600/10 to-transparent rounded-bl-full pointer-events-none" />
+                               <div className="flex items-center justify-between mb-4">
+                                  <div className="flex items-center gap-3">
+                                     <span className="p-2 bg-white/5 rounded-xl text-orange-500 group-hover:bg-orange-600 group-hover:text-white transition-all"><Globe size={18}/></span>
+                                     <div>
+                                        <span className="text-[9px] font-bold text-slate-500 block">ID: {r.id}</span>
+                                        <span className="text-sm font-black text-white">{r.name}</span>
+                                     </div>
+                                  </div>
+                                  <div className="flex items-center gap-2">
+                                     <span className="px-2 py-0.5 bg-white/5 border border-white/10 text-[9px] font-mono font-bold rounded text-slate-400">{r.currency}</span>
+                                     {regionsList.length > 1 && (
+                                        <button onClick={() => handleDeleteRegion(r.id)} className="p-2 bg-red-950/40 hover:bg-red-500 text-red-400 hover:text-white rounded-lg transition-all" title="Remover Praça">
+                                           <Trash2 size={12}/>
+                                        </button>
+                                     )}
+                                  </div>
+                               </div>
 
-           {activeTab === 'suppliers' && (
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-                 <div className="lg:col-span-4 space-y-8">
-                    <div className="bg-slate-900 p-10 rounded-[4rem] border border-white/10 shadow-2xl space-y-10">
-                       <h3 className="text-2xl font-black text-white uppercase italic flex items-center gap-4"><Package className="text-orange-500"/> Insumos & Estocagem</h3>
-                       <MacroInput label="MP-A Base ($)" val={macro.prices.mp_a} onChange={(v: number) => setMacro({...macro, prices: {...macro.prices, mp_a: v}})} />
-                       <MacroInput label="MP-B Base ($)" val={macro.prices.mp_b} onChange={(v: number) => setMacro({...macro, prices: {...macro.prices, mp_b: v}})} />
-                       <MacroInput label="Ágio Compras Esp. (%)" val={macro.special_purchase_premium} onChange={(v: number) => setMacro({...macro, special_purchase_premium: v})} />
-                       <div className="grid grid-cols-2 gap-4">
-                          <MacroInput label="Estocagem MP ($)" val={macro.prices.storage_mp || 1.40} onChange={(v: number) => setMacro({...macro, prices: {...macro.prices, storage_mp: v}})} />
-                          <MacroInput label="Estocagem PROD ($)" val={macro.prices.storage_finished || 20.00} onChange={(v: number) => setMacro({...macro, prices: {...macro.prices, storage_finished: v}})} />
-                       </div>
-                    </div>
-                 </div>
-                 <div className="lg:col-span-8 bg-slate-900 p-10 rounded-[4rem] border border-white/10 shadow-2xl space-y-12">
-                    <div className="flex justify-between items-center">
-                       <h3 className="text-2xl font-black text-white uppercase italic flex items-center gap-4"><Cpu className="text-blue-500"/> Ativos de Capital</h3>
-                       <button onClick={() => setMacro({...macro, allow_machine_sale: !macro.allow_machine_sale})} className={`px-6 py-2 rounded-full border text-[10px] font-black uppercase italic transition-all ${macro.allow_machine_sale ? 'bg-emerald-600/10 border-emerald-500/30 text-emerald-500' : 'bg-rose-600/10 border-rose-500/30 text-rose-500'}`}>
-                          Venda de Máquinas: {macro.allow_machine_sale ? 'LIBERADA' : 'BLOQUEADA'}
-                       </button>
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                       <MacroInput label="Preço ALFA" val={macro.machinery_values.alpha} dark onChange={(v: number) => setMacro({...macro, machinery_values: {...macro.machinery_values, alpha: v}})} />
-                       <MacroInput label="Preço BETA" val={macro.machinery_values.beta} dark onChange={(v: number) => setMacro({...macro, machinery_values: {...macro.machinery_values, beta: v}})} />
-                       <MacroInput label="Preço GAMA" val={macro.machinery_values.gamma} dark onChange={(v: number) => setMacro({...macro, machinery_values: {...macro.machinery_values, gamma: v}})} />
-                    </div>
-                 </div>
-              </div>
-           )}
+                               <div className="space-y-4 pt-2">
+                                  <div>
+                                     <label className="text-[9px] font-black uppercase text-slate-500 block mb-1">Preço Sugerido ($)</label>
+                                     <input type="number" step="0.1" value={r.suggested_price ?? 425.0} onChange={e => handleUpdateRegionField(r.id, 'suggested_price', parseFloat(e.target.value) || 0)} className="w-full bg-slate-900 border border-white/5 rounded-xl px-3 py-1.5 font-mono font-bold text-xs text-white outline-none focus:border-orange-500 transition-colors" />
+                                  </div>
+                                  <div>
+                                     <label className="text-[9px] font-black uppercase text-slate-500 block mb-1">Custo Frete ($)</label>
+                                     <input type="number" step="0.1" value={r.distribution_cost ?? 50.0} onChange={e => handleUpdateRegionField(r.id, 'distribution_cost', parseFloat(e.target.value) || 0)} className="w-full bg-slate-900 border border-white/5 rounded-xl px-3 py-1.5 font-mono font-bold text-xs text-white outline-none focus:border-orange-500 transition-colors" />
+                                  </div>
+                                  <div>
+                                     <label className="text-[9px] font-black uppercase text-slate-500 block mb-1">MKT Base ($)</label>
+                                     <input type="number" step="100" value={r.marketing_cost ?? 10000.0} onChange={e => handleUpdateRegionField(r.id, 'marketing_cost', parseFloat(e.target.value) || 0)} className="w-full bg-slate-900 border border-white/5 rounded-xl px-3 py-1.5 font-mono font-bold text-xs text-white outline-none focus:border-orange-500 transition-colors" />
+                                  </div>
+                                  <div>
+                                     <label className="text-[9px] font-black uppercase text-slate-500 block mb-1">Peso Demanda (%)</label>
+                                     <input type="number" step="1" value={r.demand_weight ?? 25} onChange={e => handleUpdateRegionField(r.id, 'demand_weight', parseInt(e.target.value) || 0)} className="w-full bg-slate-900 border border-white/5 rounded-xl px-3 py-1.5 font-mono font-bold text-xs text-white outline-none focus:border-orange-500 transition-colors" />
+                                  </div>
+                               </div>
+                            </div>
+                         ))}
 
-           {activeTab === 'market' && (
-              <div className="bg-slate-900 p-10 rounded-[4rem] border border-white/10 shadow-2xl space-y-12">
-                 <h3 className="text-2xl font-black text-white uppercase italic flex items-center gap-4"><ShoppingCart className="text-orange-500"/> Mercado e Operações</h3>
-                 <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
-                    <MacroInput label="Preço Venda Médio ($)" val={macro.avg_selling_price || 340} onChange={(v: number) => setMacro({...macro, avg_selling_price: v})} />
-                    <MacroInput label="Distribuição Unit. ($)" val={macro.prices.distribution_unit || 50} onChange={(v: number) => setMacro({...macro, prices: {...macro.prices, distribution_unit: v}})} />
-                    <MacroInput label="Base Campanha MKT ($)" val={macro.prices.marketing_campaign || 10000} onChange={(v: number) => setMacro({...macro, prices: {...macro.prices, marketing_campaign: v}})} />
-                    <MacroInput label="Juros Fornecedor (%)" val={macro.supplier_interest ?? 1.5} onChange={(v: number) => setMacro({...macro, supplier_interest: v})} />
-                    <MacroInput label="Ágio Compulsório (%)" val={macro.compulsory_loan_agio || 3.0} onChange={(v: number) => setMacro({...macro, compulsory_loan_agio: v})} />
-                    <MacroInput label="Variação Demanda (%)" val={macro.demand_variation || 0} onChange={(v: number) => setMacro({...macro, demand_variation: v})} />
-                 </div>
-              </div>
-           )}
+                         {/* Form de Expansão de Nova Praça */}
+                         <div className="bg-slate-950/40 p-6 rounded-[2.5rem] border-2 border-dashed border-white/10 flex flex-col justify-between hover:border-orange-500/30 transition-all space-y-4">
+                            <div className="space-y-1">
+                               <div className="text-orange-500 font-black text-[10px] uppercase tracking-wider flex items-center gap-1.5">
+                                  <Plus size={14}/> EXPANSÃO GEOGRÁFICA
+                               </div>
+                               <h4 className="text-white text-sm font-bold">Criar Nova Praça</h4>
+                               <p className="text-[10px] text-slate-500">Insira uma nova praça de atuação para o próximo round.</p>
+                            </div>
+                            
+                            <div className="space-y-3">
+                               <div>
+                                  <label className="text-[9px] font-black uppercase text-slate-500 block mb-1">Nome</label>
+                                  <input type="text" placeholder="Ex: SUL, MÉXICO" value={newRegionName} onChange={e => setNewRegionName(e.target.value.toUpperCase())} className="w-full bg-slate-900 border border-white/10 rounded-xl px-3 py-1.5 text-xs text-white font-black outline-none focus:border-orange-500" />
+                               </div>
+                               
+                               <div className="grid grid-cols-2 gap-2">
+                                  <div>
+                                     <label className="text-[9px] font-black uppercase text-slate-500 block mb-1">Moeda</label>
+                                     <select value={newRegionCurrency} onChange={e => setNewRegionCurrency(e.target.value)} className="w-full bg-slate-900 border border-white/10 rounded-xl px-3 py-1.5 text-xs text-white font-black outline-none focus:border-orange-500">
+                                        <option value="BRL">BRL</option>
+                                        <option value="USD">USD</option>
+                                        <option value="EUR">EUR</option>
+                                        <option value="GBP">GBP</option>
+                                        <option value="CNY">CNY</option>
+                                        <option value="BTC">BTC</option>
+                                     </select>
+                                  </div>
+                                  <div>
+                                     <label className="text-[9px] font-black uppercase text-slate-500 block mb-1">Peso (%)</label>
+                                     <input type="number" value={newRegionWeight} onChange={e => setNewRegionWeight(parseInt(e.target.value) || 0)} className="w-full bg-slate-900 border border-white/10 rounded-xl px-3 py-1.5 text-xs text-white font-mono outline-none focus:border-orange-500" />
+                                  </div>
+                               </div>
+                            </div>
+                            
+                            <button onClick={handleAddRegion} className="w-full py-2.5 bg-white hover:bg-orange-500 hover:text-white text-slate-950 rounded-xl font-black text-[10px] uppercase tracking-wider transition-all flex items-center justify-center gap-1.5">
+                               <Plus size={12}/> Anexar Praça
+                            </button>
+                         </div>
+                      </div>
+                   </div>
+                </div>
+             )}
 
-           {activeTab === 'staffing' && (
-              <div className="bg-slate-900 p-10 rounded-[4rem] border border-white/10 shadow-2xl space-y-12">
-                 <h3 className="text-2xl font-black text-white uppercase italic flex items-center gap-4"><Briefcase className="text-indigo-400"/> Staffing v15.22</h3>
-                 <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-                    <MacroInput label="Salário Base ($)" val={macro.hr_base.salary || 1300} onChange={(v: number) => setMacro({...macro, hr_base: {...macro.hr_base, salary: v}})} />
-                    <div className="p-8 bg-slate-950/50 rounded-3xl border border-white/5 space-y-2">
-                       <span className="block text-[8px] font-black text-slate-600 uppercase">Administração</span>
-                       <div className="flex items-center gap-3">
-                          <input type="number" value={macro.staffing.admin.count} onChange={e => setMacro({...macro, staffing: {...macro.staffing, admin: {...macro.staffing.admin, count: parseInt(e.target.value) || 0}}})} className="bg-transparent border-b border-white/10 text-xl font-mono font-black text-white outline-none w-20" />
-                          <span className="text-xs text-slate-500">Units</span>
-                       </div>
-                    </div>
-                    <div className="p-8 bg-slate-950/50 rounded-3xl border border-white/5 space-y-2">
-                       <span className="block text-[8px] font-black text-slate-600 uppercase">Vendas</span>
-                       <div className="flex items-center gap-3">
-                          <input type="number" value={macro.staffing.sales.count} onChange={e => setMacro({...macro, staffing: {...macro.staffing, sales: {...macro.staffing.sales, count: parseInt(e.target.value) || 0}}})} className="bg-transparent border-b border-white/10 text-xl font-mono font-black text-white outline-none w-20" />
-                          <span className="text-xs text-slate-500">Units</span>
-                       </div>
-                    </div>
-                    <div className="p-8 bg-slate-950/50 rounded-3xl border border-white/5 space-y-2">
-                       <span className="block text-[8px] font-black text-slate-600 uppercase">Produção</span>
-                       <div className="flex items-center gap-3">
-                          <input type="number" value={macro.staffing.production.count} onChange={e => setMacro({...macro, staffing: {...macro.staffing, production: {...macro.staffing.production, count: parseInt(e.target.value) || 0}}})} className="bg-transparent border-b border-white/10 text-xl font-mono font-black text-white outline-none w-20" />
-                          <span className="text-xs text-slate-500">Units</span>
-                       </div>
-                    </div>
-                 </div>
-              </div>
-           )}
+             {activeTab === 'staffing' && (
+                <div className="bg-slate-900 p-10 rounded-[4rem] border border-white/10 shadow-2xl space-y-12">
+                   <h3 className="text-2xl font-black text-white uppercase italic flex items-center gap-4"><Briefcase className="text-orange-500"/> Força de Trabalho (Staffing)</h3>
+                   <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                      <MacroInput label="Salário Base Operacional ($)" val={macro.hr_base.salary} onChange={(v: number) => setMacro({...macro, hr_base: {...macro.hr_base, salary: v}})} />
+                      <MacroInput label="Máximo Turnos Permitidos" val={macro.max_shifts || 1} onChange={(v: number) => setMacro({...macro, max_shifts: v})} />
+                   </div>
 
-           {activeTab === 'awards' && (
-              <div className="bg-orange-600/5 p-10 rounded-[4rem] border border-orange-500/20 shadow-2xl space-y-12">
-                 <h3 className="text-2xl font-black text-white uppercase italic flex items-center gap-4"><Award className="text-orange-500"/> Premiações por Precisão</h3>
-                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                    <MacroInput label="Prêmio Custo ($)" val={macro.award_values.cost_precision} onChange={(v: number) => setMacro({...macro, award_values: {...macro.award_values, cost_precision: v}})} />
-                    <MacroInput label="Prêmio Receita ($)" val={macro.award_values.revenue_precision} onChange={(v: number) => setMacro({...macro, award_values: {...macro.award_values, revenue_precision: v}})} />
-                    <MacroInput label="Prêmio Lucro ($)" val={macro.award_values.profit_precision} onChange={(v: number) => setMacro({...macro, award_values: {...macro.award_values, profit_precision: v}})} />
-                 </div>
-              </div>
-           )}
+                   <div className="pt-8 border-t border-white/5 space-y-6">
+                      <h4 className="text-lg font-bold text-white uppercase tracking-wider">Dimensionamento Base do Setor Administrativo</h4>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                         <div className="p-8 bg-slate-950 rounded-3xl border border-white/5 space-y-2">
+                            <span className="block text-[8px] font-black text-slate-500 uppercase tracking-widest">Administrativo</span>
+                            <div className="flex items-center gap-3">
+                               <input type="number" value={macro.staffing.admin.count} onChange={e => setMacro({...macro, staffing: {...macro.staffing, admin: {...macro.staffing.admin, count: parseInt(e.target.value) || 0}}})} className="bg-transparent border-b border-white/10 text-xl font-mono font-black text-white outline-none w-20" />
+                               <span className="text-xs text-slate-500">FTEs</span>
+                            </div>
+                         </div>
+                         <div className="p-8 bg-slate-950 rounded-3xl border border-white/5 space-y-2">
+                            <span className="block text-[8px] font-black text-slate-500 uppercase tracking-widest">Vendas</span>
+                            <div className="flex items-center gap-3">
+                               <input type="number" value={macro.staffing.sales.count} onChange={e => setMacro({...macro, staffing: {...macro.staffing, sales: {...macro.staffing.sales, count: parseInt(e.target.value) || 0}}})} className="bg-transparent border-b border-white/10 text-xl font-mono font-black text-white outline-none w-20" />
+                               <span className="text-xs text-slate-500">FTEs</span>
+                            </div>
+                         </div>
+                         <div className="p-8 bg-slate-950 rounded-3xl border border-white/5 space-y-2">
+                            <span className="block text-[8px] font-black text-slate-500 uppercase tracking-widest">Produção</span>
+                            <div className="flex items-center gap-3">
+                               <input type="number" value={macro.staffing.production.count} onChange={e => setMacro({...macro, staffing: {...macro.staffing, production: {...macro.staffing.production, count: parseInt(e.target.value) || 0}}})} className="bg-transparent border-b border-white/10 text-xl font-mono font-black text-white outline-none w-20" />
+                               <span className="text-xs text-slate-500">FTEs</span>
+                            </div>
+                         </div>
+                      </div>
+                   </div>
+                </div>
+             )}
 
-        </motion.div>
-      </AnimatePresence>
+             {activeTab === 'international' && (
+                <div className="bg-slate-900 p-10 rounded-[4rem] border border-white/10 shadow-2xl space-y-12">
+                   <h3 className="text-2xl font-black text-white uppercase italic flex items-center gap-4"><Coins className="text-orange-500"/> Paridade Cambial e Taxas de Câmbio</h3>
+                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+                      <ParamCard label="Taxa Câmbio USD" val={macro.exchange_rates.USD} onChange={(v: number) => setMacro({...macro, exchange_rates: {...macro.exchange_rates, USD: v}})} suffix="BRL" icon={<Coins size={16}/>} />
+                      <ParamCard label="Taxa Câmbio EUR" val={macro.exchange_rates.EUR} onChange={(v: number) => setMacro({...macro, exchange_rates: {...macro.exchange_rates, EUR: v}})} suffix="BRL" icon={<Coins size={16}/>} />
+                      <ParamCard label="Taxa Câmbio GBP" val={macro.exchange_rates.GBP} onChange={(v: number) => setMacro({...macro, exchange_rates: {...macro.exchange_rates, GBP: v}})} suffix="BRL" icon={<Coins size={16}/>} />
+                      <ParamCard label="Taxa Câmbio CNY" val={macro.exchange_rates.CNY} onChange={(v: number) => setMacro({...macro, exchange_rates: {...macro.exchange_rates, CNY: v}})} suffix="BRL" icon={<Coins size={16}/>} />
+                      <ParamCard label="Taxa Câmbio BTC" val={macro.exchange_rates.BTC} onChange={(v: number) => setMacro({...macro, exchange_rates: {...macro.exchange_rates, BTC: v}})} suffix="BRL" icon={<Coins size={16}/>} />
+                   </div>
 
-      <div className="flex justify-end pt-12 border-t border-white/5">
-         <button onClick={handleSave} disabled={isSaving} className="px-24 py-10 bg-orange-600 text-white rounded-full font-black text-sm uppercase tracking-[0.5em] hover:bg-white hover:text-orange-950 transition-all shadow-[0_20px_80px_rgba(249,115,22,0.5)] flex items-center gap-10 active:scale-95 group border-4 border-orange-400/50">
-            {isSaving ? <Loader2 className="animate-spin" size={32} /> : <><Save size={32} strokeWidth={2.5} /> Confirmar Intervenção no R-{nextRoundIdx}</>}
-         </button>
-      </div>
+                   {/* Simulador Cross-Rate */}
+                   <div className="p-8 bg-slate-950 rounded-3xl border border-white/5 space-y-6">
+                      <div className="flex items-center gap-3">
+                         <span className="p-2 bg-orange-600/10 rounded-xl text-orange-500"><Calculator size={18}/></span>
+                         <div>
+                            <h4 className="text-base font-bold text-white uppercase">Simulador de Conversão Financeira (Cross-Rate)</h4>
+                            <p className="text-[11px] text-slate-500">Calcule instantaneamente a paridade cruzada com base nos novos câmbios ajustados acima.</p>
+                         </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 items-end">
+                         <div>
+                            <label className="text-[9px] font-black uppercase text-slate-500 block mb-2">Montante</label>
+                            <input type="number" value={calcValue} onChange={e => setCalcValue(parseFloat(e.target.value) || 0)} className="w-full bg-slate-900 border border-white/10 rounded-xl px-4 py-3 text-sm text-white font-mono outline-none" />
+                         </div>
+                         <div>
+                            <label className="text-[9px] font-black uppercase text-slate-500 block mb-2">De</label>
+                            <select value={calcFrom} onChange={e => setCalcFrom(e.target.value)} className="w-full bg-slate-900 border border-white/10 rounded-xl px-4 py-3 text-sm text-white font-bold outline-none">
+                               {Object.keys(macro.exchange_rates).map(c => <option key={c} value={c}>{c}</option>)}
+                            </select>
+                         </div>
+                         <div>
+                            <label className="text-[9px] font-black uppercase text-slate-500 block mb-2">Para</label>
+                            <select value={calcTo} onChange={e => setCalcTo(e.target.value)} className="w-full bg-slate-900 border border-white/10 rounded-xl px-4 py-3 text-sm text-white font-bold outline-none">
+                               {Object.keys(macro.exchange_rates).map(c => <option key={c} value={c}>{c}</option>)}
+                            </select>
+                         </div>
+                         <div className="p-4 bg-orange-600/10 border border-orange-500/20 rounded-xl flex items-center justify-between">
+                            <span className="text-[10px] font-black uppercase text-orange-400">Resultado</span>
+                            <span className="text-base font-mono font-black text-white">
+                               {calcFrom === calcTo ? calcValue.toFixed(2) : (calcValue * (macro.exchange_rates[calcFrom] || 1.0) / (macro.exchange_rates[calcTo] || 1.0)).toFixed(4)} {calcTo}
+                            </span>
+                         </div>
+                      </div>
+                   </div>
+                </div>
+             )}
+
+             {activeTab === 'awards' && (
+                <div className="bg-orange-600/5 p-10 rounded-[4rem] border border-orange-500/20 shadow-2xl space-y-12">
+                   <h3 className="text-2xl font-black text-white uppercase italic flex items-center gap-4"><Award className="text-orange-500"/> Premiações por Precisão de Orçamento</h3>
+                   <p className="text-xs text-slate-400 max-w-2xl">Os estudantes ganham bonificações corporativas adicionais em dinheiro caso a estimativa de custos, receitas e lucros coincidam dentro das margens de precisão configuradas abaixo.</p>
+                   <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                      <MacroInput label="Prêmio Precisão Custo ($)" val={macro.award_values.cost_precision} onChange={(v: number) => setMacro({...macro, award_values: {...macro.award_values, cost_precision: v}})} />
+                      <MacroInput label="Prêmio Precisão Receita ($)" val={macro.award_values.revenue_precision} onChange={(v: number) => setMacro({...macro, award_values: {...macro.award_values, revenue_precision: v}})} />
+                      <MacroInput label="Prêmio Precisão Lucro ($)" val={macro.award_values.profit_precision} onChange={(v: number) => setMacro({...macro, award_values: {...macro.award_values, profit_precision: v}})} />
+                   </div>
+                </div>
+             )}
+
+             {activeTab === 'observers' && (
+                <div className="bg-slate-900 p-10 rounded-[4rem] border border-white/10 shadow-2xl space-y-12">
+                   <h3 className="text-2xl font-black text-white uppercase italic flex items-center gap-4"><Eye className="text-orange-500"/> Observadores Autorizados (Tutor/Avaliação)</h3>
+                   <p className="text-xs text-slate-400">Insira as credenciais de usuários UUID para conceder acesso em modo somente leitura (auditoria acadêmica) para esta arena.</p>
+                   
+                   <div className="flex gap-4 max-w-xl">
+                      <input type="text" placeholder="UUID do Usuário Observador" value={newObserverId} onChange={e => setNewObserverId(e.target.value)} className="flex-1 bg-slate-950 border border-white/10 rounded-2xl px-6 py-4 text-white outline-none focus:border-orange-500 transition-colors font-mono text-sm" />
+                      <button onClick={handleAddObserver} className="px-8 py-4 bg-orange-600 text-white rounded-2xl font-bold hover:bg-orange-500 transition-all flex items-center gap-2">
+                         <UserPlus size={16}/> Adicionar
+                      </button>
+                   </div>
+
+                   <div className="space-y-4 max-w-2xl">
+                      <h4 className="text-sm font-bold text-white uppercase tracking-wider">Lista de Observadores Vinculados</h4>
+                      {observersList.length === 0 ? (
+                         <div className="p-8 bg-slate-950/40 rounded-3xl text-center text-xs text-slate-500 border border-white/5 border-dashed">
+                            Nenhum observador anexado a esta arena de torneio.
+                         </div>
+                      ) : (
+                         <div className="divide-y divide-white/5 bg-slate-950 rounded-3xl border border-white/5 overflow-hidden">
+                            {observersList.map(obs => (
+                               <div key={obs} className="p-4 flex items-center justify-between hover:bg-white/5 transition-all">
+                                  <div className="flex items-center gap-3">
+                                     <User size={14} className="text-slate-400"/>
+                                     <span className="font-mono text-xs text-slate-300">{obs}</span>
+                                  </div>
+                                  <button onClick={() => handleRemoveObserver(obs)} className="p-2 hover:bg-red-500/10 text-red-400 rounded-lg transition-all" title="Remover Acesso">
+                                     <UserMinus size={14}/>
+                                  </button>
+                               </div>
+                            ))}
+                         </div>
+                      )}
+                   </div>
+                </div>
+             )}
+
+          </motion.div>
+       </AnimatePresence>
+
+       <div className="flex justify-end pt-12 border-t border-white/5">
+          <button onClick={handleSave} disabled={isSaving} className="px-24 py-10 bg-orange-600 text-white rounded-full font-black text-sm uppercase tracking-[0.5em] hover:bg-white hover:text-orange-950 transition-all shadow-[0_20px_80px_rgba(249,115,22,0.5)] flex items-center gap-10 active:scale-95 group border-4 border-orange-400/50">
+             {isSaving ? <Loader2 className="animate-spin" size={32} /> : <><Save size={32} strokeWidth={2.5} /> Confirmar Intervenção no R-{nextRoundIdx}</>}
+          </button>
+       </div>
     </div>
   );
 };
 
 const ParamCard = ({ label, val, suffix, onChange, icon }: any) => (
-  <div className="bg-slate-900/80 p-8 rounded-[3rem] border border-white/10 flex flex-col gap-6 shadow-xl group hover:border-orange-500/30 transition-all">
+  <div className="bg-slate-950 p-8 rounded-[3rem] border border-white/5 flex flex-col gap-6 shadow-xl group hover:border-orange-500/30 transition-all">
      <div className="p-3 bg-white/5 rounded-2xl group-hover:bg-orange-600 group-hover:text-white transition-all w-fit">{icon}</div>
      <div>
         <label className="text-[10px] font-black text-slate-500 group-hover:text-orange-500 mb-4 block italic uppercase tracking-widest">{label}</label>
         <div className="flex items-center gap-3">
-           <input type="number" step="0.0001" value={val} onChange={e => onChange(parseFloat(e.target.value))} className="bg-transparent text-4xl font-black text-white italic outline-none w-32 border-b border-white/5 focus:border-orange-500 transition-all" />
+           <input type="number" step="0.0001" value={val} onChange={e => onChange(parseFloat(e.target.value) || 0)} className="bg-transparent text-4xl font-black text-white italic outline-none w-32 border-b border-white/5 focus:border-orange-500 transition-all" />
            <span className="text-2xl font-black text-slate-700 italic">{suffix}</span>
         </div>
      </div>
@@ -410,7 +634,7 @@ const TabBtn = ({ active, onClick, label, icon }: any) => (
 const MacroInput = ({ label, val, onChange, dark }: any) => (
   <div className="space-y-4 group">
      <label className={`text-[10px] font-black uppercase tracking-[0.2em] italic group-focus-within:text-orange-500 transition-colors ${dark ? 'text-slate-500' : 'text-slate-400'}`}>{label}</label>
-     <input type="number" step="0.1" value={val} onChange={e => onChange(Number(e.target.value))} className={`w-full border-2 rounded-[1.5rem] px-8 py-6 font-mono font-black text-3xl outline-none transition-all ${dark ? 'bg-slate-950 border-white/5 text-white focus:border-blue-600' : 'bg-slate-950 border-white/10 text-white focus:border-orange-600 shadow-inner'}`} />
+     <input type="number" step="0.1" value={val} onChange={e => onChange(Number(e.target.value) || 0)} className={`w-full border-2 rounded-[1.5rem] px-8 py-6 font-mono font-black text-3xl outline-none transition-all ${dark ? 'bg-slate-950 border-white/5 text-white focus:border-blue-600' : 'bg-slate-950 border-white/10 text-white focus:border-orange-600 shadow-inner'}`} />
   </div>
 );
 

@@ -1209,24 +1209,47 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
             max_shifts: tutorConfig.workforce.max_shifts ?? 1,
             production_hours_period:
               tutorConfig.workforce.production_hours_period ?? 176,
+            prices: {
+              ...DEFAULT_MACRO.prices,
+              mp_a: tutorConfig.inventories.mpa_unit_val ?? 20.0,
+              mp_b: tutorConfig.inventories.mpb_unit_val ?? 40.0,
+              distribution_unit: tutorConfig.regions[0]?.distribution_cost ?? 50.0,
+              marketing_campaign: tutorConfig.regions[0]?.marketing_cost ?? 10000.0,
+            },
+            machinery_values: {
+              alpha: tutorConfig.machines[0]?.price ?? 500000.0,
+              beta: tutorConfig.machines[1]?.price ?? 1500000.0,
+              gamma: tutorConfig.machines[2]?.price ?? 3000000.0,
+            },
             hr_base: {
               ...DEFAULT_MACRO.hr_base,
               salary: tutorConfig.workforce.baseSalary ?? 2500.0,
+            },
+            staffing: {
+              admin: { count: tutorConfig.workforce.admin_count ?? 20, salaries: 4 },
+              sales: { count: tutorConfig.workforce.sales_count ?? 10, salaries: 4 },
+              production: { count: DEFAULT_MACRO.staffing.production.count, salaries: 1 }
             },
             machine_specs: {
               ...DEFAULT_MACRO.machine_specs,
               alpha: {
                 ...DEFAULT_MACRO.machine_specs.alpha,
+                initial_value: tutorConfig.machines[0]?.price ?? 500000.0,
+                production_capacity: tutorConfig.machines[0]?.capacity_at_100 ?? 2000,
                 operators_required:
                   tutorConfig.workforce.operatorsPerAlpha ?? 94,
               },
               beta: {
                 ...DEFAULT_MACRO.machine_specs.beta,
+                initial_value: tutorConfig.machines[1]?.price ?? 1500000.0,
+                production_capacity: tutorConfig.machines[1]?.capacity_at_100 ?? 7000,
                 operators_required:
                   tutorConfig.workforce.operatorsPerBeta ?? 235,
               },
               gamma: {
                 ...DEFAULT_MACRO.machine_specs.gamma,
+                initial_value: tutorConfig.machines[2]?.price ?? 3000000.0,
+                production_capacity: tutorConfig.machines[2]?.capacity_at_100 ?? 15000,
                 operators_required:
                   tutorConfig.workforce.operatorsPerGamma ?? 445,
               },
