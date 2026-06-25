@@ -675,7 +675,7 @@ export const processRoundTurnover = async (id: string, round: number, isTrial?: 
                   finalDecision = {
                     judicial_recovery: false,
                     regions: {},
-                    hr: { hired: 0, fired: 0, salary: indicatorsForRound.min_salary || 2500, trainingPercent: 0, participationPercent: 0, productivityBonusPercent: 0, misc: 0 },
+                    hr: { hired: 0, fired: 0, salary: indicatorsForRound.min_salary || indicatorsForRound.hr_base?.salary || 2500, trainingPercent: 0, participationPercent: 0, productivityBonusPercent: 0, misc: 0 },
                     production: { purchaseMPA: 0, purchaseMPB: 0, paymentType: 0, activityLevel: 0, extraProductionPercent: 0, rd_investment: 0, term_interest_rate: 0.00 },
                     machinery: { buy: { alpha: 0, alfa: 0, beta: 0, gamma: 0, gama: 0 }, sell: { alpha: 0, alfa: 0, beta: 0, gamma: 0, gama: 0 }, sell_ids: [] },
                     finance: { loanRequest: 0, loanTerm: 0, application: 0 },
@@ -740,7 +740,7 @@ export const processRoundTurnover = async (id: string, round: number, isTrial?: 
                     baseDecisions = {
                       judicial_recovery: false,
                       regions: initialRegions,
-                      hr: { hired: 0, fired: 0, salary: 2500, trainingPercent: 0, participationPercent: 0, productivityBonusPercent: 0, misc: 0 },
+                      hr: { hired: 0, fired: 0, salary: indicatorsForRound.min_salary || indicatorsForRound.hr_base?.salary || 2500, trainingPercent: 0, participationPercent: 0, productivityBonusPercent: 0, misc: 0 },
                       production: { purchaseMPA: 0, purchaseMPB: 0, paymentType: 0, activityLevel: 100, extraProductionPercent: 0, rd_investment: 0, term_interest_rate: 0.00 },
                       machinery: { buy: { alpha: 0, alfa: 0, beta: 0, gamma: 0, gama: 0 }, sell: { alpha: 0, alfa: 0, beta: 0, gamma: 0, gama: 0 }, sell_ids: [] },
                       finance: { loanRequest: 0, loanTerm: 0, application: 0 },

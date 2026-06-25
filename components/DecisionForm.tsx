@@ -295,13 +295,22 @@ const DecisionForm: React.FC<{
           initialRegions[regId] = finalData?.regions?.[regId] || { price: defaultSugPrice, term: 0, marketing: 0 };
         });
 
+        const targetBaseSalary = getInitialBaseSalaryForRound(found, round);
+
         if (finalData) {
+          if (finalData.hr) {
+            if (finalData.hr.salary === 2500 || finalData.hr.salary < targetBaseSalary) {
+              finalData.hr.salary = targetBaseSalary;
+            }
+          } else {
+            finalData.hr = { hired: 0, fired: 0, salary: targetBaseSalary, trainingPercent: 0, participationPercent: 0, productivityBonusPercent: 0, misc: 0 };
+          }
           setDecisions({ ...finalData, regions: initialRegions });
         } else {
           setDecisions({
             judicial_recovery: false,
             regions: initialRegions,
-            hr: { hired: 0, fired: 0, salary: getInitialBaseSalaryForRound(found, round), trainingPercent: 0, participationPercent: 0, productivityBonusPercent: 0, misc: 0 },
+            hr: { hired: 0, fired: 0, salary: targetBaseSalary, trainingPercent: 0, participationPercent: 0, productivityBonusPercent: 0, misc: 0 },
             production: { purchaseMPA: 0, purchaseMPB: 0, paymentType: 0, activityLevel: 100, extraProductionPercent: 0, rd_investment: 0, term_interest_rate: 0.00 },
             machinery: { buy: { alpha: 0, alfa: 0, beta: 0, gamma: 0, gama: 0 }, sell: { alpha: 0, alfa: 0, beta: 0, gamma: 0, gama: 0 }, sell_ids: [] },
             finance: { loanRequest: 0, loanTerm: 0, application: 0 },
@@ -451,11 +460,12 @@ const DecisionForm: React.FC<{
           extraProductionPercent: 0,
           rd_investment: 1,
         };
+        const defaultRoundSal = getInitialBaseSalaryForRound(activeArena, round);
         next.hr = {
           ...next.hr,
           hired: 0,
           fired: 5,
-          salary: Math.max(1800, currentMacro?.min_salary || 2500),
+          salary: Math.max(1800, currentMacro?.min_salary || defaultRoundSal),
           trainingPercent: 1.5,
           participationPercent: 2,
           productivityBonusPercent: 2,
@@ -465,6 +475,7 @@ const DecisionForm: React.FC<{
     } else if (presetType === 'equilibrada') {
       setDecisions(prev => {
         const next = { ...prev };
+        const defaultRoundSal = getInitialBaseSalaryForRound(activeArena, round);
         next.production = {
           ...next.production,
           activityLevel: 90,
@@ -475,7 +486,7 @@ const DecisionForm: React.FC<{
           ...next.hr,
           hired: 5,
           fired: 0,
-          salary: Math.round((currentMacro?.min_salary || 2500) * 1.1),
+          salary: Math.round((currentMacro?.min_salary || defaultRoundSal) * 1.1),
           trainingPercent: 4.5,
           participationPercent: 5,
           productivityBonusPercent: 6,
@@ -485,6 +496,7 @@ const DecisionForm: React.FC<{
     } else if (presetType === 'agressiva') {
       setDecisions(prev => {
         const next = { ...prev };
+        const defaultRoundSal = getInitialBaseSalaryForRound(activeArena, round);
         next.production = {
           ...next.production,
           activityLevel: 100,
@@ -495,7 +507,7 @@ const DecisionForm: React.FC<{
           ...next.hr,
           hired: 15,
           fired: 0,
-          salary: Math.round((currentMacro?.min_salary || 2500) * 1.25),
+          salary: Math.round((currentMacro?.min_salary || defaultRoundSal) * 1.25),
           trainingPercent: 8,
           participationPercent: 10,
           productivityBonusPercent: 12,
