@@ -152,7 +152,7 @@ const TutorArenaControl: React.FC<{ championship: Championship; onUpdate: (confi
 
   const handleAddRegion = () => {
     if (!newRegionName.trim()) {
-      alert("Por favor, digite o nome da nova praça comercial.");
+      alert("Por favor, digite o nome da nova região comercial.");
       return;
     }
     const newId = regionsList.length > 0 ? Math.max(...regionsList.map(r => r.id)) + 1 : 1;
@@ -176,11 +176,11 @@ const TutorArenaControl: React.FC<{ championship: Championship; onUpdate: (confi
 
   const handleDeleteRegion = (id: number) => {
     if (regionsList.length <= 1) {
-      alert("A arena de torneio precisa reter no mínimo 1 praça comercial ativa.");
+      alert("A arena de torneio precisa reter no mínimo 1 região comercial ativa.");
       return;
     }
     const targetReg = regionsList.find(r => r.id === id);
-    if (confirm(`Remover praça '${targetReg?.name}'? Todas as decisões de marketing enviadas para esta praça perderão as configurações associadas.`)) {
+    if (confirm(`Remover Região '${targetReg?.name}'? Todas as decisões de marketing enviadas para esta região perderão as configurações associadas.`)) {
       setRegionsList(regionsList.filter(r => r.id !== id));
     }
   };
@@ -192,7 +192,7 @@ const TutorArenaControl: React.FC<{ championship: Championship; onUpdate: (confi
   const handleSave = async () => {
     setIsSaving(true);
     
-    // Assegura retrocompatibilidade injetando o primeiro registro de praça na raiz das variáveis do macro global
+    // Assegura retrocompatibilidade injetando o primeiro registro de região na raiz das variáveis do macro global
     const primaryRegion = regionsList[0] || { suggested_price: 425.0, distribution_cost: 50.0, marketing_cost: 10000.0 };
     
     const finalMacro = {
@@ -211,7 +211,7 @@ const TutorArenaControl: React.FC<{ championship: Championship; onUpdate: (confi
       config: {
         ...(currentChampionship.config || {}),
         // Removida a sobreposição imediata de regions e region_configs na raiz do config global
-        // para impedir vazamento (leak) de pesos e novas praças para o round em andamento (R-1) das equipes.
+        // para impedir vazamento (leak) de pesos e novas regiões para o round em andamento (R-1) das equipes.
       },
       round_rules: {
         ...(currentChampionship.round_rules || {}),
@@ -303,7 +303,7 @@ const TutorArenaControl: React.FC<{ championship: Championship; onUpdate: (confi
        <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-none">
           <TabBtn active={activeTab === 'conjuncture'} onClick={() => setActiveTab('conjuncture')} label="Conjuntura" icon={<TrendingUp size={12}/>} />
           <TabBtn active={activeTab === 'suppliers'} onClick={() => setActiveTab('suppliers')} label="Insumos & CAPEX" icon={<Package size={12}/>} />
-          <TabBtn active={activeTab === 'market'} onClick={() => setActiveTab('market')} label="Mercado & Praças" icon={<ShoppingCart size={12}/>} />
+          <TabBtn active={activeTab === 'market'} onClick={() => setActiveTab('market')} label="Mercado & Regiões" icon={<ShoppingCart size={12}/>} />
           <TabBtn active={activeTab === 'staffing'} onClick={() => setActiveTab('staffing')} label="Staffing" icon={<Briefcase size={12}/>} />
           <TabBtn active={activeTab === 'international'} onClick={() => setActiveTab('international')} label="Câmbio Oracle" icon={<Coins size={12}/>} />
           <TabBtn active={activeTab === 'awards'} onClick={() => setActiveTab('awards')} label="Premiações" icon={<Award size={12}/>} />
@@ -376,7 +376,7 @@ const TutorArenaControl: React.FC<{ championship: Championship; onUpdate: (confi
                       <MacroInput label="Alíquota IRPJ (%)" val={macro.tax_rate_ir || 25.0} onChange={(v: number) => setMacro({...macro, tax_rate_ir: v})} />
                    </div>
 
-                   {/* Lista de Praças Comerciais */}
+                   {/* Lista de Regiões Comerciais */}
                    {totalDemandWeights !== 100 && (
                       <div className="bg-amber-500/10 border border-amber-500/20 text-amber-200 p-6 rounded-[2.5rem] flex items-start gap-4 shadow-lg animate-fadeIn text-left mb-6">
                          <div className="p-3 bg-amber-500/20 rounded-2xl text-amber-400 mt-1 flex-shrink-0">
@@ -387,12 +387,12 @@ const TutorArenaControl: React.FC<{ championship: Championship; onUpdate: (confi
                                Alerta de Rebalanceamento Comercial: Peso de Demanda em {totalDemandWeights}%
                             </h5>
                             <p className="text-xs text-slate-300 leading-relaxed font-medium">
-                               A soma atual dos pesos de demanda das praças é de <strong className="text-amber-300 font-bold">{totalDemandWeights}%</strong> (diferente de 100%).
+                               A soma atual dos pesos de demanda das regiões é de <strong className="text-amber-300 font-bold">{totalDemandWeights}%</strong> (diferente de 100%).
                                Quando a soma total difere de 100%, o mercado geral será proporcionalmente expandido ou contraído (ex: gerando <strong className="text-amber-300 font-bold">{totalDemandWeights}%</strong> do tamanho base de demanda padrão).
                             </p>
                             <div className="text-[11px] text-slate-400 space-y-1 bg-slate-950/40 p-4 rounded-2xl border border-white/5 font-medium leading-normal">
                                <p className="flex items-center gap-2 text-emerald-400 font-bold">
-                                  <span>✔️</span> Para uma divisão clássica balanceada, redistribua os pesos das praças de modo que o somatório seja exatamente 100%.
+                                  <span>✔️</span> Para uma divisão clássica balanceada, redistribua os pesos das regiões de modo que o somatório seja exatamente 100%.
                                </p>
                                <p className="flex items-center gap-2">
                                   <span>💡</span> Sobrecarga de demanda (ex: &gt; 100%) ou recessão forçada (ex: &lt; 100%) são ferramentas poderosas para desafiar as equipes a redesenhar suas estruturas produtivas e de pricing. O sistema suportará integralmente a sua decisão!
@@ -403,8 +403,8 @@ const TutorArenaControl: React.FC<{ championship: Championship; onUpdate: (confi
                    )}
                    <div className="space-y-6">
                       <div className="flex items-center justify-between">
-                         <h4 className="text-lg font-bold text-white uppercase tracking-wider flex items-center gap-2"><Globe size={18} className="text-orange-500"/> Praças Comerciais Ativas</h4>
-                         <span className="text-xs font-mono text-slate-400">{regionsList.length} Praças Ativas</span>
+                         <h4 className="text-lg font-bold text-white uppercase tracking-wider flex items-center gap-2"><Globe size={18} className="text-orange-500"/> Rergiões Comerciais Ativas</h4>
+                         <span className="text-xs font-mono text-slate-400">{regionsList.length} Regiões Ativas</span>
                       </div>
 
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
@@ -422,7 +422,7 @@ const TutorArenaControl: React.FC<{ championship: Championship; onUpdate: (confi
                                   <div className="flex items-center gap-2">
                                      <span className="px-2 py-0.5 bg-white/5 border border-white/10 text-[9px] font-mono font-bold rounded text-slate-400">{r.currency}</span>
                                      {regionsList.length > 1 && (
-                                        <button onClick={() => handleDeleteRegion(r.id)} className="p-2 bg-red-950/40 hover:bg-red-500 text-red-400 hover:text-white rounded-lg transition-all" title="Remover Praça">
+                                        <button onClick={() => handleDeleteRegion(r.id)} className="p-2 bg-red-950/40 hover:bg-red-500 text-red-400 hover:text-white rounded-lg transition-all" title="Remover Região">
                                            <Trash2 size={12}/>
                                         </button>
                                      )}
@@ -450,14 +450,14 @@ const TutorArenaControl: React.FC<{ championship: Championship; onUpdate: (confi
                             </div>
                          ))}
 
-                         {/* Form de Expansão de Nova Praça */}
+                         {/* Form de Expansão de Nova Região */}
                          <div className="bg-slate-950/40 p-6 rounded-[2.5rem] border-2 border-dashed border-white/10 flex flex-col justify-between hover:border-orange-500/30 transition-all space-y-4">
                             <div className="space-y-1">
                                <div className="text-orange-500 font-black text-[10px] uppercase tracking-wider flex items-center gap-1.5">
                                   <Plus size={14}/> EXPANSÃO GEOGRÁFICA
                                </div>
-                               <h4 className="text-white text-sm font-bold">Criar Nova Praça</h4>
-                               <p className="text-[10px] text-slate-500">Insira uma nova praça de atuação para o próximo round.</p>
+                               <h4 className="text-white text-sm font-bold">Criar Nova Região</h4>
+                               <p className="text-[10px] text-slate-500">Insira uma nova reião de atuação para o próximo round.</p>
                             </div>
                             
                             <div className="space-y-3">
@@ -501,7 +501,7 @@ const TutorArenaControl: React.FC<{ championship: Championship; onUpdate: (confi
                             </div>
                             
                             <button onClick={handleAddRegion} className="w-full py-2.5 bg-white hover:bg-orange-500 hover:text-white text-slate-950 rounded-xl font-black text-[10px] uppercase tracking-wider transition-all flex items-center justify-center gap-1.5">
-                               <Plus size={12}/> Anexar Praça
+                               <Plus size={12}/> Anexar Região
                             </button>
                          </div>
                       </div>

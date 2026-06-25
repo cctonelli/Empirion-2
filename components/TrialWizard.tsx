@@ -1062,7 +1062,7 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
     await saveP0Template(tplPayload);
     setShowSaveTplModal(false);
     loadTemplatesFromSupabase();
-    alert("Template P0 Salvo com Sucesso!");
+    alert("Template Salvo com Sucesso!");
   };
 
   const handleLoadTpl = (tpl: P0Template) => {
@@ -2338,7 +2338,7 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                                   </span>
                                 </div>
                                 <div className="flex justify-between text-purple-400">
-                                  <span>Salário Base Operador:</span>
+                                  <span>Salário Base Inicial:</span>
                                   <span className="font-bold">
                                     {formatCurrency(
                                       selectedPreviewTemplate.config?.workforce
@@ -2350,14 +2350,14 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                               </div>
                             </div>
 
-                            {/* Praças de Venda e Estoques */}
+                            {/* Regiões de Venda e Estoques */}
                             <div className="p-6 bg-slate-950/80 rounded-2xl border border-white/5 space-y-4 shadow-inner font-sans">
                               <h4 className="text-[10px] font-black text-emerald-400 uppercase tracking-widest italic border-b border-white/5 pb-2 font-sans">
-                                Praças e Estoque MPA/MPB
+                                Regiões e Estoque MPA/MPB
                               </h4>
                               <div className="space-y-3 font-mono text-[11px] text-slate-400">
                                 <div className="flex justify-between">
-                                  <span>Praças Comerciais:</span>
+                                  <span>Regiões Comerciais:</span>
                                   <span className="font-bold text-white">
                                     {selectedPreviewTemplate.config?.regions
                                       ?.length || 0}{" "}
@@ -2487,7 +2487,7 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                                 ? "Este cenário é do tipo Greenfield Purista (Começo do Zero). Ele exige dos times alto foco em investimentos de infraestrutura no primeiro round (compra de máquinas, contratação total de operadores, estruturação fabril)."
                                 : selectedPreviewTemplate.config
                                       ?.starting_mode === "start_with_base"
-                                  ? "Este cenário começa com infraestrutura de Base Ativa (PME). É recomendado para simulações acadêmicas clássicas onde o foco inicial é calibrar marketing, produção de matéria prima imediata e vendas nas praças."
+                                  ? "Este cenário começa com infraestrutura de Base Ativa (PME). É recomendado para simulações acadêmicas clássicas onde o foco inicial é calibrar marketing, produção de matéria prima imediata e vendas nas regiões."
                                   : "Cenário Running Company (Operação Plena). As empresas já iniciam maduras, de grande porte, contendo estoques elevados de produtos acabados, contas comerciais em andamento e obrigações passadas que precisarão ser liquidadas."}
                             </p>
                           </div>
@@ -2966,7 +2966,7 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                   />
 
                   <WizardField
-                    label="SALÁRIO BASE RECRUTA ($)"
+                    label="SALÁRIO BASE INICIAL ($)"
                     type="currency"
                     currency={tutorConfig.currency}
                     val={tutorConfig.workforce.baseSalary}
@@ -3110,7 +3110,7 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                 <div className="space-y-10">
                   <div className="flex justify-between items-center bg-slate-900/40 p-8 rounded-[3rem] border border-white/10 shadow-xl text-left">
                     <h4 className="text-xl font-black text-white uppercase italic">
-                      Configuração de Regiões de Venda
+                      Configuração de Região de Venda
                     </h4>
                     <button
                       onClick={() => {
@@ -3131,7 +3131,7 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                       }}
                       className="px-8 py-3 bg-orange-600 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-white hover:text-orange-950 transition-all flex items-center gap-2 shadow-xl active:scale-95 animate-pulse"
                     >
-                      <Plus size={16} /> Adicionar Praça
+                      <Plus size={16} /> Adicionar Região
                     </button>
                   </div>
 
@@ -3145,7 +3145,7 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                           Configuração de Hiper-Demanda / Recessão Ativa: Soma em {totalTrialDemandWeights}%
                         </h5>
                         <p className="text-xs text-slate-300 leading-relaxed font-medium">
-                          A soma dos pesos de demanda das praças configuradas totaliza <strong className="text-amber-300 font-bold">{totalTrialDemandWeights}%</strong> (diferente do padrão de 100%).
+                          A soma dos pesos de demanda das regiões configuradas totaliza <strong className="text-amber-300 font-bold">{totalTrialDemandWeights}%</strong> (diferente do padrão de 100%).
                           Isso indica que o mercado geral gerado para as equipes será proporcionalmente <strong className="text-amber-300 font-bold">{totalTrialDemandWeights > 100 ? "expandido (hiper-demanda)" : "contraído (recessão)"}</strong>.
                         </p>
                         <div className="text-[11px] text-slate-400 space-y-2 bg-slate-950/40 p-5 rounded-2xl border border-white/5 font-medium leading-normal">

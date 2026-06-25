@@ -11,20 +11,20 @@
 ## Decisão Arquitetural: Isolação Estrita de Novas Regiões e Prevenção de Off-by-One na Intervenção - v2026.178
 
 **Data:** 25 de Junho de 2026 às 12:30 UTC  
-**Motivo:** Sanar o vazamento de pesos de demandas e de novas regiões de intervenção futuras para a rodada corrente disputada pelas equipes, garantindo o congelamento e a promoção correta das praças no turnover e corrigindo o erro off-by-one nos painéis de decisão e revisão.
+**Motivo:** Sanar o vazamento de pesos de demandas e de novas Regiões de intervenção futuras para a rodada corrente disputada pelas equipes, garantindo o congelamento e a promoção correta das Regiões no turnover e corrigindo o erro off-by-one nos painéis de decisão e revisão.
 
 **Detalhamento Técnico de Planejamento e Modificações:**
 - **Remoção de Vazamentos no Salvamento de Regiões (`components/TutorArenaControl.tsx`)**:
-  - Ajustou-se o método `handleSave` para que as edições e adições de praças comerciais efetuadas pelo Tutor para rodadas futuras sejam armazenadas exclusivamente no nó `round_rules?.[nextRoundIdx]`.
-  - Removeu-se a sobregravação imediata das colunas `config.regions` e `config.region_configs` globais do campeonato no payload, blindando a rodada ativa em disputa contra vazamentos de pesos alterados ou praças precoces.
-- **Resolução de Praças e Herança Dinâmica por Rodada (`components/DecisionForm.tsx` & `components/steps/MarketingStep.tsx`)**:
-  - Atualizou-se o formulário de decisão (`DecisionForm.tsx`) e os painéis de cálculo de marketing e rateio financeiro (`MarketingStep.tsx`) para carregar as praças vigentes com base na precedência lógica por round: busca-se prioritariamente de dentro das regras específicas da rodada (`round_rules?.[round]`) antes de reincidir em fallbacks do config global.
+  - Ajustou-se o método `handleSave` para que as edições e adições de Regiões comerciais efetuadas pelo Tutor para rodadas futuras sejam armazenadas exclusivamente no nó `round_rules?.[nextRoundIdx]`.
+  - Removeu-se a sobregravação imediata das colunas `config.regions` e `config.region_configs` globais do campeonato no payload, blindando a rodada ativa em disputa contra vazamentos de pesos alterados ou Regiões precoces.
+- **Resolução de Regiões e Herança Dinâmica por Rodada (`components/DecisionForm.tsx` & `components/steps/MarketingStep.tsx`)**:
+  - Atualizou-se o formulário de decisão (`DecisionForm.tsx`) e os painéis de cálculo de marketing e rateio financeiro (`MarketingStep.tsx`) para carregar as Regiões vigentes com base na precedência lógica por round: busca-se prioritariamente de dentro das regras específicas da rodada (`round_rules?.[round]`) antes de reincidir em fallbacks do config global.
   - Sincronizou-se a variável `targetRound` reativa no escopo principal de `MarketingStep.tsx` para guiar consistentemente todas as sub-renderizações de cards e rateios de custos.
 - **Correção de Off-by-One em Listas e Revisões de Regiões (`components/steps/ReviewStep.tsx`)**:
-  - Substituiu-se a indexação direta de array baseada em ID numérico (`regions?.[regId]`) por buscas seguras `.find(r => r.id === regId)` no painel de revisão. Essa correção elide o desalinhamento de índices (como a indexação zero-based do JavaScript versus os IDs um-based de regiões), assegurando que o nome correto e os parâmetros de preço de cada praça correspondam fielmente à intenção de digitação do aluno.
+  - Substituiu-se a indexação direta de array baseada em ID numérico (`regions?.[regId]`) por buscas seguras `.find(r => r.id === regId)` no painel de revisão. Essa correção elide o desalinhamento de índices (como a indexação zero-based do JavaScript versus os IDs um-based de Regiões), assegurando que o nome correto e os parâmetros de preço de cada Região correspondam fielmente à intenção de digitação do aluno.
 - **Congelamento e Promoção de Regiões no Fechamento de Rodada (`services/supabase.ts` -> `processRoundTurnover`)**:
   - No processamento do turnover de fechamento de ciclo, o sistema agora resolve o cronograma regional da rodada que acaba de ser executada e congela-o permanentemente gravando os valores consolidados em `round_rules?.[nextRound]`.
-  - Promove as praças customizadas da nova rodada ativa (se configuradas pelo Tutor em `round_rules?.[nextNextRound]`) para a raiz do `config` global, assegurando a herança correta para as tomadas de decisões e planejamentos subsequentes.
+  - Promove as Regiões customizadas da nova rodada ativa (se configuradas pelo Tutor em `round_rules?.[nextNextRound]`) para a raiz do `config` global, assegurando a herança correta para as tomadas de decisões e planejamentos subsequentes.
 
 **Status atual:** v2026.178 - Em Produção / Compilado com Sucesso.
 
@@ -275,7 +275,7 @@
 **Detalhamento Técnico de Planejamento e Modificações:**
 - **Reconfiguração de Grades (Mecanismo Anti-esmagamento)**:
   - No `FactoryStep.tsx`: Transição de `xl:grid-cols-4` para um grid confortável de 2 colunas amplas (`lg:grid-cols-2 lg:gap-10`). Agora, em resoluções desktop, as decisões operacionais (Uso de Capacidade, Turnos, Horas Extras, P&D) são expostas como uma grade simétrica 2x2, viabilizando respiro horizontal e conforto visual.
-  - No `MarketingStep.tsx`: Transição de `xl:grid-cols-4` para um grid proporcional de 3 colunas maximo (`xl:grid-cols-3` e `lg:grid-cols-3`). Desta forma, praças de vendas se comportam com elegância mesmo com resoluções ou densidades variadas.
+  - No `MarketingStep.tsx`: Transição de `xl:grid-cols-4` para um grid proporcional de 3 colunas maximo (`xl:grid-cols-3` e `lg:grid-cols-3`). Desta forma, Regiões de vendas se comportam com elegância mesmo com resoluções ou densidades variadas.
 - **Micro-interações & Estilo Defensivo**:
   - Incorporação do modificador de flex-layout `gap-3` acoplado ao `shrink-0`, `whitespace-nowrap` e `pl-2` em todas as tags e valores chaves (e.g., marcas de turnos selecionados `1 Turno`, bônus de contratação, demissão e salários da base `HRStep.tsx`). Isso impede que o navegador crie uma quebra de linha artificial no meio de um indicador financeiro ou textual.
 - **DX & Consistência**:
@@ -291,15 +291,15 @@
 ## Decisão Arquitetural: Mapeamento de Regiões Comerciais do JSON de Configuração do Tutor no Painel de Decisões do Estudante - v2026.163
 
 **Data:** 16 de Junho de 2026 às 15:45 UTC  
-**Motivo:** Correção de discrepância visual e de usabilidade reportada pelas equipes. O JSON `config` armazenado nas tabelas `championships` ou `trial_championships` detém o mapeamento detalhado de cada região (como ID, NAME, CURRENCY, DEMAND_WEIGHT, etc.) configurada nominalmente pelo tutor (ex: "SUL", "SUDESTE", "CENTRO-OESTE" etc.). Contudo, as equipes de estudantes se deparavam com nomes genéricos "Região 1", "Região 2" etc. no painel de Tomada de Decisão Comercial (Aba de Marketing), impedindo que identificassem geograficamente e taticamente as praças comerciais onde atuavam. Esta atualização acopla e sincroniza o painel do aluno diretamente com as propriedades de nomes reais gravadas no JSON da arena ativa (`activeArena?.config?.regions` ou `config?.region_configs`).
+**Motivo:** Correção de discrepância visual e de usabilidade reportada pelas equipes. O JSON `config` armazenado nas tabelas `championships` ou `trial_championships` detém o mapeamento detalhado de cada região (como ID, NAME, CURRENCY, DEMAND_WEIGHT, etc.) configurada nominalmente pelo tutor (ex: "SUL", "SUDESTE", "CENTRO-OESTE" etc.). Contudo, as equipes de estudantes se deparavam com nomes genéricos "Região 1", "Região 2" etc. no painel de Tomada de Decisão Comercial (Aba de Marketing), impedindo que identificassem geograficamente e taticamente as Regiões comerciais onde atuavam. Esta atualização acopla e sincroniza o painel do aluno diretamente com as propriedades de nomes reais gravadas no JSON da arena ativa (`activeArena?.config?.regions` ou `config?.region_configs`).
 
 **Detalhamento Técnico de Planejamento e Modificações:**
-- **Sincronização nos Títulos de Praças (`MarketingStep.tsx`)**:
+- **Sincronização nos Títulos de Regiões (`MarketingStep.tsx`)**:
   - Ajuste na renderização de nomes para priorizar as propriedades de `regionConf?.name` e `activeArena?.region_names?.[idx]` antes de recorrer ao fallback de string estática `Região ${id}`.
 - **Sincronização do Motor Interno de Simulação em Tempo Real**:
   - O utilitário `calculateRegionStats` foi atualizado para que os nomes dinâmicos se estendam coerentemente de ponta a ponta no painel, incluindo projeções estatísticas de volume de vendas e share histórico calculado em tempo de execução para os alunos.
 - **Micro-interações Contextuais Modificadas**:
-  - O botão de replicação de parâmetros comerciais agora exibe dinamicamente o nome correto da praça base de origem (ex: `Replicar SUL` em vez do genérico `Replicar Região 1`).
+  - O botão de replicação de parâmetros comerciais agora exibe dinamicamente o nome correto da Região base de origem (ex: `Replicar SUL` em vez do genérico `Replicar Região 1`).
   - O texto de ajuda contextiva foi ajustado analogamente para refletir o nome configurado em tempo real.
 
 **Impactos:**
@@ -619,13 +619,13 @@
 **Motivo:** Dirimir lacunas analíticas e duplicidades de controle entre as colunas da tabela `trial_championships` (conflito de fonte da verdade), especificamente onde o peso de demanda consolidada diferia entre o campo raiz `region_configs` (105% de peso total) e o nó `config.regions` (110% de peso total, que é o correto determinado pelo Tutor). Também auditar e explicar matematicamente a geração da demanda exata de 63.000 unidades disputadas no Round 1 sob o enfoque de conformidade estrutural.
 
 **Detalhamento Técnico de Planejamento:**
-- **Harmonização Relacional e Single Source of Truth**: Reestruturamos prioritariamente a cadeia de herança analítica de regiões nas engines de cockpit (`MarketingStep.tsx`) e fechamento de rodadas (`services/supabase.ts`). O código agora inspeciona e preenche as configurações regionais preferencialmente do nó `config.regions` ou `config.region_configs` (onde residem as modificações consistentes de 110% de peso do Tutor). Somente se estes nós estiverem ausentes, o sistema recorre de forma segura à coluna plana de raiz `region_configs`. Isso resolve definitivamente a assimetria corporativa de pesos.
+- **Harmonização Relacional e Single Source of Truth**: Reestruturamos prioritariamente a cadeia de herança analítica de Regiões nas engines de cockpit (`MarketingStep.tsx`) e fechamento de rodadas (`services/supabase.ts`). O código agora inspeciona e preenche as configurações regionais preferencialmente do nó `config.regions` ou `config.region_configs` (onde residem as modificações consistentes de 110% de peso do Tutor). Somente se estes nós estiverem ausentes, o sistema recorre de forma segura à coluna plana de raiz `region_configs`. Isso resolve definitivamente a assimetria corporativa de pesos.
 - **Auditoria e Desmistificação do Market Size Global (63.000 unidades)**:
   1. No modo tradicional **Start with Base**, as 3 equipes iniciam o jogo em conformidade com o Balanço Patrimonial Herdado clássico contendo **5 máquinas Alpha** operacionais por equipe (`INITIAL_MACHINES_R0` como premissa de herança de ativos imobilizados no Round 0).
   2. No decorrer do Round 1, todas as equipes executaram decisões corporativas de aprovação de CAPEX para a compra de **+5 máquinas Alpha** adicionais cada uma.
   3. Portanto, a frota produtiva ativa no início das entregas do Round 1 totalizou **10 máquinas Alpha por equipe** (5 iniciais + 5 adquiridas por CAPEX).
   4. Sabendo que a capacidade nominal de fabricação regulamentar de cada máquina Alpha é de **2.000 unidades físicas / ciclo**, a capacidade total instalada da indústria para as 3 equipes atingiu: `10 máquinas * 2.000 un/máquina * 3 equipes = 60.000 unidades globais` de capacidade acumulada.
-  5. Multiplicando essa capacidade de 100% instalada pelo peso acumulado de demanda das 5 regiões registradas na coluna residual de herança até a unificação (**105% / 100**), o motor econômico calculou de forma 100% impecável: `60.000 unidades * 1.05 = 63.000 unidades` de demanda consolidada.
+  5. Multiplicando essa capacidade de 100% instalada pelo peso acumulado de demanda das 5 Regiões registradas na coluna residual de herança até a unificação (**105% / 100**), o motor econômico calculou de forma 100% impecável: `60.000 unidades * 1.05 = 63.000 unidades` de demanda consolidada.
   6. Com a unificação em `v2026.141`, ao operar agora sobre o peso ajustado correto de **110%** contido no `config.regions`, a demanda do mercado sob o mesmo parque industrial expandido passará a ser de exatamente `60.000 * 1.10 = 66.000 unidades` físicas, correspondendo fiduciosamente à modelagem pretendida pelo Tutor.
 
 **Impactos:**
@@ -637,12 +637,12 @@
 ## Decisão Arquitetural, Mapeamento Posicional de Regiões para eliminação de Market Size Nulo (Resiliência do Algoritmo de Demanda) - v2026.140
 
 **Data:** 14 de Junho de 2026 às 17:25 UTC  
-**Motivo:** Corrigir anomalia visual e analítica onde o valor exibido para o "MARKET SIZE REGIONAL" na Região 01 constava erroneamente como "0 UN", decorrente de conflito e duplicidade nos IDs das regiões no banco de dados (por exemplo, a colisão em que Região 01 e Região 04 tinham ambas o atributo `id: 4`, enquanto o frontend buscava sequencialmente por `id: 1`).
+**Motivo:** Corrigir anomalia visual e analítica onde o valor exibido para o "MARKET SIZE REGIONAL" na Região 01 constava erroneamente como "0 UN", decorrente de conflito e duplicidade nos IDs das Regiões no banco de dados (por exemplo, a colisão em que Região 01 e Região 04 tinham ambas o atributo `id: 4`, enquanto o frontend buscava sequencialmente por `id: 1`).
 
 **Detalhamento Técnico de Planejamento:**
 - **Indexação por Ordem Posicional Baseada em Array**: Em vez de mapear as chaves de armazenamento e busca de `regionalMarketSizes` usando as chaves `r.id` do banco de dados (as quais podem conter collisions ou corrupções), as rotinas de cálculo do planejador de vendas (`MarketingStep.tsx`) passaram a utilizar sistematicamente a indexação posicional 1-baseada (`idx + 1`).
 - **Escopos Modificados:**
-  - **Identificação Unificada em `calculateRegionStats`**: Chaves associativas do mapa de demandas regionais e pontuações de competitividade agora consideram consistentemente a ordem em que as regiões aparecem no vetor correspondente (Região 1 mapeia para `"1"`, Região 2 para `"2"`, etc.), independentemente do `id` cru registrado na tabela do Supabase.
+  - **Identificação Unificada em `calculateRegionStats`**: Chaves associativas do mapa de demandas regionais e pontuações de competitividade agora consideram consistentemente a ordem em que as Regiões aparecem no vetor correspondente (Região 1 mapeia para `"1"`, Região 2 para `"2"`, etc.), independentemente do `id` cru registrado na tabela do Supabase.
   - **Cálculo Consistente no Simulador de Fechamento de Rodada (`simulation.ts`)**: Adicionados fallbacks de indexação sequencial `[regId - 1]` nos blocos de receitas, faturamento local, câmbio e custos de logística/distribuição comercial da rodada real, evitando lacunas e garantindo que o processamento do fechamento use as definições financeiras perfeitas em conformidade contábil.
 
 **Impactos:**
@@ -654,16 +654,16 @@
 ## Decisão Arquitetural, Controle de Vigência de Regiões por start_round (Expansão de Mercado Resiliente) - v2026.140
 
 **Data:** 24 de Junho de 2026 às 22:35 UTC  
-**Motivo:** Corrigir a anomalia visual e de simulação onde, ao tutor cadastrar uma nova região de vendas via intervenção para rodadas futuras (ex: Round 2), as regiões já parametrizadas e vigentes para a rodada atual em andamento (Round 1) sumiam ou eram distorcidas na tela "ESTRATÉGIA COMERCIAL" (`MarketingStep.tsx`) das equipes, diluindo precocemente a demanda competitiva do mercado.
+**Motivo:** Corrigir a anomalia visual e de simulação onde, ao tutor cadastrar uma nova região de vendas via intervenção para rodadas futuras (ex: Round 2), as Regiões já parametrizadas e vigentes para a rodada atual em andamento (Round 1) sumiam ou eram distorcidas na tela "ESTRATÉGIA COMERCIAL" (`MarketingStep.tsx`) das equipes, diluindo precocemente a demanda competitiva do mercado.
 
 **Detalhamento Técnico de Planejamento:**
 - **Propriedade start_round Dedicada (`TutorArenaControl.tsx`)**: No painel do tutor, ao adicionar uma nova região ao `regionsList` em intervenção, ela é marcada com a propriedade `start_round: nextRoundIdx` para indicar em qual rodada ela de fato passa a existir.
-- **Filtragem Reativa de Inicialização (`DecisionForm.tsx`)**: O cockpit de decisões das equipes de estudantes passa a filtrar a lista global de regiões do campeonato para montar as decisões e rascunhos apenas para as praças cuja existência seja válida no round em andamento (`!r.start_round || r.start_round <= round`).
-- **Apuramento Consistente de Indicadores (`MarketingStep.tsx`)**: A função `calculateRegionStats` foi refatorada para modular a lista de configurações de regiões (`regionConfigs`) de acordo com o round sob análise (seja histórico ou projetado). Isso evita que o market size bruto total seja indevidamente rateado com praças territoriais que ainda não foram inauguradas na simulação.
+- **Filtragem Reativa de Inicialização (`DecisionForm.tsx`)**: O cockpit de decisões das equipes de estudantes passa a filtrar a lista global de Regiões do campeonato para montar as decisões e rascunhos apenas para as Regiões cuja existência seja válida no round em andamento (`!r.start_round || r.start_round <= round`).
+- **Apuramento Consistente de Indicadores (`MarketingStep.tsx`)**: A função `calculateRegionStats` foi refatorada para modular a lista de configurações de Regiões (`regionConfigs`) de acordo com o round sob análise (seja histórico ou projetado). Isso evita que o market size bruto total seja indevidamente rateado com Regiões territoriais que ainda não foram inauguradas na simulação.
 
 **Impactos:**
 - **Integridade de Indicadores e Projeções**: Estabilidade total e acurácia contábil nas telas do discente e no simulador para a rodada atual.
-- **Evolução Gradativa de Mercado**: Garante que o recurso pedagógico de expansão de vendas funcione como planejado, habilitando a nova praça de forma suave e sincronizada apenas quando o torneio avançar para a rodada agendada pelo tutor.
+- **Evolução Gradativa de Mercado**: Garante que o recurso pedagógico de expansão de vendas funcione como planejado, habilitando a nova Região de forma suave e sincronizada apenas quando o torneio avançar para a rodada agendada pelo tutor.
 
 ---
 
@@ -694,7 +694,7 @@
 - **Inclusão de Múltiplos Fallbacks Sequenciais (Cockpit & Simulador)**: Fomos além do mapeamento sequencial rígido pautado no campo `id` da região e implementamos estratégias complementares de leitura (fallbacks baseados no índice indexado do vetor no array `regions_count` ou `[regId - 1]`).
 - **Escopo Corrigido Totalmente**:
   - **Exibição nas Telas de Decisões (`/components/DecisionForm.tsx`)**: Correção do loop `initialRegions` permitindo recuperar as variáveis mesmo em caso de lacunas numéricas ou duplicidades de IDs.
-  - **Interpolação de Estampa Financeira e Estimativa (`/components/steps/MarketingStep.tsx`)**: Ajustados os buscadores de regiões de cockpit para computar consistentemente o `baseSuggestedPrice`, frete e custo de marketing territoriais.
+  - **Interpolação de Estampa Financeira e Estimativa (`/components/steps/MarketingStep.tsx`)**: Ajustados os buscadores de Regiões de cockpit para computar consistentemente o `baseSuggestedPrice`, frete e custo de marketing territoriais.
   - **Sincronismo com Room e Auditor (`/services/supabase.ts`)**: Corrigido o instanciador automático de decisões para torneios em andamento (`baseDecisions`).
   - **Fórmula de Equilíbrio e Mecânica de Demanda (`/services/simulation.ts` e `/services/simulation-core.ts`)**: Injetada a resiliência por índice `regId - 1` para certificar que os preços no cálculo da matriz de vendas respeitem as especificidades físicas do simulador independentemente do array de ID do Supabase.
 
@@ -743,7 +743,7 @@
 ## Decisão Arquitetural & Regra de Negócio, Correção da Participação Regional (Market Share vs Total Demanda) - v2026.135
 
 **Data:** 14 de Junho de 2026 às 12:48 UTC  
-**Motivo:** Corrigir a inconsistência de cálculo no indicador "SUA PARTICIPAÇÃO REGIÃO" em `MarketingStep.tsx` durante o planejamento de marketing/vendas das equipes. Anteriormente, a participação era calculada dividindo o volume vendido da empresa pelo somatório de vendas reais de todos os concorrentes daquela única praça (`totalRegionUnitsSold`). Esta abordagem, além de poder atingir 100% de forma enganosa caso apenas duas empresas estivessem competindo e vendendo, gerava simulações idênticas entre as regiões (visto que o market share concorrencial tendia a se estabilizar horizontalmente), em vez de focar no aproveitamento fiduciário do tamanho de demanda total planejado da região (Market Size Regional / `rMarketSizeVal`), frustrando a análise detalhada dos diretores.
+**Motivo:** Corrigir a inconsistência de cálculo no indicador "SUA PARTICIPAÇÃO REGIÃO" em `MarketingStep.tsx` durante o planejamento de marketing/vendas das equipes. Anteriormente, a participação era calculada dividindo o volume vendido da empresa pelo somatório de vendas reais de todos os concorrentes daquela única Região (`totalRegionUnitsSold`). Esta abordagem, além de poder atingir 100% de forma enganosa caso apenas duas empresas estivessem competindo e vendendo, gerava simulações idênticas entre as Regiões (visto que o market share concorrencial tendia a se estabilizar horizontalmente), em vez de focar no aproveitamento fiduciário do tamanho de demanda total planejado da região (Market Size Regional / `rMarketSizeVal`), frustrando a análise detalhada dos diretores.
 
 **Detalhamento Técnico de Planejamento:**
 - **Nova Formulação Fiduciária de Participação Regional**: Substituição da base de cálculo de total vendido regional concorrencial (`totalRegionUnitsSold`) pelo tamanho absoluto do Market Size configurado para aquela região (`rMarketSizeVal`).
@@ -752,7 +752,7 @@
   - Em um cenário de Market Size de 19.800 unidades e 1.756 unidades vendidas pela empresa, o indicador exibe de forma precisa e correta `8.9%` (ou 8.87% sem arredondamentos no teto), expressando realisticamente a penetração da empresa em relação às necessidades em escala de consumo bruto da região.
 
 **Impactos:**
-- **Cálculo Preciso por Praça**: Assegura consistência fiduciária contábil e de inteligência de mercado de forma totalmente isolada para cada praça analítica, superando o travamento estático do valor concorrencial anterior.
+- **Cálculo Preciso por Região**: Assegura consistência fiduciária contábil e de inteligência de mercado de forma totalmente isolada para cada Região analítica, superando o travamento estático do valor concorrencial anterior.
 - **Excelente UX e Tomada de Decisão**: Fornece um feedback cristalino sobre a fatia da região que está sendo atendida pela empresa em face de sua estratégia de produção e pricing.
 
 ---
@@ -898,7 +898,7 @@
 **Motivo:** Generalizar o motor de simulação cambial para aceitar qualquer moeda (BRL, USD, GBP, CNY) como moeda-base do torneio configurada pelo Tutor, salvaguardando a consistência e integridade das contas do DRE e reconciliação cambial de saldo de contas a receber (`fin.fx_variance`).
 
 **Detalhamento Técnico:**
-- **Generalização Multimoeda Dinâmica**: Extensão do motor em `services/simulation.ts` para computar a taxa de câmbio (cross-rates) tendo como âncora a moeda corporativa selecionada pelo Tutor do torneio. Se a moeda da praça de exportação é diferente da moeda-base consolidada, o sistema aciona a taxa de conversão cruzada correta e calcula a receita e despesas locais com extrema fidelidade.
+- **Generalização Multimoeda Dinâmica**: Extensão do motor em `services/simulation.ts` para computar a taxa de câmbio (cross-rates) tendo como âncora a moeda corporativa selecionada pelo Tutor do torneio. Se a moeda da Região de exportação é diferente da moeda-base consolidada, o sistema aciona a taxa de conversão cruzada correta e calcula a receita e despesas locais com extrema fidelidade.
 - **Sincronização de Árvore Inicial (`constants.tsx`)**: Inclusão explícita do nó `{ id: 'fin.fx_variance', label: '(+ / -) VARIAÇÃO CAMBIAL', value: 0.00, type: 'revenue', isEditable: true }` sob a conta `fin_res` no `INITIAL_FINANCIAL_TREE`, garantindo integridade e consistência imediata entre a estrutura do JSON estático e os resultados emitidos no motor e telas de rateio de faturamento.
 - **Acoplamento no Recálculo Síncrono de Inicialização**: Atualização em `services/initialization.ts` no procedimento `recalculateStatements` para agregar o potencial saldo inicial de `fin.fx_variance` dentro do totalizador `fin_res` de resultado financeiro consolidado, evitando desvios acumulados de round zero.
 
@@ -942,10 +942,10 @@
 ## Decisão Arquitetural, Margem por Geolocalização & DRE Regional de Vendas - v2026.118
 
 **Data:** 10 de Junho de 2026 às 21:20 UTC  
-**Motivo:** Implementar a capacidade analítica de Inteligência Comercial e Controladoria Contábil solicitada pela equipe multidisciplinar, integrando uma Demonstração de Resultado do Exercício (DRE) expandida por praça de vendas (DRE por Geolocalização) no Cockpit do Aluno. Isso soluciona o gap estratégico de incapacidade de visualização de margens líquidas e lucros brutos/líquidos diretos agregados regionalmente.
+**Motivo:** Implementar a capacidade analítica de Inteligência Comercial e Controladoria Contábil solicitada pela equipe multidisciplinar, integrando uma Demonstração de Resultado do Exercício (DRE) expandida por Região de vendas (DRE por Geolocalização) no Cockpit do Aluno. Isso soluciona o gap estratégico de incapacidade de visualização de margens líquidas e lucros brutos/líquidos diretos agregados regionalmente.
 
 **Detalhamento Técnico:**
-- **Modelo de Custeio Geográfico por Absorção Focal (CPC / IFRS)**: Estruturou-se uma sub-DRE em cada Card regional que desconta da Receita Bruta: os impostos faturados por região (flutuante conforme alíquotas de IVA por round), os Custos de Produtos Vendidos Alocados (WAC global da equipe multiplicado por vendas físicas da praça), despesas regionais de campanhas de marketing local e custos de transporte/frete logístico da praça.
+- **Modelo de Custeio Geográfico por Absorção Focal (CPC / IFRS)**: Estruturou-se uma sub-DRE em cada Card regional que desconta da Receita Bruta: os impostos faturados por região (flutuante conforme alíquotas de IVA por round), os Custos de Produtos Vendidos Alocados (WAC global da equipe multiplicado por vendas físicas da Região), despesas regionais de campanhas de marketing local e custos de transporte/frete logístico da Região.
 - **Micro-interação de Controladoria**: Adição de Disclosure/Accordion expansível ("DRE & Lucratividade") com indicação visual de tendências positiva e negativa (`lucro >= 0 ? TrendingUp : TrendingDown`), permitindo simular faturamento líquido e margem líquida percentual em tempo real com base nas variações de decisões do cockpit de vendas.
 - **Motor de Custo Médio (WAC Estimator)**: Implementação de estimador contábil para o custo de estocagem PA (`wac`) recuperando dados reais do DRE histórico ou deduzindo pelo custeio padrão de entradas de matéria-prima (3x MP A + 2x MP B) acrescido de overhead fabril direto.
 
@@ -973,16 +973,16 @@
 ## Decisão Arquitetural, Rateio Proporcional de Estoque & Sincronismo de Vendas no Cockpit - v2026.116
 
 **Data:** 10 de Junho de 2026 às 19:15 UTC  
-**Motivo:** Sanar as três principais inconsistências do módulo de Marketing do round: a quantidade vendida (`Vendas na Região (un)`) e a participação de mercado (`Venda Relativa (%)`) apareciam idênticas em todas as regiões por conta de divisão estática do estoque contra demand_weight, divergindo também do montante real registrado nas fichas de Kardex e no Custo do Produto Vendido (CPV). Adicionalmente, implementar indicador de vendas agregadas concorrenciais por região.
+**Motivo:** Sanar as três principais inconsistências do módulo de Marketing do round: a quantidade vendida (`Vendas na Região (un)`) e a participação de mercado (`Venda Relativa (%)`) apareciam idênticas em todas as Regiões por conta de divisão estática do estoque contra demand_weight, divergindo também do montante real registrado nas fichas de Kardex e no Custo do Produto Vendido (CPV). Adicionalmente, implementar indicador de vendas agregadas concorrenciais por região.
 
 **Detalhamento Técnico:**
-- **Algoritmo de Alocação de Vendas via Rateio Proporcional (v19.6 Sapphire)**: Em vez de limitar de antemão o estoque em porções simétricas rígidas (`totalQtyForSale / regionCount`), o sistema agora calcula a demanda atraída individualmente em todas as regiões para cada participante. Se a demanda acumulada de todas as praças for maior do que o estoque total pronto para venda, aplica-se um coeficiente dinâmico proporcional de atendimento (`teamStockRatio = totalQtyForSale / totalDemandAllRegions`), garantindo que as vendas físicas regionais flutuem em estrita consonância com os esforços competitivos de precificação, marketing e prazos em cada praça.
+- **Algoritmo de Alocação de Vendas via Rateio Proporcional (v19.6 Sapphire)**: Em vez de limitar de antemão o estoque em porções simétricas rígidas (`totalQtyForSale / regionCount`), o sistema agora calcula a demanda atraída individualmente em todas as Regiões para cada participante. Se a demanda acumulada de todas as Regiões for maior do que o estoque total pronto para venda, aplica-se um coeficiente dinâmico proporcional de atendimento (`teamStockRatio = totalQtyForSale / totalDemandAllRegions`), garantindo que as vendas físicas regionais flutuem em estrita consonância com os esforços competitivos de precificação, marketing e prazos em cada Região.
 - **Paridade de Motores de Simulação**: A lógica de rateio dinâmico foi implementada de modo estritamente idêntico no simulador de turnovers base (`/services/simulation.ts`), no kernel de fallback (`/services/simulation-core.ts`) e no cockpit visual do estudante (`/components/steps/MarketingStep.tsx`).
 - **Novo Indicador Analítico "Vendas Totais na região (qtde)"**: Integrado na função `calculateRegionStats` de `MarketingStep.tsx` e exposto no HUD regional para representar a somatória de unidades faturadas por todas as equipes em atividade concorrencial naquela região específica.
 
 **Impactos:**
 - **Exatidão Contábil Total**: Alinhamento imediato e inabalável entre os painéis de projeção do Cockpit de Marketing e os registros definitivos do Kardex e Demonstrativo de Resultado do Exercício (DRE).
-- **Competição Dinâmica Realista**: Esforços adicionais de campanhas ou preços diferenciados passam a surtir efeito regional fluido, gerando vendas líquidas e taxas de venda relativa (`Venda Relativa (%)`) dinamicamente variadas por praça.
+- **Competição Dinâmica Realista**: Esforços adicionais de campanhas ou preços diferenciados passam a surtir efeito regional fluido, gerando vendas líquidas e taxas de venda relativa (`Venda Relativa (%)`) dinamicamente variadas por Região.
 
 ---
 
@@ -1427,7 +1427,7 @@ Todas as contas listadas na `INITIAL_FINANCIAL_TREE` dentro de `constants.tsx` (
 
 ## 5. 🌎 Expansão Geopolítica e Multi-Moeda
 
-O simulador suporta operações industriais complexas distribuídas em até **15 regiões simultâneas**:
+O simulador suporta operações industriais complexas distribuídas em até **15 Regiões simultâneas**:
 - **Consolidação Cambial:** Transações regionais usam cotações de moedas como **BRL (Base de liquidação), USD, EUR, GBP, CNY e BTC**.
 - **Cotações Cruzadas:** Paridades e taxas de câmbio são reguladas através dos `MacroIndicators` lançados a cada rodada.
 - **Segmentação Geopolítica:** Cada região possui peso de demanda exclusivo, moeda local própria, e atratividade comercial influenciada diretamente pelas tarifas aduaneiras e incentivos tributários regionais (Landed Cost).
@@ -1648,11 +1648,11 @@ project-root/
 - **Data:** 05 de Junho de 2026, 15:00 UTC
 - **Motivo:** Sanar o desalinhamento de dados e erro de auditoria na simulação, onde o Tutor customizava os valores regionais de "Preço Venda Sugerido", "Custo Unitário de Distribuição" e "Custo Orçamentário de Marketing" no Wizard e no banco Supabase (coluna JSON `config` na tabela `trial_championships`), porém o frontend exibia valores estáticos hardcoded (R$ 425 e custos estáticos) e o backend de simulação recalculava despesas com base em indicadores macro globais não-coincidentes, gerando distorções de demanda e CPV.
 - **Diferenças:**
-  - *Sincronização no Core de Simulação (`services/simulation.ts` e `services/simulation-core.ts`):* Refatorada a lógica de demanda de mercado de cada praça para buscar de forma dinâmica a propriedade `suggested_price` mapeada de cada região do JSON `config` do Supabase (com fallback seguro ao indexador macroeconômico global se não configurado). O gasto total de marketing agora calcula o limite promocional tendo como base o `marketing_cost` territorializado e customizado. O Custo de Distribuição comercial por região calcula individualmente a quantidade real vendida em cada praça vezes o respectivo `distribution_cost` regionalizado daquele torneio, ponderando proporcionalmente as frações de atendimento em caso de ruptura de estoque.
+  - *Sincronização no Core de Simulação (`services/simulation.ts` e `services/simulation-core.ts`):* Refatorada a lógica de demanda de mercado de cada Região para buscar de forma dinâmica a propriedade `suggested_price` mapeada de cada região do JSON `config` do Supabase (com fallback seguro ao indexador macroeconômico global se não configurado). O gasto total de marketing agora calcula o limite promocional tendo como base o `marketing_cost` territorializado e customizado. O Custo de Distribuição comercial por região calcula individualmente a quantidade real vendida em cada Região vezes o respectivo `distribution_cost` regionalizado daquele torneio, ponderando proporcionalmente as frações de atendimento em caso de ruptura de estoque.
   - *Interface de Inteligência Comercial das Equipes (`components/steps/MarketingStep.tsx`):* Adicionado um bloco de informativos fidedignos no rodapé dos cartões de decisões comerciais, buscando dinamicamente das configurações JSON os limites orçamentários sob medida daquela região (Min. Recomendado de preço, Custo de logística/distribuição por unidade e Custo padrão de campanha).
   - *Exibição Consolidada no Diário Oficial (`components/GazetteViewer.tsx`):* Desenvolvida e integrada a nova seção "Condições Comerciais e Logísticas por Região" sob a aba Macroeconômica do Gazette, mostrando pesos de demanda, de logística tributária regionalizada e moedas customizadas conforme a preferência parametrizada do Tutor no banco Supabase.
   - *Inicialização Fidedigna de Rascunhos (`components/DecisionForm.tsx`):* O loop de preenchimento de preços padrões iniciais quando o aluno acessa o round sem rascunho agora inicializa o campo herdando o respectivo preço sugerido da região ativa do Supabase em vez do valor estático de R$ 425.
-- **Impactos Esperados:** Sincronismo impecável e perfeita aderência matemática da demanda, CPV, faturamento e custos promocionais em torneios customizados de praça única ou diversificada.
+- **Impactos Esperados:** Sincronismo impecável e perfeita aderência matemática da demanda, CPV, faturamento e custos promocionais em torneios customizados de Região única ou diversificada.
 - **Status:** Ativo e Disponível em Produção, Compilação e Linter 100% Homologados.
 
 ### v19.69 Obsidian Diamond Amortization CPC 27 - Realinhamento Integral de Depreciação e Vida Útil de Ativos sob CPC 27
@@ -1686,7 +1686,7 @@ project-root/
 
 ### v19.66 Obsidian Fiduciary Marketing Realignment - Realinhamento Fiduciário de Campanhas de Marketing e Alocação de Overheads
 - **Data:** 03 de Junho de 2026, 16:04 UTC
-- **Motivo:** Sanar a grave inconsistência financeira onde o valor total de saídas na conta de "Campanhas de Marketing" no DFC vinha sendo inflada por custos de overhead comercial fixo de herança (`salesOverhead = prevOpexSales * inflationMult`), distorcendo a conciliação do que de fato as equipes decidiram gastar com publicidade direta (ex: 2 campanhas de $10K em 4 regiões deveria resultar em $80K de despesa real de marketing, mas estava sendo mostrado como $954K).
+- **Motivo:** Sanar a grave inconsistência financeira onde o valor total de saídas na conta de "Campanhas de Marketing" no DFC vinha sendo inflada por custos de overhead comercial fixo de herança (`salesOverhead = prevOpexSales * inflationMult`), distorcendo a conciliação do que de fato as equipes decidiram gastar com publicidade direta (ex: 2 campanhas de $10K em 4 Regiões deveria resultar em $80K de despesa real de marketing, mas estava sendo mostrado como $954K).
 - **Diferenças:**
   - *Mapeamento Puro de Marketing:* Refatorada a conta `'cf.outflow.marketing'` em `services/simulation.ts` para assumir de forma estrita apenas o custo físico e financeiro real de marketing contratado pelas equipes: `-(totalMarketingExp)`.
   - *Agregação Coerente de Outflows de Fornecedores Sênior:* Os custos fixos de overhead comercial e administrativo (`salesOverhead` e `admOverhead`) correspondentes a contratos estáticos operacionais, serviços faturados gerais e taxas administrativas corporativas foram agrupados e lançados na conta `'cf.outflow.suppliers'` ("PAGAMENTO A FORNECEDORES") que originalmente centraliza os desembolsos de bens e serviços operacionais terceirizados contratados.
@@ -2778,16 +2778,16 @@ project-root/
 ## Decisão Arquitetural & Versionamento - Expansão Geográfica com Parâmetros de Entrada Customizados pelo Tutor - v19.83 / v2026.123
 
 **Data:** 24 de Junho de 2026 às 21:25 UTC  
-**Motivo:** Evitar que praças criadas via expansão geográfica (intervenção do Tutor) nasçam com valores estáticos predefinidos (*fallbacks* de preço sugerido, custos de frete e marketing base). Proporcionar autonomia para definir esses fatores já no ato de criação no card de Expansão Geográfica.
+**Motivo:** Evitar que Regiões criadas via expansão geográfica (intervenção do Tutor) nasçam com valores estáticos predefinidos (*fallbacks* de preço sugerido, custos de frete e marketing base). Proporcionar autonomia para definir esses fatores já no ato de criação no card de Expansão Geográfica.
 **Principais diferenças:**  
 - **Novas Variáveis de Estado no Form (`TutorArenaControl.tsx`):**
   - Implementados os hooks de estado `newRegionSuggestedPrice` (default `425.0`), `newRegionDistributionCost` (default `50.0`) e `newRegionMarketingCost` (default `10000.0`).
 - **Inclusão dos Campos Básicos no Layout de Cadastro:**
   - Adicionados inputs dinâmicos elegantes dispostos em uma grade de 3 colunas logo abaixo dos campos de Moeda e Peso (%) com as labels: **PREÇO SUGERIDO ($)**, **CUSTO FRETE ($)** e **MKT BASE ($)**.
 - **Acoplamento Fiduciário na Função de Anexação (`handleAddRegion`):**
-  - Ajustada a rotina de criação de regiões para alimentar o objeto comercial de praça com as propriedades customizadas pelo Tutor no formulário e resetar o estado de forma limpa.
+  - Ajustada a rotina de criação de Regiões para alimentar o objeto comercial de Região com as propriedades customizadas pelo Tutor no formulário e resetar o estado de forma limpa.
 **Impactos esperados:**  
-- **Controle Cirúrgico e de Alta Fidelidade (Tutor/Mercado):** Praças internacionais de exportação criadas nas rodadas subsequentes herdam imediatamente a precificação estratégica simulada pelo Tutor.
+- **Controle Cirúrgico e de Alta Fidelidade (Tutor/Mercado):** Regiões internacionais de exportação criadas nas rodadas subsequentes herdam imediatamente a precificação estratégica simulada pelo Tutor.
 **Status:** ATIVO, compilado com sucesso, sem pendências no linter e homologado por UI/UX, Engenheiro de Software Sênior e Contabilidade.
 
 
@@ -2802,7 +2802,7 @@ project-root/
 - **Detecção Inteligente e Persistência Local:**
   - Configurado o `LanguageDetector` para salvar a preferência do discente/tutor no `localStorage` sob a chave `i18nextLng` para preservar consistência linguística entre as sessões.
 - **Acoplamento Desvinculado das Regras Monetárias:**
-  - Separado o idioma da interface (pt/en/es) das moedas das praças comerciais (`region.currency`), permitindo simulação multinacional de verdade (jogadores em pt-BR tomando decisões em USD ou MXN).
+  - Separado o idioma da interface (pt/en/es) das moedas das Regiões comerciais (`region.currency`), permitindo simulação multinacional de verdade (jogadores em pt-BR tomando decisões em USD ou MXN).
 **Impactos esperados:**  
 - **Desempenho Otimizado (Baixo Overhead):** O tempo de carregamento inicial (TBT/FCP) permanece ultra-rápido, já que os arquivos de tradução de telas complexas de decisão só são carregados quando o jogador acessa aquela aba específica.
 - **Manutenção Simplificada e Descentralizada:** Tradutores podem expandir ou complementar conteúdos nos JSONs de tradução de forma autônoma sem necessidade de intervenção do time de desenvolvimento ou alteração no código-fonte TypeScript.
@@ -2812,7 +2812,7 @@ project-root/
 ## Decisão Arquitetural & Versionamento - Alerta de Rebalanceamento Comercial de Demanda (Soberania do Tutor) - v2026.142
 
 **Data:** 24 de Junho de 2026 às 23:40 UTC  
-**Motivo:** Implementar um alerta visual proeminente e estratégico nos painéis de controle do Tutor (`TutorArenaControl.tsx` e `TrialWizard.tsx`) sempre que o somatório dos pesos das regiões comerciais diferir de 100%. Isso permite que o Tutor use desvios intencionais para simular hiper-demanda ou recessões, mantendo-se totalmente consciente sobre o impacto macroeconômico das suas intervenções.
+**Motivo:** Implementar um alerta visual proeminente e estratégico nos painéis de controle do Tutor (`TutorArenaControl.tsx` e `TrialWizard.tsx`) sempre que o somatório dos pesos das Regiões comerciais diferir de 100%. Isso permite que o Tutor use desvios intencionais para simular hiper-demanda ou recessões, mantendo-se totalmente consciente sobre o impacto macroeconômico das suas intervenções.
 **Principais diferenças:**  
 - **Visualização Reativa de Pesos:**
   - Adicionado painel explicativo animado contendo detalhes estratégicos, orientações de calibração para 100% e as consequências de manter o desbalanceamento na simulação.
@@ -2822,7 +2822,7 @@ project-root/
 - **Soberania Pedagógica:**
   - O sistema orienta o Tutor através do alerta didático, mas não gera travas de validação arbitrárias, respeitando a liberdade do docente em prosseguir com o desenho que preferir para desafiar as equipes de discentes.
 **Impactos esperados:**  
-- **Melhoria da Experiência do Tutor (DX/UX):** Mitiga drasticamente parametrizações desatentas de praças e orienta de forma clara as equipes/tutores sobre a dinâmica do tamanho de mercado final gerado no fechamento.
+- **Melhoria da Experiência do Tutor (DX/UX):** Mitiga drasticamente parametrizações desatentas de Regiões e orienta de forma clara as equipes/tutores sobre a dinâmica do tamanho de mercado final gerado no fechamento.
 **Status:** ATIVO, homologado por PMP, UI/UX, Engenheiro de Software Sênior e Auditoria Contábil.
 
 

@@ -64,8 +64,8 @@ export function FactoryStep() {
 ---
 
 ## 💰 3. Acoplamento Fiduciário Multimonedas
-Para apoiar a expansão internacional simulada, a moeda das praças não é amarrada estritamente ao idioma ativo na interface. 
-- Um usuário jogando em **Português (pt-BR)** pode criar e gerenciar uma praça configurada em **USD** ou **MXN**.
+Para apoiar a expansão internacional simulada, a moeda das regiões não é amarrada estritamente ao idioma ativo na interface. 
+- Um usuário jogando em **Português (pt-BR)** pode criar e gerenciar uma regiões configurada em **USD** ou **MXN**.
 - O sistema de moedas dinâmicas herda e formata os dados monetários diretamente das propriedades do objeto comercial da região ativa (`region.currency`).
 
 ---

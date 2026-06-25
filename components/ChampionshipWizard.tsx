@@ -194,7 +194,7 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void, isTrial?: boolean }
                <WizardStepTitle icon={<MapPin size={48}/>} title="Nodos Regionais" desc="Identifique as regiões geográficas de consumo." />
                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {regionNames.map((n, i) => (
-                     <WizardField key={i} label={`Nome Região ${i+1}`} val={n} onChange={(v:any)=> {
+                     <WizardField key={i} label={`Nome da Região ${i+1}`} val={n} onChange={(v:any)=> {
                         const copy = [...regionNames]; copy[i] = v; setRegionNames(copy);
                      }} />
                   ))}
