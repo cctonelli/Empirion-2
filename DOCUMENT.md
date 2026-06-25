@@ -2859,6 +2859,22 @@ project-root/
 **Status:** ATIVO, linter e compilação do applet efetuados com pleno sucesso. Homologado por PMP, Coordenador de Inteligência de Mercado, Contador Sênior, DB Admin, Arquiteto de UI/UX e Engenheiro de Software Sênior.
 
 
+## Decisão Arquitetural & Versionamento - Bloqueio Reativo de Transmissão sob Pausa - v2026.153
+
+**Data:** 25 de Junho de 2026 às 15:58 UTC  
+**Motivo:** Sanar o gap de reatividade onde a alteração no estado de pausa da rodada feita pelo Tutor (congelamento) não desabilitava o botão de transmissão de decisões dos alunos em tempo real, permitindo envios de decisões sob campeonato congelado ou gerando inconsistências no fluxo dinâmico de discentes.
+**Principais diferenças:**  
+- **Sincronização Ativa de Arena via Supabase Realtime:**
+  - Inserido `useEffect` reativo em `components/DecisionForm.tsx` que se inscreve ativamente no canal correspondente ao ID do campeonato (`decision-form-realtime-arena-${champId}`) tanto para a tabela `championships` quanto para `trial_championships`.
+  - O payload recebido em tempo real atualiza o estado local `activeArena` por meio da função de mapeamento sintético `mapChampionshipSynthetically`.
+- **Desativação Instantânea de Controles:**
+  - O botão de **"Transmitir Decisão"** e o botão de backup **"Transmitir Mesmo Assim"** passam a escutar reativamente esse estado sincronizado no milissegundo em que o Tutor clica em "Congelar" ou "Descongelar" no painel de comando.
+  - O botão é desabilitado visualmente de forma imediata (adquirindo o estilo cinza desabilitado) e o texto é alterado para **"Decisões Congeladas"** para o aluno, impedindo qualquer gravação fiduciária extemporânea. No momento do despause pelo Tutor, os botões tornam-se novamente clicáveis de forma síncrona no cliente.
+**Impactos esperados:**  
+- **SLA e Compliance de Jogo:** Alinhamento perfeito e tempo real entre o painel de decisões do aluno e o painel de controle do Tutor, extinguindo problemas de envios extemporâneos em dinâmicas acadêmicas e empresariais.
+**Status:** ATIVO, linter e compilação do applet efetuados com pleno sucesso. Homologado por PMP, Coordenador de Inteligência de Mercado, Contador Sênior, DB Admin, Arquiteto de UI/UX e Engenheiro de Software Sênior.
+
+
 
 
 

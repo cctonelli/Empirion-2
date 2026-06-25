@@ -4,7 +4,7 @@ import {
   Gavel, ShieldCheck, ChevronLeft, ChevronRight, AlertTriangle, 
   Activity, BarChart3, Coins, Rocket, Sparkles, Sliders, Play, Landmark
 } from 'lucide-react';
-import { saveDecisions, getChampionships, supabase, getTeamSimulationHistory } from '../services/supabase';
+import { saveDecisions, getChampionships, supabase, getTeamSimulationHistory, mapChampionshipSynthetically } from '../services/supabase';
 import { DecisionData, Branch, Championship, Team, MachineInstance, MacroIndicators } from '../types';
 import { calculateProjections } from '../services/simulation';
 import { calculateESDS } from '../services/gemini';
@@ -296,6 +296,46 @@ const DecisionForm: React.FC<{
     };
     initializeForm();
   }, [champId, teamId, round]);
+
+  // Sincronização em Tempo Real (Supabase Realtime) do Estado do Campeonato (Pausa, Config, etc.)
+  useEffect(() => {
+    if (!activeArena?.id) return;
+
+    const isTrial = activeArena.is_trial;
+    const table = isTrial ? 'trial_championships' : 'championships';
+    const champId = activeArena.id;
+
+    const channel = supabase.channel(`decision-form-realtime-arena-${champId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: table,
+          filter: `id=eq.${champId}`
+        },
+        (payload) => {
+          console.log(`[DecisionForm Realtime] Mudança capturada na Arena (${table}):`, payload.new);
+          if (!payload.new) return;
+          setActiveArena(prev => {
+            if (!prev) return null;
+            return mapChampionshipSynthetically({
+              ...prev,
+              ...payload.new,
+              // Preserva as propriedades relacionais locais que não vêm no payload bruto
+              teams: prev.teams,
+              round_rules: (payload.new as any).round_rules || prev.round_rules,
+              market_indicators: (payload.new as any).market_indicators || prev.market_indicators
+            });
+          });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      channel.unsubscribe();
+    };
+  }, [activeArena?.id, activeArena?.is_trial]);
 
   const updateDecision = (path: string, val: any) => {
     if (isReadOnly) return;
