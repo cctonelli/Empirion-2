@@ -39,6 +39,7 @@ export const MarketingStep: React.FC<MarketingStepProps> = ({
   isReadOnly,
   round,
 }) => {
+  const targetRound = round !== undefined ? round : ((activeArena?.current_round || 0) + 1);
   const [competitorsLog, setCompetitorsLog] = React.useState<any[]>([]);
   const [loadingIntel, setLoadingIntel] = React.useState(false);
   const [allRegionsExpanded, setAllRegionsExpanded] = React.useState(false);
@@ -290,6 +291,8 @@ export const MarketingStep: React.FC<MarketingStepProps> = ({
       : (round !== undefined ? round : ((activeArena?.current_round || 0) + 1));
 
     let regionConfigs: any[] =
+      activeArena?.round_rules?.[targetRound]?.regions ||
+      activeArena?.round_rules?.[targetRound]?.region_configs ||
       activeArena?.config?.regions ||
       activeArena?.config?.region_configs ||
       activeArena?.region_configs ||
@@ -549,13 +552,16 @@ export const MarketingStep: React.FC<MarketingStepProps> = ({
   };
 
   const firstRegionName = React.useMemo(() => {
+    const rRules = activeArena?.round_rules?.[targetRound] || {};
     const firstRegionConf =
+      rRules.regions?.find((r: any) => Number(r.id) === 1) ||
+      rRules.region_configs?.find((r: any) => Number(r.id) === 1) ||
       activeArena?.config?.regions?.find((r: any) => Number(r.id) === 1) ||
       activeArena?.config?.region_configs?.find((r: any) => Number(r.id) === 1) ||
       activeArena?.config?.regions?.[0] ||
       activeArena?.config?.region_configs?.[0];
     return firstRegionConf?.name || "Região 1";
-  }, [activeArena]);
+  }, [activeArena, targetRound]);
 
   return (
     <div className="space-y-12 lg:space-y-16 animate-in fade-in slide-in-from-bottom-4 duration-700">
@@ -683,7 +689,10 @@ export const MarketingStep: React.FC<MarketingStepProps> = ({
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-6 lg:gap-8">
         {Object.entries(decisions.regions).map(([id, reg]: [string, any]) => {
           const regId = Number(id);
+          const rRules = activeArena?.round_rules?.[targetRound] || {};
           const regionConf =
+            rRules.regions?.find((r: any) => r.id === regId) ||
+            rRules.region_configs?.find((r: any) => r.id === regId) ||
             activeArena?.config?.regions?.find((r: any) => r.id === regId) ||
             activeArena?.config?.region_configs?.find(
               (r: any) => r.id === regId,
@@ -1065,7 +1074,10 @@ export const MarketingStep: React.FC<MarketingStepProps> = ({
 
                         // Para o rateio fiduciário das despesas corporativas não-alocáveis (irpj/csll, folha adm, inadimplência, juros, etc).
                         // Calculamos em tempo de execução a soma das margens de contribuição de todas as regiões operadas.
-                        const allRegions = activeArena?.config?.regions ||
+                        const rRules = activeArena?.round_rules?.[targetRound] || {};
+                        const allRegions = rRules.regions ||
+                          rRules.region_configs ||
+                          activeArena?.config?.regions ||
                           activeArena?.config?.region_configs || [
                             { id: 1 },
                             { id: 2 },
@@ -1085,6 +1097,8 @@ export const MarketingStep: React.FC<MarketingStepProps> = ({
                             {};
 
                           const rRegionConf =
+                            rRules.regions?.find((x: any) => x.id === rId) ||
+                            rRules.region_configs?.find((x: any) => x.id === rId) ||
                             activeArena?.config?.regions?.find(
                               (x: any) => x.id === rId,
                             ) ||

@@ -144,7 +144,15 @@ export const ReviewStep: React.FC<ReviewStepProps> = ({ decisions, round, projec
             ) : (
               regionEntries.map(([id, reg]: [string, any]) => {
                 const regId = Number(id);
-                const regionConf = activeArena?.config?.regions?.[regId] || activeArena?.config?.region_configs?.[regId] || { name: `Região ${regId}` };
+                const rRules = activeArena?.round_rules?.[round] || {};
+                const regionConf = 
+                  rRules.regions?.find((r: any) => r.id === regId) ||
+                  rRules.region_configs?.find((r: any) => r.id === regId) ||
+                  activeArena?.config?.regions?.find((r: any) => r.id === regId) ||
+                  activeArena?.config?.region_configs?.find((r: any) => r.id === regId) ||
+                  activeArena?.config?.regions?.[regId - 1] ||
+                  activeArena?.config?.region_configs?.[regId - 1] ||
+                  { name: `Região ${regId}` };
                 return (
                   <div key={id} className="p-2 border border-white/5 rounded-xl bg-slate-950/20 space-y-1.5">
                     <span className="text-[10px] font-black text-slate-300 font-sans block truncate uppercase tracking-wider">

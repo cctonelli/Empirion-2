@@ -1,10 +1,32 @@
 # Oracle Strategos - Bússola de Diretrizes do Projeto (DOCUMENT.md)
-
+ 
 ## 📋 Controle de Governança
 - **Produto:** EMPIRION ORACLE
-- **Versão Ativa:** v2026.177 Detalhamento de Estrutura de Funding Imobiliário e Amortização Linear.
+- **Versão Ativa:** v2026.178 Isolação Estrita de Novas Regiões e Prevenção de Off-by-One na Intervenção.
 - **Tipo de Documento:** Master Index & Diretrizes de Engenharia Contínua
 - **Status da Documentação:** Sincronizado com o PRD.md, BUSINESS_RULES.md & ROADMAP.md
+ 
+---
+
+## Decisão Arquitetural: Isolação Estrita de Novas Regiões e Prevenção de Off-by-One na Intervenção - v2026.178
+
+**Data:** 25 de Junho de 2026 às 12:30 UTC  
+**Motivo:** Sanar o vazamento de pesos de demandas e de novas regiões de intervenção futuras para a rodada corrente disputada pelas equipes, garantindo o congelamento e a promoção correta das praças no turnover e corrigindo o erro off-by-one nos painéis de decisão e revisão.
+
+**Detalhamento Técnico de Planejamento e Modificações:**
+- **Remoção de Vazamentos no Salvamento de Regiões (`components/TutorArenaControl.tsx`)**:
+  - Ajustou-se o método `handleSave` para que as edições e adições de praças comerciais efetuadas pelo Tutor para rodadas futuras sejam armazenadas exclusivamente no nó `round_rules?.[nextRoundIdx]`.
+  - Removeu-se a sobregravação imediata das colunas `config.regions` e `config.region_configs` globais do campeonato no payload, blindando a rodada ativa em disputa contra vazamentos de pesos alterados ou praças precoces.
+- **Resolução de Praças e Herança Dinâmica por Rodada (`components/DecisionForm.tsx` & `components/steps/MarketingStep.tsx`)**:
+  - Atualizou-se o formulário de decisão (`DecisionForm.tsx`) e os painéis de cálculo de marketing e rateio financeiro (`MarketingStep.tsx`) para carregar as praças vigentes com base na precedência lógica por round: busca-se prioritariamente de dentro das regras específicas da rodada (`round_rules?.[round]`) antes de reincidir em fallbacks do config global.
+  - Sincronizou-se a variável `targetRound` reativa no escopo principal de `MarketingStep.tsx` para guiar consistentemente todas as sub-renderizações de cards e rateios de custos.
+- **Correção de Off-by-One em Listas e Revisões de Regiões (`components/steps/ReviewStep.tsx`)**:
+  - Substituiu-se a indexação direta de array baseada em ID numérico (`regions?.[regId]`) por buscas seguras `.find(r => r.id === regId)` no painel de revisão. Essa correção elide o desalinhamento de índices (como a indexação zero-based do JavaScript versus os IDs um-based de regiões), assegurando que o nome correto e os parâmetros de preço de cada praça correspondam fielmente à intenção de digitação do aluno.
+- **Congelamento e Promoção de Regiões no Fechamento de Rodada (`services/supabase.ts` -> `processRoundTurnover`)**:
+  - No processamento do turnover de fechamento de ciclo, o sistema agora resolve o cronograma regional da rodada que acaba de ser executada e congela-o permanentemente gravando os valores consolidados em `round_rules?.[nextRound]`.
+  - Promove as praças customizadas da nova rodada ativa (se configuradas pelo Tutor em `round_rules?.[nextNextRound]`) para a raiz do `config` global, assegurando a herança correta para as tomadas de decisões e planejamentos subsequentes.
+
+**Status atual:** v2026.178 - Em Produção / Compilado com Sucesso.
 
 ---
 
@@ -653,7 +675,7 @@
 **Detalhamento Técnico de Planejamento:**
 - **Ausência de Restrições Contábeis & CRUD**: No ecossistema de avaliação e simulação rápida em modo Trial, os recursos de cadastro de templates, configuração de rodadas, envio de decisões de preço, marketing, prazos e investimentos são completamente destravados (`zero CRUD restrictions`).
 - **Priorização Inteligente de Fallbacks Locals (Híbridos)**: Para garantir que nenhuma falha de rede ou barreira de RLS interrompa o fluxo pedagógico e concorrencial dos discentes, as rotinas do simulador e cockpits operam com prioridade dupla:
-  1. Tentam sincronizar com as respectivas tabelas públicas do Supabase (`trial_championships`, `p0_templates`, etc.) sem exigir login ou tokens de segurança.
+  1. Tentam sincronizar com as respectivas tabelas públicas do Supabase (`trial_championships`, `r0_templates`, etc.) sem exigir login ou tokens de segurança.
   2. Caso ocorra erro de RLS, rede ou autenticação, recorrem silenciosa e instantaneamente aos repositórios estáticos e caches locais estruturados (`localStorage`, `constants` e variáveis em memória reativa), garantindo a continuidade imediata dos cálculos da simulação com exatidão matemática fiduciária.
 - **Bypass Mandatório do Fluxo de Login**: Nenhuma barreira visual de autenticação deve ser imposta aos competidores em modo Trial.
 
@@ -685,7 +707,7 @@
 ## Decisão Arquitetural, Persistência de Cronograma Macroeconômico Customizado (DEFAULT_INDUSTRIAL_CHRONOGRAM) em Templates P0 - v2026.137
 
 **Data:** 14 de Junho de 2026 às 15:10 UTC  
-**Motivo:** Corrigir a ausência de persistência e hibridização do cronograma de indicadores do simulador (`DEFAULT_INDUSTRIAL_CHRONOGRAM` / `roundRules` customizados pelo Tutor na criação de torneios) no objeto JSON `config` da tabela `p0_templates` no Supabase ao salvar e recuperar modelos de P0. Anteriormente, as configurações financeiras de P0 eram devidamente transportadas, porém os ajustes cronológicos do Tutor nas réguas macroeconômicas eram descartados por desacoplamento de estado, retornando o cronograma estático genérico.
+**Motivo:** Corrigir a ausência de persistência e hibridização do cronograma de indicadores do simulador (`DEFAULT_INDUSTRIAL_CHRONOGRAM` / `roundRules` customizados pelo Tutor na criação de torneios) no objeto JSON `config` da tabela `r0_templates` no Supabase ao salvar e recuperar modelos de P0. Anteriormente, as configurações financeiras de P0 eram devidamente transportadas, porém os ajustes cronológicos do Tutor nas réguas macroeconômicas eram descartados por desacoplamento de estado, retornando o cronograma estático genérico.
 
 **Detalhamento Técnico de Planejamento:**
 - **Consolidação na Persistência de Modelos (`handleSaveTpl`)**: No gatilho de gravação contábil de rascunhos de P0, o objeto `config` de `tplPayload` foi expandido para fundir o estado do parque industrial e premissas (`tutorConfig`) com as parametrizações do cronograma de rodadas (`DEFAULT_INDUSTRIAL_CHRONOGRAM: roundRules` e `round_rules: roundRules`).
@@ -2053,7 +2075,7 @@ project-root/
   - *União de Modos Contábeis:* Implementação de Discriminated Unions no TypeScript para os modos `start_from_zero` (foco em Caixa/Capital), `start_with_base` (foco em ativo fabril balanceado) e `start_with_running` (modo focado em pendências de CP/LP e estoques parciais de produtos).
   - *Quadro Ativo de Bots:* Configuração do módulo de concorrentes mecânicos (Bots autônomos) integrados com perfis mercadológicos (AGRESSIVO, CONSERVADOR, etc.).
   - *Preview Real-Time & Recalculo fiduciário:* Inclusão do botão "Recalcular P0" que roda o kernel matemático determinístico em tempo real e renderiza os demonstrativos em sub-abas dedicadas no Step 8 (DRE, DFC, Balanço e E-SDS).
-  - *Serviço de Templates:* Persistência das escolhas do Tutor de forma dinâmica na base do Supabase (`p0_templates`) para reaproveitamento ágil.
+  - *Serviço de Templates:* Persistência das escolhas do Tutor de forma dinâmica na base do Supabase (`r0_templates`) para reaproveitamento ágil.
   - *Higienização Fiduciária de Payload (Database Payload Sanitization):* Integração de um filtro inteligente no método `createChampionshipWithTeams` em `services/supabase.ts` que permite ao front-end transitar modelos ricos e flexíveis de parâmetros de simulação, mas isola e limpa essas chaves dinâmicas antes que a query de inserção atinja as tabelas `trial_championships` e `championships`. Isso evita colisões com a DDL no Supabase e blinda o simulador contra erros de Schema Cache em mutações futuras. (Decisão ADR-DB-04)
 - **Status:** Em Produção (Fidelidade Absoluta e Excelência de DX).
 
@@ -2276,7 +2298,7 @@ project-root/
 - **Principais Diferenças na v2026.127:**
   - **Dynamic Privacy Policy Selector:** `getP0Templates()` avalia de forma nativa a presença do estado `is_trial_session` ou a ausência de autoconexão para liberar a visualização pública. Em cenários oficializados (campeonatos pagos/produção), aplica o filtro isolante `.eq('tutor_id', currentUser_id)`.
   - **Database Payload Sanitization (ADR-DB-04):** Sanada a tentativa de inserção de propriedades de tráfego visual (`category` e `code`) de forma crua, expurgando esses campos antes de submeter ao Supabase-PostgREST para evitar o erro `400 Bad Request` na listagem persistente e garantindo o funcionamento perfeito do fluxo.
-  - **Transição de RLS no PostgreSQL:** Ajuste das regras de concorrência e leitura na tabela `public.p0_templates` onde se retirou a restrição rígida `TO authenticated` na cláusula `SELECT` com o flag `is_public` (liberando-a de forma coerente à role `public`), mantendo escrita segura em conformidade com as regras do torneio.
+  - **Transição de RLS no PostgreSQL:** Ajuste das regras de concorrência e leitura na tabela `public.r0_templates` onde se retirou a restrição rígida `TO authenticated` na cláusula `SELECT` com o flag `is_public` (liberando-a de forma coerente à role `public`), mantendo escrita segura em conformidade com as regras do torneio.
 - **Status:** Ativo e em Produção.
 
 ### v19.21 - Sapphire Obsidian Masterclass (Accounting & Tutor Experience Patch)
@@ -2293,7 +2315,7 @@ project-root/
 - **Principais Diferenças na v19.20:**
   - **Índices de Expressão (Expression Indexes) para Casts de Texto:** Criação de índices específicos como `idx_companies_team_id_cast_text` e `idx_teams_id_cast_text` que indexam a expressão `(team_id)::text` e `(id)::text`. Isso remove os "Seq Scans" gerados pelos castings necessários nas RLS de segurança e fusão de views.
   - **Busca por Escopo de Campeonato:** Indexação composta `idx_companies_champ_round_fiduciary` para agilizar filtragens por `championship_id` + `round`, trazendo as consultas e auditorias aos tempos de resposta de microssegundos.
-  - **Eficiência de RLS de Templates:** Criação do índice composto `idx_p0_templates_tutor_public` na tabela `p0_templates` para garantir carragamento imediato das configurações P0 sem latência.
+  - **Eficiência de RLS de Templates:** Criação do índice composto `idx_r0_templates_tutor_public` na tabela `r0_templates` para garantir carragamento imediato das configurações P0 sem latência.
 - **Status:** Em produção.
 
 ### v19.19 - Obsidian Diamond Enterprise (Database Precision Patch)
@@ -2314,9 +2336,9 @@ project-root/
 
 ### v19.18 - Obsidian Diamond Enterprise (Tutor Masterclass)
 - **Data:** Maio de 2026
-- **Motivo:** Implementação do painel fiduciário em tempo real (Real-Time Auditor) e do sistema maduro de templates persistentes na tabela `p0_templates` do Supabase com proteção RLS.
+- **Motivo:** Implementação do painel fiduciário em tempo real (Real-Time Auditor) e do sistema maduro de templates persistentes na tabela `r0_templates` do Supabase com proteção RLS.
 - **Principais Diferenças na v19.18:**
-  - **Tabela `p0_templates`:** Criada a estrutura física e as políticas de segurança de linha (RLS) que blindam os templates de cada tutor e dão suporte a visualização de templates compartilhados e privados.
+  - **Tabela `r0_templates`:** Criada a estrutura física e as políticas de segurança de linha (RLS) que blindam os templates de cada tutor e dão suporte a visualização de templates compartilhados e privados.
   - **Audit Dashboard (v19.18) no Step 8:** Centralização analítica contendo kpis avançados de Solvência de Kanitz, Altman Z-Score de mercados emergentes, classificação automática de risco de crédito (AAA a A-), cálculos de faturamento teórico do maquinário ativo e listagem minuciosa de estoque (MPA, MPB, PA e WIP).
   - **Reconciliação e Recálculo Dinâmico:** Correção fiduciária exata ao centavo e recálculo em tempo real (Real-Time Recalculable P0 Preview) com perfeita amarração contábil de Ativos e Passivos + PL.
 - **Status:** Em produção.
@@ -2720,7 +2742,7 @@ project-root/
 ## Decisão Arquitetural & Versionamento - Persistência Contábil de Equipes do Tutor e Sincronização Integral de Cronograma em Templates P0 - v19.81 / v2026.121
 
 **Data:** 24 de Junho de 2026 às 18:35 UTC  
-**Motivo:** Corrigir a perda de configurações de equipes (quantidade e nomes das equipes humanas, e quantidade de competidores virtuais/bots) criadas pelo Tutor no TrialWizard ao salvar um modelo fiduciário de torneio/P0, além de certificar a persistência do cronograma macroeconômico completo customizado pelo tutor (`DEFAULT_INDUSTRIAL_CHRONOGRAM` / `round_rules`) no banco de dados Supabase via `p0_templates`.
+**Motivo:** Corrigir a perda de configurações de equipes (quantidade e nomes das equipes humanas, e quantidade de competidores virtuais/bots) criadas pelo Tutor no TrialWizard ao salvar um modelo fiduciário de torneio/P0, além de certificar a persistência do cronograma macroeconômico completo customizado pelo tutor (`DEFAULT_INDUSTRIAL_CHRONOGRAM` / `round_rules`) no banco de dados Supabase via `r0_templates`.
 **Principais diferenças:**  
 - **Persistência Total da Configuração de Equipes no Template (`handleSaveTpl`):**
   - Inclusão explícita de `humanTeamsCount`, `teamNames` e `botsCount` no payload JSON do campo `config` ao salvar o template através da função `handleSaveTpl`.
@@ -2728,7 +2750,7 @@ project-root/
   - Atualização dos métodos de carga reativa de templates no `TrialWizard.tsx` para detectar os metadados de equipes e injetá-los no estado local (`setHumanTeamsCount`, `setTeamNames` e `setBotsCount`), assegurando resgate fidedigno e instantâneo dos times.
   - Estendido o modelo `BaseP0Config` no arquivo de tipos `services/initialization.ts` com as propriedades opcionais `humanTeamsCount?: number`, `teamNames?: string[]` e `botsCount?: number` para garantir plena type-safety no TypeScript durante o processo de build do applet.
 - **Armazenamento Seguro de Cronogramas Customizados:**
-  - Garantida a redundância sadia ao mapear e gravar o estado customizado de `roundRules` tanto sob `round_rules` quanto `DEFAULT_INDUSTRIAL_CHRONOGRAM` dentro da coluna `config` (tipo `jsonb`) da tabela `p0_templates`.
+  - Garantida a redundância sadia ao mapear e gravar o estado customizado de `roundRules` tanto sob `round_rules` quanto `DEFAULT_INDUSTRIAL_CHRONOGRAM` dentro da coluna `config` (tipo `jsonb`) da tabela `r0_templates`.
 **Impactos esperados:**  
 - **Experiência de Setup Fluida (DX/UX):** O Tutor não precisa mais reconfigurar nomes e contagem de equipes após carregar ou pré-visualizar um template pré-salvo.
 - **Consistência de Rodadas Macroeconômicas:** Todas as regras, exceções e indexadores editados por rodada são integralmente preservados no template.
@@ -2745,7 +2767,7 @@ project-root/
 - **Interface Intuitiva e Condicional no Setup de Torneio (`TrialWizard.tsx`):**
   - Implementado painel de campos adicionais dinâmicos no card "Carga De Estoques R-0" contendo as labels **CUSTO ESTOCAGEM MP (UN)** (`storage_mp`, com padrão `2.00`) e **CUSTO ESTOCAGEM PA** (`storage_finished`, com padrão `5.00`), exibido estritamente quando o modo selecionado for `START FROM ZERO` (`tutorConfig.starting_mode === 'start_from_zero'`).
 - **Persistência Total (Supabase e Templates):**
-  - Vinculadas as variáveis no payload JSON `config` de `championships`, `trial_championships` e no `p0_templates` (através de desestruturação reativa via spread do `tutorConfig` ao criar/salvar).
+  - Vinculadas as variáveis no payload JSON `config` de `championships`, `trial_championships` e no `r0_templates` (através de desestruturação reativa via spread do `tutorConfig` ao criar/salvar).
   - Configurada injeção dinâmica destas variáveis nos preços iniciais de mercado (`market_indicators.prices`) na criação de novos torneios para que as rodadas iniciais e subsequentes do motor de simulação contábil usem estritamente as definições do Tutor.
 **Impactos esperados:**  
 - **Autonomia Total de Parâmetros Operacionais:** O Tutor detém o poder de moldar restrições logísticas de custeio por absorção e estocagem em cenários customizados a partir do zero absoluto.

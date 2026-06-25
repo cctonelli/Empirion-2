@@ -264,7 +264,11 @@ const DecisionForm: React.FC<{
         }
 
         const initialRegions: any = {};
-        const allRegions = found?.config?.regions || found?.config?.region_configs || found?.region_configs || [];
+        const allRegions = found?.round_rules?.[round]?.regions || 
+                           found?.round_rules?.[round]?.region_configs || 
+                           found?.config?.regions || 
+                           found?.config?.region_configs || 
+                           found?.region_configs || [];
         const activeRegionsForRound = allRegions.filter((r: any) => !r.start_round || r.start_round <= round);
 
         activeRegionsForRound.forEach((regionConf: any, index: number) => {

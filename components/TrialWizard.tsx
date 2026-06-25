@@ -5952,7 +5952,7 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
           <div className="fixed inset-0 z-[999] bg-black/80 flex items-center justify-center p-6 backdrop-blur-sm">
             <div className="bg-slate-900 border-2 border-white/10 p-10 rounded-[3rem] max-w-lg w-full space-y-8 shadow-[0_50px_100px_rgba(0,0,0,0.9)] animate-in fade-in zoom-in duration-200 text-left">
               <h3 className="text-2xl font-black text-white uppercase italic">
-                Salvar P0 como Template
+                Salvar Torneio como Template
               </h3>
               <div className="space-y-4">
                 <div className="space-y-2">

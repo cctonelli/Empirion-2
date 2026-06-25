@@ -766,7 +766,11 @@ export const processRoundTurnover = async (id: string, round: number, isTrial?: 
 
         // --- MODELO CONCORRENCIAL MULTIRREGIONAL DE MARKET SHARE (v19.5 Sapphire) ---
         // 2.1 Configuração de Regiões do Campeonato
-        let regionConfigs: RegionConfig[] = champ.config?.regions || champ.config?.region_configs || champ.region_configs || [];
+        let regionConfigs: RegionConfig[] = champ.round_rules?.[nextRound]?.regions || 
+                                            champ.round_rules?.[nextRound]?.region_configs || 
+                                            champ.config?.regions || 
+                                            champ.config?.region_configs || 
+                                            champ.region_configs || [];
         if (!regionConfigs || regionConfigs.length === 0) {
             const regCount = champ.regions_count || 1;
             regionConfigs = Array.from({ length: regCount }, (_, i) => ({
@@ -1093,18 +1097,54 @@ export const processRoundTurnover = async (id: string, round: number, isTrial?: 
         const nextIndicators = { ...indicatorsForRound, ...nextRules, avg_selling_price: avgPrice };
 
         // v19.59: Limpeza fiduciária de variáveis de pausa ao realizar Turnover de Rodada
+        // Se houver regras de região específicas para a rodada seguinte que agora se torna ativa (nextNextRound),
+        // nós as promovemos para a raiz do config para servir de linha de base fluida.
+        const nextRoundRegions = champ.round_rules?.[nextNextRound]?.regions || 
+                                 champ.round_rules?.[nextNextRound]?.region_configs;
+        
         const updatedConfig = {
             ...(champ.config || {}),
             is_paused: false,
             paused_at: null,
-            remaining_ms_at_pause: null
+            remaining_ms_at_pause: null,
+            ...(nextRoundRegions ? {
+                regions: nextRoundRegions,
+                region_configs: nextRoundRegions.map((r: any) => ({
+                    id: r.id,
+                    name: r.name,
+                    currency: r.currency,
+                    demand_weight: r.demand_weight,
+                    suggested_price: r.suggested_price,
+                    distribution_cost: r.distribution_cost,
+                    marketing_cost: r.marketing_cost
+                }))
+            } : {})
+        };
+
+        const updatedRoundRules = {
+            ...(champ.round_rules || {}),
+            // Congela as regiões utilizadas no round que acaba de ser concluído (nextRound)
+            [nextRound]: {
+                ...(champ.round_rules?.[nextRound] || {}),
+                regions: regionConfigs,
+                region_configs: regionConfigs.map((r: any) => ({
+                    id: r.id,
+                    name: r.name,
+                    currency: r.currency,
+                    demand_weight: r.demand_weight,
+                    suggested_price: r.suggested_price,
+                    distribution_cost: r.distribution_cost,
+                    marketing_cost: r.marketing_cost
+                }))
+            }
         };
 
         const { error: champUpdateErr } = await supabase.from(champTable).update({ 
             current_round: nextRound, 
             market_indicators: nextIndicators,
             round_started_at: new Date().toISOString(),
-            config: updatedConfig
+            config: updatedConfig,
+            round_rules: updatedRoundRules
         }).eq('id', id);
 
         if (champUpdateErr) {
@@ -1126,7 +1166,7 @@ export const getP0Templates = async (): Promise<any[]> => {
     // aplicamos controle rígido filtrando apenas os templates correspondentes ao tutor logado.
     const isTrialSession = localStorage.getItem('is_trial_session') === 'true' || !currentUser_id;
 
-    let query = supabase.from('p0_templates').select('*');
+    let query = supabase.from('r0_templates').select('*');
     
     // Se não estiver em Trial (Modo Oficializado), filtramos rigidamente no banco pelo tutor logado
     if (!isTrialSession && currentUser_id) {
@@ -1136,11 +1176,11 @@ export const getP0Templates = async (): Promise<any[]> => {
     const { data: dbData, error } = await query.order('created_at', { ascending: false });
     
     // Obter dados locais persistidos de forma híbrida
-    const local = localStorage.getItem('local_p0_templates');
+    const local = localStorage.getItem('local_r0_templates');
     const localList = local ? JSON.parse(local) : [];
 
     if (error) {
-      console.warn("Using local fallback for p0_templates due to database response:", error);
+      console.warn("Using local fallback for r0_templates due to database response:", error);
       // Filtramos também a lista local no modo oficializado
       if (!isTrialSession && currentUser_id) {
         return localList.filter((item: any) => item.tutor_id === currentUser_id);
@@ -1175,7 +1215,7 @@ export const getP0Templates = async (): Promise<any[]> => {
 
     return combined;
   } catch (err) {
-    const local = localStorage.getItem('local_p0_templates');
+    const local = localStorage.getItem('local_r0_templates');
     return local ? JSON.parse(local) : [];
   }
 };
@@ -1186,7 +1226,7 @@ export const saveP0Template = async (template: any) => {
     
     // HIGIENIZAÇÃO DE PAYLOAD (ADR-DB-04):
     // Removemos 'category' e 'code' do payload de inserção no banco de dados,
-    // pois essas colunas de transporte não existem fisicamente na tabela 'p0_templates' de Supabase-PostgREST,
+    // pois essas colunas de transporte não existem fisicamente na tabela 'r0_templates' de Supabase-PostgREST,
     // o que causaria um erro de Bad Request (Coluna inexistente).
     const { category, code, ...dbSafeTemplate } = template;
 
@@ -1208,14 +1248,14 @@ export const saveP0Template = async (template: any) => {
 
     // 1. Tenta gravar no banco de dados Supabase
     const { data: dbData, error } = await supabase
-      .from('p0_templates')
+      .from('r0_templates')
       .insert(payload)
       .select();
       
     if (error) {
       console.warn("Database storage failed, falling back to LocalStorage:", error);
       // Fallback local robusto
-      const local = localStorage.getItem('local_p0_templates');
+      const local = localStorage.getItem('local_r0_templates');
       const list = local ? JSON.parse(local) : [];
       const existsIdx = list.findIndex((x: any) => x.code === payloadLocal.code);
       if (existsIdx >= 0) {
@@ -1223,7 +1263,7 @@ export const saveP0Template = async (template: any) => {
       } else {
         list.push(payloadLocal);
       }
-      localStorage.setItem('local_p0_templates', JSON.stringify(list));
+      localStorage.setItem('local_r0_templates', JSON.stringify(list));
       return { data: [payloadLocal], error: null };
     }
 
@@ -1235,18 +1275,18 @@ export const saveP0Template = async (template: any) => {
       category: category || "industrial"
     } : payloadLocal;
     
-    const local = localStorage.getItem('local_p0_templates');
+    const local = localStorage.getItem('local_r0_templates');
     const list = local ? JSON.parse(local) : [];
     
     // Elimina qualquer duplicata local com o mesmo 'code' para consistência
     const filteredList = list.filter((item: any) => item.code !== savedRecord.code);
     filteredList.push(savedRecord);
-    localStorage.setItem('local_p0_templates', JSON.stringify(filteredList));
+    localStorage.setItem('local_r0_templates', JSON.stringify(filteredList));
 
     return { data: [savedRecord], error: null };
   } catch (err) {
     console.error("Exception during saveP0Template:", err);
-    const local = localStorage.getItem('local_p0_templates');
+    const local = localStorage.getItem('local_r0_templates');
     const list = local ? JSON.parse(local) : [];
     const fallbackId = template.id || `tpl-${Math.random().toString(36).substr(2, 9)}`;
     const payloadFallback = { 
@@ -1261,7 +1301,7 @@ export const saveP0Template = async (template: any) => {
     } else {
       list.push(payloadFallback);
     }
-    localStorage.setItem('local_p0_templates', JSON.stringify(list));
+    localStorage.setItem('local_r0_templates', JSON.stringify(list));
     return { data: [payloadFallback], error: null };
   }
 };
@@ -1269,28 +1309,28 @@ export const saveP0Template = async (template: any) => {
 export const deleteP0Template = async (id: string): Promise<{ success: boolean; error?: string }> => {
   try {
     const { error } = await supabase
-      .from('p0_templates')
+      .from('r0_templates')
       .delete()
       .eq('id', id);
     
     // Limpeza fiduciária no LocalStorage para cenários offline ou fallbacks locais coerentes
-    const local = localStorage.getItem('local_p0_templates');
+    const local = localStorage.getItem('local_r0_templates');
     if (local) {
       const list = JSON.parse(local);
       const filtered = list.filter((item: any) => item.id !== id);
-      localStorage.setItem('local_p0_templates', JSON.stringify(filtered));
+      localStorage.setItem('local_r0_templates', JSON.stringify(filtered));
     }
 
     if (error) {
-      console.warn("Using local delete fallback for p0_templates:", error);
+      console.warn("Using local delete fallback for r0_templates:", error);
     }
     return { success: true };
   } catch (err: any) {
-    const local = localStorage.getItem('local_p0_templates');
+    const local = localStorage.getItem('local_r0_templates');
     if (local) {
       const list = JSON.parse(local);
       const filtered = list.filter((item: any) => item.id !== id);
-      localStorage.setItem('local_p0_templates', JSON.stringify(filtered));
+      localStorage.setItem('local_r0_templates', JSON.stringify(filtered));
     }
     return { success: true };
   }

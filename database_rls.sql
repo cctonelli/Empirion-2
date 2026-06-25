@@ -476,7 +476,7 @@ SET key_value = EXCLUDED.key_value,
     updated_at = now();
 
 -- 11. TABELA DE TEMPLATES DE CONFIGURAÇÃO DO P0 (v19.18 OBSIDIAN DIAMOND)
-CREATE TABLE IF NOT EXISTS public.p0_templates (
+CREATE TABLE IF NOT EXISTS public.r0_templates (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name TEXT NOT NULL,
     description TEXT,
@@ -488,18 +488,18 @@ CREATE TABLE IF NOT EXISTS public.p0_templates (
 );
 
 -- Habilitar RLS
-ALTER TABLE public.p0_templates ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.r0_templates ENABLE ROW LEVEL SECURITY;
 
 -- Políticas de RLS de Templates (Aprimoradas para Modo Trial/Híbrido)
 -- Em modo Trial/Sandbox, permite a leitura e escrita cooperativa de templates tanto para autenticados quanto convidados.
-DROP POLICY IF EXISTS "Leitura de templates públicos e próprios" ON public.p0_templates;
-CREATE POLICY "Leitura de templates públicos e próprios" ON public.p0_templates
+DROP POLICY IF EXISTS "Leitura de templates públicos e próprios" ON public.r0_templates;
+CREATE POLICY "Leitura de templates públicos e próprios" ON public.r0_templates
     FOR SELECT TO public
     USING (true);
 
-DROP POLICY IF EXISTS "Escrita apenas para tutores e admins" ON public.p0_templates;
-DROP POLICY IF EXISTS "Escrita de templates sem restricoes em modo Trial" ON public.p0_templates;
-CREATE POLICY "Escrita de templates sem restricoes em modo Trial" ON public.p0_templates
+DROP POLICY IF EXISTS "Escrita apenas para tutores e admins" ON public.r0_templates;
+DROP POLICY IF EXISTS "Escrita de templates sem restricoes em modo Trial" ON public.r0_templates;
+CREATE POLICY "Escrita de templates sem restricoes em modo Trial" ON public.r0_templates
     FOR ALL TO public
     USING (true)
     WITH CHECK (true);
@@ -518,7 +518,7 @@ CREATE POLICY "Escrita de templates sem restricoes em modo Trial" ON public.p0_t
 CREATE INDEX IF NOT EXISTS idx_companies_champ_round_fiduciary ON public.companies (championship_id, round);
 CREATE INDEX IF NOT EXISTS idx_companies_team_id_cast_text ON public.companies (((team_id)::text));
 CREATE INDEX IF NOT EXISTS idx_teams_id_cast_text ON public.teams (((id)::text));
-CREATE INDEX IF NOT EXISTS idx_p0_templates_tutor_public ON public.p0_templates (tutor_id, is_public);
+CREATE INDEX IF NOT EXISTS idx_r0_templates_tutor_public ON public.r0_templates (tutor_id, is_public);
 
 -- ==============================================================================
 -- 14. POLÍTICAS DE GOVERNANÇA E CONTROLE ÉTICO DE DECISÕES v2026.120 (EMPIRION SECURE)

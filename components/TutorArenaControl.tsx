@@ -210,16 +210,8 @@ const TutorArenaControl: React.FC<{ championship: Championship; onUpdate: (confi
       observers: observersList,
       config: {
         ...(currentChampionship.config || {}),
-        regions: regionsList,
-        region_configs: regionsList.map(r => ({
-           id: r.id,
-           name: r.name,
-           currency: r.currency,
-           demand_weight: r.demand_weight,
-           suggested_price: r.suggested_price,
-           distribution_cost: r.distribution_cost,
-           marketing_cost: r.marketing_cost
-        }))
+        // Removida a sobreposição imediata de regions e region_configs na raiz do config global
+        // para impedir vazamento (leak) de pesos e novas praças para o round em andamento (R-1) das equipes.
       },
       round_rules: {
         ...(currentChampionship.round_rules || {}),
