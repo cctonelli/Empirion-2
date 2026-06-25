@@ -30,6 +30,7 @@ export const HRStep: React.FC<HRStepProps> = ({
   round,
 }) => {
   const kpis: any = activeTeam?.kpis || {};
+  const currency = activeArena?.currency || 'BRL';
   
   // 1. Número da Rodada
   const currentRound = round !== undefined ? round : (activeArena?.current_round || 1);
@@ -103,7 +104,8 @@ export const HRStep: React.FC<HRStepProps> = ({
 
   // 5. Projeções de Folha de Pagamento em Tempo Real
   const payrollProjection = useMemo(() => {
-    const currentSalary = parseFloat(decisions.hr?.salary) || 2500;
+    const baseSal = activeArena?.market_indicators?.hr_base?.salary || 2500;
+    const currentSalary = parseFloat(decisions.hr?.salary) || baseSal;
     const socialChargesRate = (currentMacro?.social_charges !== undefined ? currentMacro.social_charges : 35) / 100;
 
     // --- MOD ---
@@ -449,7 +451,7 @@ export const HRStep: React.FC<HRStepProps> = ({
                 </div>
               ) : (
                 <span className="text-2.5xl font-mono font-black text-emerald-400 block pb-1">
-                  {formatCurrency(sectorAvgSalary || 2500, 'BRL')}
+                  {formatCurrency(sectorAvgSalary || (activeArena?.market_indicators?.hr_base?.salary || 2500), currency)}
                 </span>
               )}
             </div>
@@ -468,12 +470,12 @@ export const HRStep: React.FC<HRStepProps> = ({
                 </span>
               </div>
               <p className="text-xs text-slate-400 mb-4">
-                Salário base original (BRL 2.500,00) corrigido pela inflação acumulada do torneio (+{currentMacro?.inflation_rate || 0}% neste round).
+                Salário base original ({formatCurrency(activeArena?.market_indicators?.hr_base?.salary || 2500, currency)}) corrigido pela inflação acumulada do torneio (+{currentMacro?.inflation_rate || 0}% neste round).
               </p>
             </div>
             <div className="my-2 select-none">
               <span className="text-2.5xl font-mono font-black text-orange-400 block">
-                {formatCurrency(adjustedBaseSalary, 'BRL')}
+                {formatCurrency(adjustedBaseSalary, currency)}
               </span>
             </div>
             <span className="text-[10px] text-orange-300/80 font-medium block mt-1">
@@ -497,32 +499,32 @@ export const HRStep: React.FC<HRStepProps> = ({
             <div className="space-y-1.5 border-t border-white/10 pt-2 text-xxs font-mono text-zinc-400">
               <div className="flex justify-between text-zinc-300 font-semibold mb-0.5">
                 <span>MOD ({payrollProjection.operatorsAvailable} operários):</span>
-                <span className="text-white font-bold">{formatCurrency(payrollProjection.totalMOD, 'BRL')}</span>
+                <span className="text-white font-bold">{formatCurrency(payrollProjection.totalMOD, currency)}</span>
               </div>
               <div className="pl-3 flex justify-between text-[10px] text-zinc-500">
                 <span>├ Salários Base & Turnos:</span>
-                <span>{formatCurrency(payrollProjection.payrollMOD, 'BRL')}</span>
+                <span>{formatCurrency(payrollProjection.payrollMOD, currency)}</span>
               </div>
               <div className="pl-3 flex justify-between text-[10px] text-zinc-500">
                 <span>├ Encargos Patronais ({(payrollProjection.socialChargesRate * 100).toFixed(0)}%):</span>
-                <span>{formatCurrency(payrollProjection.socialChargesMOD, 'BRL')}</span>
+                <span>{formatCurrency(payrollProjection.socialChargesMOD, currency)}</span>
               </div>
               <div className="pl-3 flex justify-between text-[10px] text-zinc-500 mb-1">
                 <span>└ Prêmio Produtividade:</span>
-                <span>{formatCurrency(payrollProjection.productivityBonus, 'BRL')}</span>
+                <span>{formatCurrency(payrollProjection.productivityBonus, currency)}</span>
               </div>
 
               <div className="flex justify-between border-t border-white/5 pt-1">
                 <span>Admin ({payrollProjection.staffAdmin} profs):</span>
-                <span className="text-white font-bold">{formatCurrency(payrollProjection.totalPayrollAdm, 'BRL')}</span>
+                <span className="text-white font-bold">{formatCurrency(payrollProjection.totalPayrollAdm, currency)}</span>
               </div>
               <div className="flex justify-between">
                 <span>Vendas ({payrollProjection.staffSales} profs):</span>
-                <span className="text-white font-bold">{formatCurrency(payrollProjection.totalPayrollSales, 'BRL')}</span>
+                <span className="text-white font-bold">{formatCurrency(payrollProjection.totalPayrollSales, currency)}</span>
               </div>
               <div className="flex justify-between border-t border-white/5 pt-1 text-xs">
                 <span className="text-zinc-300 font-bold">Folha Bruta Total:</span>
-                <span className="text-amber-400 font-extrabold">{formatCurrency(payrollProjection.totalPayrollWithCharges, 'BRL')}</span>
+                <span className="text-amber-400 font-extrabold">{formatCurrency(payrollProjection.totalPayrollWithCharges, currency)}</span>
               </div>
             </div>
           </div>
@@ -613,7 +615,7 @@ export const HRStep: React.FC<HRStepProps> = ({
             />
 
             <p className="text-xs text-rose-300 italic font-sans">
-              Custo estimado de rescisão: ~{formatCurrency((decisions.hr.fired || 0) * (decisions.hr.salary || 2500) * 1.5, 'BRL')}
+              Custo estimado de rescisão: ~{formatCurrency((decisions.hr.fired || 0) * (decisions.hr.salary || (activeArena?.market_indicators?.hr_base?.salary || 2500)) * 1.5, currency)}
             </p>
           </div>
         </div>
@@ -641,7 +643,7 @@ export const HRStep: React.FC<HRStepProps> = ({
                 <HelpCircle size={16} className="text-slate-500 group-hover:text-orange-400 transition-colors cursor-help" />
               </label>
               <span className="text-1.5xl lg:text-2xl font-mono font-bold text-orange-400 shrink-0 whitespace-nowrap pl-2">
-                {formatCurrency(decisions.hr.salary, 'BRL')}
+                {formatCurrency(decisions.hr.salary, currency)}
               </span>
             </div>
 
@@ -651,13 +653,13 @@ export const HRStep: React.FC<HRStepProps> = ({
               step="100"
               disabled={isReadOnly}
               value={decisions.hr.salary}
-              onChange={e => updateDecision('hr.salary', parseInt(e.target.value) || 2500)}
+              onChange={e => updateDecision('hr.salary', parseInt(e.target.value) || Math.round(adjustedBaseSalary))}
               className="w-full bg-slate-950 border-2 border-slate-700 rounded-2xl px-6 py-5 text-2xl lg:text-3xl font-mono font-bold text-white outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500/30 transition-all font-mono"
-              placeholder="2500"
+              placeholder={String(Math.round(adjustedBaseSalary))}
             />
 
             <p className="text-xs text-orange-300 italic font-sans">
-              Mínimo regional sugerido: BRL {currentMacro?.min_salary || 2500}
+              Mínimo regional sugerido: {formatCurrency(currentMacro?.min_salary || Math.round(adjustedBaseSalary), currency)}
             </p>
           </div>
         </div>

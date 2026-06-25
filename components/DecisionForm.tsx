@@ -6,7 +6,7 @@ import {
 } from 'lucide-react';
 import { saveDecisions, getChampionships, supabase, getTeamSimulationHistory, mapChampionshipSynthetically } from '../services/supabase';
 import { DecisionData, Branch, Championship, Team, MachineInstance, MacroIndicators } from '../types';
-import { calculateProjections } from '../services/simulation';
+import { calculateProjections, getCumulativeAdjust } from '../services/simulation';
 import { calculateESDS } from '../services/gemini';
 import { motion as _motion, AnimatePresence } from 'framer-motion';
 const motion = _motion as any;
@@ -34,6 +34,14 @@ const STEPS = [
   { id: 'finance', label: '7. FINANÇAS', icon: Landmark },
   { id: 'review', label: '8. ORÁCULO', icon: ShieldCheck },
 ];
+
+const getInitialBaseSalaryForRound = (arena: any, targetRound: number) => {
+  if (!arena) return 2500;
+  const chronogram = arena.round_rules || DEFAULT_INDUSTRIAL_CHRONOGRAM;
+  const inflationMult = getCumulativeAdjust(chronogram, targetRound, 'inflation_rate');
+  const baseSal = arena.market_indicators?.hr_base?.salary || 2500;
+  return Math.round(baseSal * inflationMult);
+};
 
 const DecisionForm: React.FC<{ 
   teamId?: string; 
@@ -293,7 +301,7 @@ const DecisionForm: React.FC<{
           setDecisions({
             judicial_recovery: false,
             regions: initialRegions,
-            hr: { hired: 0, fired: 0, salary: 2500, trainingPercent: 0, participationPercent: 0, productivityBonusPercent: 0, misc: 0 },
+            hr: { hired: 0, fired: 0, salary: getInitialBaseSalaryForRound(found, round), trainingPercent: 0, participationPercent: 0, productivityBonusPercent: 0, misc: 0 },
             production: { purchaseMPA: 0, purchaseMPB: 0, paymentType: 0, activityLevel: 100, extraProductionPercent: 0, rd_investment: 0, term_interest_rate: 0.00 },
             machinery: { buy: { alpha: 0, alfa: 0, beta: 0, gamma: 0, gama: 0 }, sell: { alpha: 0, alfa: 0, beta: 0, gamma: 0, gama: 0 }, sell_ids: [] },
             finance: { loanRequest: 0, loanTerm: 0, application: 0 },
