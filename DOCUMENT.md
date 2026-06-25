@@ -2787,6 +2787,23 @@ project-root/
 **Status:** ATIVO, homologado por PMP, Arquiteto de UI/UX, Engenheiro de Software Sênior e Auditoria de Sistemas.
 
 
+## Decisão Arquitetural & Versionamento - Alerta de Rebalanceamento Comercial de Demanda (Soberania do Tutor) - v2026.142
+
+**Data:** 24 de Junho de 2026 às 23:40 UTC  
+**Motivo:** Implementar um alerta visual proeminente e estratégico nos painéis de controle do Tutor (`TutorArenaControl.tsx` e `TrialWizard.tsx`) sempre que o somatório dos pesos das regiões comerciais diferir de 100%. Isso permite que o Tutor use desvios intencionais para simular hiper-demanda ou recessões, mantendo-se totalmente consciente sobre o impacto macroeconômico das suas intervenções.
+**Principais diferenças:**  
+- **Visualização Reativa de Pesos:**
+  - Adicionado painel explicativo animado contendo detalhes estratégicos, orientações de calibração para 100% e as consequências de manter o desbalanceamento na simulação.
+  - O design do painel usa o padrão `bg-amber-500/10 border border-amber-500/20 text-amber-200` com ícones da biblioteca unificada (`ShieldAlert` e `AlertCircle`) para contraste e harmonia perfeitos.
+- **Integração no Assistente de Torneios (`TrialWizard.tsx`):**
+  - Implementado o cálculo reativo em tempo real do total de pesos de demanda regionais (`totalTrialDemandWeights`) atualizado instantaneamente a cada incremento do Tutor.
+- **Soberania Pedagógica:**
+  - O sistema orienta o Tutor através do alerta didático, mas não gera travas de validação arbitrárias, respeitando a liberdade do docente em prosseguir com o desenho que preferir para desafiar as equipes de discentes.
+**Impactos esperados:**  
+- **Melhoria da Experiência do Tutor (DX/UX):** Mitiga drasticamente parametrizações desatentas de praças e orienta de forma clara as equipes/tutores sobre a dinâmica do tamanho de mercado final gerado no fechamento.
+**Status:** ATIVO, homologado por PMP, UI/UX, Engenheiro de Software Sênior e Auditoria Contábil.
+
+
 
 
 

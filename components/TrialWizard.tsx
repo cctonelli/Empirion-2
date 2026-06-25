@@ -666,6 +666,8 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
     storage_finished: 5.00,
   });
 
+  const totalTrialDemandWeights = tutorConfig.regions.reduce((sum, r) => sum + (Number(r.demand_weight) || 0), 0);
+
   // Salvar/Carregar templates
   const [savedTemplates, setSavedTemplates] = useState<P0Template[]>([]);
   const [showFiduciaryMonitor, setShowFiduciaryMonitor] = useState(false);
@@ -3132,6 +3134,32 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                       <Plus size={16} /> Adicionar Praça
                     </button>
                   </div>
+
+                  {totalTrialDemandWeights !== 100 && (
+                    <div className="bg-amber-500/10 border border-amber-500/20 text-amber-200 p-8 rounded-[3rem] flex items-start gap-5 shadow-xl animate-fadeIn text-left">
+                      <div className="p-3 bg-amber-500/20 rounded-2xl text-amber-400 mt-1 flex-shrink-0">
+                        <ShieldAlert size={24} />
+                      </div>
+                      <div className="space-y-3">
+                        <h5 className="text-base font-black text-amber-300 uppercase tracking-wider flex items-center gap-2">
+                          Configuração de Hiper-Demanda / Recessão Ativa: Soma em {totalTrialDemandWeights}%
+                        </h5>
+                        <p className="text-xs text-slate-300 leading-relaxed font-medium">
+                          A soma dos pesos de demanda das praças configuradas totaliza <strong className="text-amber-300 font-bold">{totalTrialDemandWeights}%</strong> (diferente do padrão de 100%).
+                          Isso indica que o mercado geral gerado para as equipes será proporcionalmente <strong className="text-amber-300 font-bold">{totalTrialDemandWeights > 100 ? "expandido (hiper-demanda)" : "contraído (recessão)"}</strong>.
+                        </p>
+                        <div className="text-[11px] text-slate-400 space-y-2 bg-slate-950/40 p-5 rounded-2xl border border-white/5 font-medium leading-normal">
+                          <p className="flex items-center gap-2 text-emerald-400 font-bold">
+                            <span>✔️</span> Para uma distribuição clássica estável (100% do mercado padrão), ajuste os pesos para que somem exatamente 100%.
+                          </p>
+                          <p className="flex items-center gap-2">
+                            <span>💡</span> Alterar o somatório dos pesos permite simular cenários econômicos complexos e forçar os discentes a repensar suas margens de produção, estocagem e precificação de forma ágil e fiduciária.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-8 text-left">
                     {tutorConfig.regions.map((r, i) => (
                       <div

@@ -385,6 +385,30 @@ const TutorArenaControl: React.FC<{ championship: Championship; onUpdate: (confi
                    </div>
 
                    {/* Lista de Praças Comerciais */}
+                   {totalDemandWeights !== 100 && (
+                      <div className="bg-amber-500/10 border border-amber-500/20 text-amber-200 p-6 rounded-[2.5rem] flex items-start gap-4 shadow-lg animate-fadeIn text-left mb-6">
+                         <div className="p-3 bg-amber-500/20 rounded-2xl text-amber-400 mt-1 flex-shrink-0">
+                            <AlertCircle size={22} />
+                         </div>
+                         <div className="space-y-2">
+                            <h5 className="text-sm font-black text-amber-300 uppercase tracking-wider flex items-center gap-2">
+                               Alerta de Rebalanceamento Comercial: Peso de Demanda em {totalDemandWeights}%
+                            </h5>
+                            <p className="text-xs text-slate-300 leading-relaxed font-medium">
+                               A soma atual dos pesos de demanda das praças é de <strong className="text-amber-300 font-bold">{totalDemandWeights}%</strong> (diferente de 100%).
+                               Quando a soma total difere de 100%, o mercado geral será proporcionalmente expandido ou contraído (ex: gerando <strong className="text-amber-300 font-bold">{totalDemandWeights}%</strong> do tamanho base de demanda padrão).
+                            </p>
+                            <div className="text-[11px] text-slate-400 space-y-1 bg-slate-950/40 p-4 rounded-2xl border border-white/5 font-medium leading-normal">
+                               <p className="flex items-center gap-2 text-emerald-400 font-bold">
+                                  <span>✔️</span> Para uma divisão clássica balanceada, redistribua os pesos das praças de modo que o somatório seja exatamente 100%.
+                               </p>
+                               <p className="flex items-center gap-2">
+                                  <span>💡</span> Sobrecarga de demanda (ex: &gt; 100%) ou recessão forçada (ex: &lt; 100%) são ferramentas poderosas para desafiar as equipes a redesenhar suas estruturas produtivas e de pricing. O sistema suportará integralmente a sua decisão!
+                                </p>
+                            </div>
+                         </div>
+                      </div>
+                   )}
                    <div className="space-y-6">
                       <div className="flex items-center justify-between">
                          <h4 className="text-lg font-bold text-white uppercase tracking-wider flex items-center gap-2"><Globe size={18} className="text-orange-500"/> Praças Comerciais Ativas</h4>
