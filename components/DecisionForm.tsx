@@ -109,6 +109,14 @@ const DecisionForm: React.FC<{
   const [showValidationWarningModal, setShowValidationWarningModal] = useState(false);
   const [loadedKey, setLoadedKey] = useState<string | null>(null);
 
+  const isTeamWO = useMemo(() => {
+    return !!activeTeam?.kpis?.is_wo || activeTeam?.status === 'wo_eliminated';
+  }, [activeTeam]);
+
+  const effectiveIsReadOnly = useMemo(() => {
+    return isReadOnly || isTeamWO || !!activeArena?.config?.is_paused || isExpiredWaiting || isTournamentFinished;
+  }, [isReadOnly, isTeamWO, activeArena, isExpiredWaiting, isTournamentFinished]);
+
   const [decisions, setDecisions] = useState<DecisionData>({
     judicial_recovery: false,
     regions: {}, 
@@ -347,7 +355,7 @@ const DecisionForm: React.FC<{
   }, [activeArena?.id, activeArena?.is_trial]);
 
   const updateDecision = (path: string, val: any) => {
-    if (isReadOnly) return;
+    if (effectiveIsReadOnly) return;
     const keys = path.split('.');
     setDecisions(prev => {
       const next = JSON.parse(JSON.stringify(prev));
@@ -361,7 +369,7 @@ const DecisionForm: React.FC<{
   };
 
   const replicateInCluster = () => {
-    if (isReadOnly) return;
+    if (effectiveIsReadOnly) return;
     const firstRegion = decisions.regions[1];
     if (!firstRegion) return;
     
@@ -373,7 +381,7 @@ const DecisionForm: React.FC<{
   };
 
   const executeSaveDecisions = async () => {
-    if (!teamId || !champId || isReadOnly || !!activeArena?.config?.is_paused) return;
+    if (!teamId || !champId || effectiveIsReadOnly) return;
     setIsSaving(true);
     try {
       const res = await saveDecisions(teamId, champId, round, decisions) as any;
@@ -390,7 +398,7 @@ const DecisionForm: React.FC<{
   };
 
   const handleTransmit = async () => {
-    if (!teamId || !champId || isReadOnly || !!activeArena?.config?.is_paused) return;
+    if (!teamId || !champId || effectiveIsReadOnly) return;
 
     const machines = projections?.kpis?.machines || [];
     const specs = currentMacro?.machine_specs as any;
@@ -502,6 +510,18 @@ const DecisionForm: React.FC<{
 
   return (
     <div className="flex flex-col h-full bg-[#020617] rounded-xl border border-white/5 overflow-hidden shadow-3xl">
+      {isTeamWO && (
+        <div className="bg-rose-950/70 border-b border-rose-500/30 px-6 py-3 flex items-center justify-between gap-4 animate-pulse shrink-0 z-30">
+          <div className="flex items-center gap-3">
+            <AlertTriangle size={20} className="text-rose-500 shrink-0" />
+            <div>
+              <h4 className="text-xs font-black text-white uppercase tracking-wider">EQUIPE DESQUALIFICADA POR W.O. (INSOLVÊNCIA ASSISTIDA)</h4>
+              <p className="text-[10px] text-rose-300">A regra fiduciária foi ativada automaticamente devido ao limite de rodadas sem decisões. As vendas foram forçadas a zero, o mercado foi redistribuído e novas transmissões de decisões estão bloqueadas.</p>
+            </div>
+          </div>
+          <span className="px-2.5 py-1 bg-rose-500/20 text-rose-400 text-[9px] font-black uppercase rounded border border-rose-500/40">Status: Inativo</span>
+        </div>
+      )}
       {/* HEADER TÁTICO FIXO */}
       <header className="px-4 py-3 bg-slate-900/80 backdrop-blur-xl border-b border-white/10 flex flex-col md:flex-row justify-between items-center gap-4 shrink-0 z-20 shadow-2xl">
          <div className="flex items-center gap-6">
@@ -568,14 +588,22 @@ const DecisionForm: React.FC<{
             <button
                type="button"
                onClick={handleTransmit}
-               disabled={isSaving || isReadOnly || isExpiredWaiting || !!activeArena?.config?.is_paused}
+               disabled={isSaving || effectiveIsReadOnly}
                className={`px-6 py-2 rounded-xl font-black text-[9px] uppercase tracking-[0.15em] transition-all flex items-center gap-2 active:scale-95 group ${
-                 (isReadOnly || isExpiredWaiting || !!activeArena?.config?.is_paused)
+                 effectiveIsReadOnly
                    ? 'bg-slate-800 text-slate-500 border border-white/5 cursor-not-allowed shadow-none'
                    : 'bg-emerald-600 text-white hover:bg-white hover:text-emerald-950 shadow-2xl shadow-emerald-600/20 cursor-pointer'
                }`}
             >
-               {isSaving ? <Loader2 size={14} className="animate-spin" /> : <Rocket size={14} className="group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />} {isExpiredWaiting ? 'Aguardando Turnover' : !!activeArena?.config?.is_paused ? 'Decisões Congeladas' : 'Transmitir Decisão'}
+               {isSaving ? <Loader2 size={14} className="animate-spin" /> : <Rocket size={14} className="group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />} {
+                 isTeamWO 
+                   ? 'Bloqueado (W.O.)' 
+                   : isExpiredWaiting 
+                   ? 'Aguardando Turnover' 
+                   : !!activeArena?.config?.is_paused 
+                   ? 'Decisões Congeladas' 
+                   : 'Transmitir Decisão'
+               }
             </button>
          </div>
       </header>
@@ -742,37 +770,37 @@ const DecisionForm: React.FC<{
                                
                                {/* PASSO 1 - JURÍDICO */}
                                {activeStep === 0 && (
-                                 <LegalStep decisions={decisions} updateDecision={updateDecision} isReadOnly={isReadOnly} />
+                                 <LegalStep decisions={decisions} updateDecision={updateDecision} isReadOnly={effectiveIsReadOnly} />
                                )}
 
                                {/* PASSO 2 - COMERCIAL / MARKETING */}
                                {activeStep === 1 && (
-                                 <MarketingStep decisions={decisions} updateDecision={updateDecision} replicateInCluster={replicateInCluster} activeArena={activeArena} activeTeam={activeTeam} isReadOnly={isReadOnly} round={round} />
+                                 <MarketingStep decisions={decisions} updateDecision={updateDecision} replicateInCluster={replicateInCluster} activeArena={activeArena} activeTeam={activeTeam} isReadOnly={effectiveIsReadOnly} round={round} />
                                )}
 
                                {/* PASSO 3 - GESTÃO DE ATIVOS & CAPEX */}
                                {activeStep === 2 && (
-                                 <AssetsStep decisions={decisions} updateDecision={updateDecision} activeArena={activeArena} activeTeam={activeTeam} round={round} currentMacro={currentMacro} isReadOnly={isReadOnly} />
+                                 <AssetsStep decisions={decisions} updateDecision={updateDecision} activeArena={activeArena} activeTeam={activeTeam} round={round} currentMacro={currentMacro} isReadOnly={effectiveIsReadOnly} />
                                )}
 
                                {/* PASSO 4 - SUPRIMENTOS / CADEIA DE SUPRIMENTOS */}
                                {activeStep === 3 && (
-                                 <SupplyStep decisions={decisions} updateDecision={updateDecision} activeArena={activeArena} activeTeam={activeTeam} round={round} currentMacro={currentMacro} isReadOnly={isReadOnly} />
+                                 <SupplyStep decisions={decisions} updateDecision={updateDecision} activeArena={activeArena} activeTeam={activeTeam} round={round} currentMacro={currentMacro} isReadOnly={effectiveIsReadOnly} />
                                )}
 
                                {/* PASSO 5 - CHÃO DE FÁBRICA & OPERAÇÕES */}
                                {activeStep === 4 && (
-                                 <FactoryStep decisions={decisions} updateDecision={updateDecision} activeArena={activeArena} activeTeam={activeTeam} currentMacro={currentMacro} isReadOnly={isReadOnly} />
+                                 <FactoryStep decisions={decisions} updateDecision={updateDecision} activeArena={activeArena} activeTeam={activeTeam} currentMacro={currentMacro} isReadOnly={effectiveIsReadOnly} />
                                )}
 
                                {/* PASSO 6 - GESTÃO DE TALENTOS & RH */}
                                {activeStep === 5 && (
-                                 <HRStep decisions={decisions} updateDecision={updateDecision} activeArena={activeArena} activeTeam={activeTeam} currentMacro={currentMacro} isReadOnly={isReadOnly} round={round} />
+                                 <HRStep decisions={decisions} updateDecision={updateDecision} activeArena={activeArena} activeTeam={activeTeam} currentMacro={currentMacro} isReadOnly={effectiveIsReadOnly} round={round} />
                                )}
 
                                {/* PASSO 7 - FINANÇAS & MERCADO DE CAPITAIS */}
                                {activeStep === 6 && (
-                                 <FinanceStep decisions={decisions} updateDecision={updateDecision} activeArena={activeArena} currentMacro={currentMacro} isReadOnly={isReadOnly} />
+                                 <FinanceStep decisions={decisions} updateDecision={updateDecision} activeArena={activeArena} currentMacro={currentMacro} isReadOnly={effectiveIsReadOnly} />
                                )}
 
                                {/* PASSO 8 - ORÁCULO DE REVISÃO E TRANSMISSÃO */}

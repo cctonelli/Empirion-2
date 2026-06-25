@@ -4,6 +4,8 @@ import { Branch, ChampionshipTemplate, AccountNode, DeadlineUnit, CurrencyType, 
 export const APP_VERSION = "v18.0.0-Oracle-Gold-Verified";
 export const BUILD_DATE = "15/02/2026";
 export const PROTOCOL_NODE = "Node 08-STREET-ACCOUNTING-CORE";
+export const MAX_CONSECUTIVE_MISSES = 1; // Quantidade de rodadas sem envio consecutivas toleradas antes do W.O. (1 significa que se falhar duas vezes consecutivas, entra em W.O. no segundo turnover)
+
 
 export const DEFAULT_INITIAL_SHARE_PRICE = 100.00;
 

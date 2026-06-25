@@ -198,3 +198,19 @@ Esboço da estrutura de arquivos planejada para o diretório `/src/locales/`:
 
 ---
 
+## 9. 🚀 Registro de Iniciativas de Confiabilidade Contábil Concluídas (Q2-2026)
+
+### A. Governança de Eliminação por Walkover (W.O.) e Salvaguarda Fiduciária (Entregue em 25/06/2026)
+- **Motivação:** Neutralizar o impacto nocivo de equipes inativas no equilíbrio concorrencial e na arrecadação do faturamento regional global do torneio.
+- **Implementação do Motor:**
+  - Criação da contagem cumulativa de rodadas de inação na tabela de KPIs (`consecutive_no_submissions`).
+  - Implementação do flag permanente `status = 'wo_eliminated'` na tabela `teams`.
+  - Inclusão do isolamento operacional que força a zero a atratividade comercial e a captação de market share da equipe desqualificada.
+- **Implementação do Cockpit (UI/UX):**
+  - Renderização do banner visual de W.O. (Insolvência Assistida) de alta fidelidade e urgência para alertar a equipe desqualificada sobre a perda de direitos de controle.
+  - Bloqueio retroativo de gravação e transmissão de decisões, colocando o cockpit em modo estrito de somente-leitura.
+  - Amortização e manutenção continuada das contas patrimoniais herdadas para integridade nas auditorias de fim de torneio.
+- **Sincronia Contábil:**
+  - Redirecionamento da demanda remanescente de equipes de W.O. via algoritmos de Spillover de Estoque, de forma a manter as receitas setoriais acumuladas sem declínios imprevistos de mercado.
+
+

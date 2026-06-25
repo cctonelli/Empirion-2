@@ -19,7 +19,7 @@ import {
 } from '../types';
 import { generateBotDecision, calculateESDS } from './gemini';
 import { calculateProjections } from './simulation';
-import { INITIAL_FINANCIAL_TREE, INITIAL_MACHINES_R0, DEFAULT_INDUSTRIAL_CHRONOGRAM } from '../constants';
+import { INITIAL_FINANCIAL_TREE, INITIAL_MACHINES_R0, DEFAULT_INDUSTRIAL_CHRONOGRAM, MAX_CONSECUTIVE_MISSES } from '../constants';
 
 // NOTA SÊNIOR: Suporte híbrido para leitura de envs em Vite e Node Standard (evita quebra em testes offline)
 const getEnvVal = (key: string): string => {
@@ -240,12 +240,18 @@ export const saveDecisions = async (teamId: string, champId: string, round: numb
   const isTrialSession = isTrial !== undefined ? isTrial : (localStorage.getItem('is_trial_session') === 'true');
   const table = isTrialSession ? 'trial_decisions' : 'current_decisions';
   
+  // Garante o status de origem 'equipe' no JSONB de decisões
+  const decisionData = {
+    ...data,
+    decision_status: 'equipe'
+  };
+  
   const { data: existing } = await supabase.from(table).select('id').eq('team_id', teamId).eq('round', round).maybeSingle();
   if (existing) {
-    const { error } = await supabase.from(table).update({ data, championship_id: champId }).eq('id', existing.id);
+    const { error } = await supabase.from(table).update({ data: decisionData, championship_id: champId }).eq('id', existing.id);
     return { success: !error, error: error?.message };
   } else {
-    const { error } = await supabase.from(table).insert({ team_id: teamId, championship_id: champId, round, data });
+    const { error } = await supabase.from(table).insert({ team_id: teamId, championship_id: champId, round, data: decisionData });
     return { success: !error, error: error?.message };
   }
 };
@@ -640,86 +646,135 @@ export const processRoundTurnover = async (id: string, round: number, isTrial?: 
             const { data: dec } = await supabase.from(decisionsTable).select('*').eq('team_id', team.id).eq('round', nextRound).maybeSingle();
             let finalDecision = dec?.data;
             
-            if (!team.is_bot && !finalDecision) {
-              // Time humano não enviou decisão (por timeout de timer ou inação do round)
-              // Recuperamos a decisão do round anterior (se houver) e sanitizamos
-              let baseDecisions: any = null;
-              if (round >= 1) {
-                const { data: prevDec } = await supabase
-                  .from(decisionsTable)
-                  .select('*')
-                  .eq('team_id', team.id)
-                  .eq('round', round)
-                  .maybeSingle();
-                if (prevDec?.data) {
-                  baseDecisions = JSON.parse(JSON.stringify(prevDec.data));
-                  
-                  // Sanitizar Maquinário (CAPEX): Zera compras e vendas pontuais, e esvazia ids marcados para venda
-                  baseDecisions.machinery = {
-                    buy: { alpha: 0, alfa: 0, beta: 0, gamma: 0, gama: 0 },
-                    sell: { alpha: 0, alfa: 0, beta: 0, gamma: 0, gama: 0 },
-                    sell_ids: []
-                  };
-                  
-                  // Sanitizar Recursos Humanos: Zera novas contratações e demissões espontâneas
-                  if (baseDecisions.hr) {
-                    baseDecisions.hr.hired = 0;
-                    baseDecisions.hr.fired = 0;
-                  }
-                  
-                  // Sanitizar Finanças: Zera solicitações de empréstimos táticos / aplicações
-                  if (baseDecisions.finance) {
-                    baseDecisions.finance.loanRequest = 0;
-                    baseDecisions.finance.loanTerm = 0;
-                    baseDecisions.finance.application = 0;
-                  }
-                  
-                  // Sanitizar Estimativas do Oráculo
-                  if (baseDecisions.estimates) {
-                    baseDecisions.estimates.forecasted_unit_cost = 0;
-                    baseDecisions.estimates.forecasted_revenue = 0;
-                    baseDecisions.estimates.forecasted_net_profit = 0;
-                  }
-                }
-              }
+            // Controle fiduciário de W.O. (Walkover)
+            const prevKpis = team.kpis || {};
+            let isWO = !!prevKpis.is_wo || team.status === 'wo_eliminated';
+            let consecutiveMisses = prevKpis.consecutive_no_submissions !== undefined ? Number(prevKpis.consecutive_no_submissions) : 0;
+            let decisionOrigin: 'equipe' | 'sistema' | 'bloqueada' = 'equipe';
 
-              // Se não existir nenhuma decisão anterior (ou se for o round inicial), criamos a estrutura padrão
-              if (!baseDecisions) {
-                const initialRegions: any = {};
-                const regionsCount = champ.regions_count || 1;
-                const regionConfigsList = champ.config?.regions || champ.config?.region_configs || champ.region_configs || [];
+            if (!team.is_bot) {
+              if (finalDecision) {
+                // A equipe enviou a decisão ativamente em tempo hábil
+                consecutiveMisses = 0;
+                isWO = false;
+                decisionOrigin = 'equipe';
                 
-                for (let i = 1; i <= regionsCount; i++) {
-                  const regionConf = regionConfigsList.find((r: any) => r.id === i) || regionConfigsList[i - 1];
-                  const defaultSugPrice = regionConf?.suggested_price !== undefined ? Number(regionConf.suggested_price) : 425;
-                  initialRegions[i] = { price: defaultSugPrice, term: 0, marketing: 0 };
+                // Atualiza o registro para garantir o status da decisão como equipe
+                finalDecision = { ...finalDecision, decision_status: 'equipe' };
+                await supabase.from(decisionsTable).update({ data: finalDecision }).eq('id', dec.id);
+              } else {
+                // A equipe NÃO enviou a decisão (omissão ou desqualificação por W.O.)
+                consecutiveMisses += 1;
+                
+                if (isWO || consecutiveMisses > MAX_CONSECUTIVE_MISSES) {
+                  // Já estava em W.O. ou acabou de estourar a tolerância fiduciária configurada
+                  isWO = true;
+                  decisionOrigin = 'bloqueada';
+                  
+                  // Decisão vazia e bloqueada (Insolvência Assistida)
+                  finalDecision = {
+                    judicial_recovery: false,
+                    regions: {},
+                    hr: { hired: 0, fired: 0, salary: indicatorsForRound.min_salary || 2500, trainingPercent: 0, participationPercent: 0, productivityBonusPercent: 0, misc: 0 },
+                    production: { purchaseMPA: 0, purchaseMPB: 0, paymentType: 0, activityLevel: 0, extraProductionPercent: 0, rd_investment: 0, term_interest_rate: 0.00 },
+                    machinery: { buy: { alpha: 0, alfa: 0, beta: 0, gamma: 0, gama: 0 }, sell: { alpha: 0, alfa: 0, beta: 0, gamma: 0, gama: 0 }, sell_ids: [] },
+                    finance: { loanRequest: 0, loanTerm: 0, application: 0 },
+                    estimates: { forecasted_unit_cost: 0, forecasted_revenue: 0, forecasted_net_profit: 0 },
+                    decision_status: 'bloqueada'
+                  };
+                } else {
+                  // Primeiro miss - dentro do limite de tolerância (duplicada pelo sistema de forma automática)
+                  decisionOrigin = 'sistema';
+                  let baseDecisions: any = null;
+                  
+                  if (round >= 1) {
+                    const { data: prevDec } = await supabase
+                      .from(decisionsTable)
+                      .select('*')
+                      .eq('team_id', team.id)
+                      .eq('round', round)
+                      .maybeSingle();
+                    if (prevDec?.data) {
+                      baseDecisions = JSON.parse(JSON.stringify(prevDec.data));
+                      
+                      // Sanitizar Maquinário (CAPEX): Zera compras e vendas pontuais, e esvazia ids marcados para venda
+                      baseDecisions.machinery = {
+                        buy: { alpha: 0, alfa: 0, beta: 0, gamma: 0, gama: 0 },
+                        sell: { alpha: 0, alfa: 0, beta: 0, gamma: 0, gama: 0 },
+                        sell_ids: []
+                      };
+                      
+                      // Sanitizar Recursos Humanos: Zera novas contratações e demissões espontâneas
+                      if (baseDecisions.hr) {
+                        baseDecisions.hr.hired = 0;
+                        baseDecisions.hr.fired = 0;
+                      }
+                      
+                      // Sanitizar Finanças: Zera solicitações de empréstimos táticos / aplicações
+                      if (baseDecisions.finance) {
+                        baseDecisions.finance.loanRequest = 0;
+                        baseDecisions.finance.loanTerm = 0;
+                        baseDecisions.finance.application = 0;
+                      }
+                      
+                      // Sanitizar Estimativas do Oráculo
+                      if (baseDecisions.estimates) {
+                        baseDecisions.estimates.forecasted_unit_cost = 0;
+                        baseDecisions.estimates.forecasted_revenue = 0;
+                        baseDecisions.estimates.forecasted_net_profit = 0;
+                      }
+                    }
+                  }
+
+                  if (!baseDecisions) {
+                    const initialRegions: any = {};
+                    const regionsCount = champ.regions_count || 1;
+                    const regionConfigsList = champ.config?.regions || champ.config?.region_configs || champ.region_configs || [];
+                    
+                    for (let i = 1; i <= regionsCount; i++) {
+                      const regionConf = regionConfigsList.find((r: any) => r.id === i) || regionConfigsList[i - 1];
+                      const defaultSugPrice = regionConf?.suggested_price !== undefined ? Number(regionConf.suggested_price) : 425;
+                      initialRegions[i] = { price: defaultSugPrice, term: 0, marketing: 0 };
+                    }
+
+                    baseDecisions = {
+                      judicial_recovery: false,
+                      regions: initialRegions,
+                      hr: { hired: 0, fired: 0, salary: 2500, trainingPercent: 0, participationPercent: 0, productivityBonusPercent: 0, misc: 0 },
+                      production: { purchaseMPA: 0, purchaseMPB: 0, paymentType: 0, activityLevel: 100, extraProductionPercent: 0, rd_investment: 0, term_interest_rate: 0.00 },
+                      machinery: { buy: { alpha: 0, alfa: 0, beta: 0, gamma: 0, gama: 0 }, sell: { alpha: 0, alfa: 0, beta: 0, gamma: 0, gama: 0 }, sell_ids: [] },
+                      finance: { loanRequest: 0, loanTerm: 0, application: 0 },
+                      estimates: { forecasted_unit_cost: 0, forecasted_revenue: 0, forecasted_net_profit: 0 }
+                    };
+                  }
+
+                  finalDecision = { ...baseDecisions, decision_status: 'sistema' };
                 }
 
-                baseDecisions = {
-                  judicial_recovery: false,
-                  regions: initialRegions,
-                  hr: { hired: 0, fired: 0, salary: 2500, trainingPercent: 0, participationPercent: 0, productivityBonusPercent: 0, misc: 0 },
-                  production: { purchaseMPA: 0, purchaseMPB: 0, paymentType: 0, activityLevel: 100, extraProductionPercent: 0, rd_investment: 0, term_interest_rate: 0.00 },
-                  machinery: { buy: { alpha: 0, alfa: 0, beta: 0, gamma: 0, gama: 0 }, sell: { alpha: 0, alfa: 0, beta: 0, gamma: 0, gama: 0 }, sell_ids: [] },
-                  finance: { loanRequest: 0, loanTerm: 0, application: 0 },
-                  estimates: { forecasted_unit_cost: 0, forecasted_revenue: 0, forecasted_net_profit: 0 }
-                };
+                // Salva a decisão simulada no banco de dados para auditoria posterior das equipes e fidedignidade contábil
+                const { error: insertDecErr } = await supabase.from(decisionsTable).insert({
+                  team_id: team.id,
+                  championship_id: id,
+                  round: nextRound,
+                  data: finalDecision
+                });
+
+                if (insertDecErr) {
+                  console.error(`Erro ao inserir decisão de carry-forward fiduciário para ${team.name}:`, insertDecErr);
+                  throw new Error(`[ERRO BANCO DE DADOS] Falha ao registrar decisão automática para ${team.name} em ${decisionsTable}: ${insertDecErr.message}`);
+                }
               }
+            }
 
-              finalDecision = baseDecisions;
-
-              // Salva a decisão simulada por timeout no banco de dados para auditoria posterior das equipes e fidedignidade contábil
-              const { error: insertDecErr } = await supabase.from(decisionsTable).insert({
-                team_id: team.id,
-                championship_id: id,
-                round: nextRound,
-                data: finalDecision
-              });
-
-              if (insertDecErr) {
-                console.error(`Erro ao inserir decisão de carry-forward fiduciário para ${team.name}:`, insertDecErr);
-                throw new Error(`[ERRO BANCO DE DADOS] Falha ao registrar decisão automática (carry-forward) para ${team.name} em ${decisionsTable}: ${insertDecErr.message}`);
-              }
+            // Atualiza localmente os metadados na equipe de modo que o cálculo concorrencial herde o W.O. imediatamente
+            team.kpis = {
+              ...prevKpis,
+              is_wo: isWO,
+              consecutive_no_submissions: consecutiveMisses,
+              decision_status: decisionOrigin
+            };
+            if (isWO) {
+              team.status = 'wo_eliminated';
             }
 
             if (team.is_bot && !finalDecision) {
@@ -793,6 +848,11 @@ export const processRoundTurnover = async (id: string, round: number, isTrial?: 
             if (finalDecision) {
                 const ecoWithCurrency = { ...(champ.config || {}), currency: champ.currency } as EcosystemConfig;
                 const res = calculateProjections(finalDecision, champ.branch, ecoWithCurrency, indicatorsForRound, team, [], nextRound, champ.round_rules);
+                if (res && res.kpis) {
+                    res.kpis.is_wo = team.kpis?.is_wo || false;
+                    res.kpis.consecutive_no_submissions = team.kpis?.consecutive_no_submissions || 0;
+                    res.kpis.decision_status = team.kpis?.decision_status || 'equipe';
+                }
                 
                 // Obter Turnos e multiplicador
                 const selectedShifts = finalDecision?.production?.shifts ?? 1;
@@ -917,6 +977,11 @@ export const processRoundTurnover = async (id: string, round: number, isTrial?: 
                     champ.round_rules,
                     teamCompDemands
                 );
+                if (prelimRes && prelimRes.kpis) {
+                    prelimRes.kpis.is_wo = team.kpis?.is_wo || false;
+                    prelimRes.kpis.consecutive_no_submissions = team.kpis?.consecutive_no_submissions || 0;
+                    prelimRes.kpis.decision_status = team.kpis?.decision_status || 'equipe';
+                }
                 
                 // Mapear vendas e rupturas físicas reais de primeiro passo por região
                 regionConfigs.forEach((r: any) => {
@@ -1003,6 +1068,11 @@ export const processRoundTurnover = async (id: string, round: number, isTrial?: 
                     champ.round_rules,
                     teamCompDemands
                 );
+                if (res && res.kpis) {
+                    res.kpis.is_wo = team.kpis?.is_wo || false;
+                    res.kpis.consecutive_no_submissions = team.kpis?.consecutive_no_submissions || 0;
+                    res.kpis.decision_status = team.kpis?.decision_status || 'equipe';
+                }
                 
                 // 3.1 Calcular E-SDS v1.2 via Gemini
                 const { data: previousRounds } = await supabase

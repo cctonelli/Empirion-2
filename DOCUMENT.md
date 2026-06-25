@@ -2891,6 +2891,79 @@ project-root/
 **Status:** ATIVO, homologado com louvor e validado por linter e compilação de produção. Homologado por PMP, DB Admin, Arquiteto de UI/UX, Engenheiro de Software Sênior, Contador Sênior e Coordenador de Mercado.
 
 
+## Estudo de Viabilidade Técnico-Operacional - Eliminação de Equipes por W.O. (Walkover) - v2026.155
+
+**Data:** 25 de Junho de 2026 às 16:45 UTC  
+**Responsável:** PMP (Project Management Professional) em conjunto com Contador Sênior, Coordenador de Inteligência de Mercado, Engenheiro de Software Sênior, Administrador de Banco de Dados e Arquiteto de UI/UX.
+
+---
+
+### 1. Entendimento do Problema e Justificativa de Negócio (Market Intelligence & Pedagogia)
+No cenário atual do simulador, quando uma equipe não transmite suas decisões em tempo hábil, o sistema herda automaticamente as decisões da rodada anterior. Embora útil para falhas de rede pontuais, a **displicência continuada** gera graves problemas:
+1. **Distorção de Mercado (Market Share & Pricing):** Equipes inativas continuam disputando a demanda com preços defasados e sem correção inflacionária ou logística, atuando como "concorrentes zumbis" que roubam faturamento legítimo de equipes ativas.
+2. **Desestímulo Pedagógico:** A ausência de punição à inatividade desmotiva as equipes engajadas, minando o esforço de planejamento, análise financeira e inteligência de mercado das demais marcas concorrentes.
+3. **Inconsistência Macroeconômica:** A inércia de decisões de produção e marketing de uma equipe inativa impede que o mercado encontre um equilíbrio natural de oferta e demanda.
+
+---
+
+### 2. Parecer Técnico dos Especialistas da Equipe
+
+#### 📊 Contador Sênior (Processos & Auditoria)
+> *"Sob a ótica do CPC e das normas de integridade contábil, a inércia decisória de uma empresa leva a sérios desvios de valuation. No simulador, se uma marca não atua, ela deve ser posta em status de **Insolvência por Inatividade (W.O.)**. Financeiramente, propomos:*
+> - **Congelamento Operacional:** Cessão imediata de faturamento (vendas = 0 nas regiões).
+> - **Manutenção de Custos Fixos:** Despesas financeiras, depreciações, multas contratuais e aluguéis de fábrica continuam sendo debitados na DRE, corroendo o Patrimônio Líquido (PL) para refletir o declínio real.
+> - **Garantia de Auditoria:** O balanço patrimonial deve registrar a provisão para perdas de estoque obsoleto e ociosidade de maquinário (impairment)."
+
+#### 🎯 Coordenador de Inteligência de Mercado (Marketing & Vendas)
+> *"Se uma equipe não decide, seus preços tornam-se âncoras artificiais no algoritmo de Market Share regional. Propomos:*
+> - **Exclusão do Market Share:** Ao ser classificada em W.O., o market share da equipe faltosa é zerado (0%) em todas as regiões.
+> - **Redistribuição Fiduciária de Demanda:** A demanda que seria direcionada a essa equipe é distribuída proporcionalmente entre as equipes ativas com base em seus atributos de preço, publicidade e qualidade de produto, premiando o esforço estratégico do mercado engajado."
+
+#### 💻 Engenheiro de Software Sênior (Arquitetura & Clean Code)
+> *"Para implementar essa feature de forma resiliente, limpa e modularizada, sem quebrar os algoritmos de simulação existentes, a arquitetura recomendada compreende:*
+> - **Controle de Estado de Envio:** Rastrear o envio efetivo da decisão por rodada. Caso o tempo expire sem envio, incrementa-se o contador de não envios consecutivos (`consecutive_misses`).
+> - **Limite de Tolerância (W.O. Threshold):** Definido por padrão como **1 ou 2 rounds consecutivos** sem envio (configurável pelo Tutor).
+> - **Motor de Turnover Modificado (`processRoundTurnover`):** Ao iniciar o cálculo do período, a rotina de simulação filtra as equipes com status 'WO' e as ignora na alocação de pedidos e cálculos de competitividade de preços.
+> - **Comentários e Clareza:** Todo código será extensamente comentado em português do Brasil, garantindo excelente DX (Developer Experience) para o futuro sustentável do projeto."
+
+#### 🗄️ Engenheiro de Banco de Dados (DB Admin)
+> *"Para suportar essa funcionalidade com performance e integridade no PostgreSQL/Supabase, propomos a seguinte estrutura de dados:*
+> 1. **Novas Colunas na Tabela `teams` / `trial_teams`:**
+>    - `status`: VARCHAR (ex: 'active', 'suspended', 'wo_eliminated') padrão 'active'.
+>    - `consecutive_no_submissions`: INT padrão 0.
+> 2. **Índice B-Tree Planejado:** `CREATE INDEX idx_teams_status ON teams(status, championship_id);` para otimização das queries de simulação de rodada.
+> 3. **Auditoria de Mudança:** Registro no log da rodada detalhando o exato instante da declaração do W.O. por auditoria de sistema."
+
+#### 🎨 Arquiteto de UI/UX (Rhythm, Spacing & Visual Polish)
+> *"Precisamos evitar que o W.O. seja uma surpresa desagradável e garantir que a interface expresse essa urgência de forma elegante:*
+> - **Cockpit do Aluno:** Se o tempo estiver abaixo de 20% e a decisão não tiver sido transmitida, o card do terminal de decisão piscará sutilmente com uma borda âmbar e um banner de aviso: *'Atenção: Transmita suas decisões para evitar penalidades de W.O.'*.
+> - **Painel do Tutor (Command Center):** Um painel claro listando as marcas e o número de faltas consecutivas. Ao lado da equipe eliminada, exibe-se uma etiqueta refinada em tom escuro com borda carmesim: `[ ELIMINADA POR W.O. ]` com tooltip explicativo."
+
+---
+
+### 3. Plano de Implementação Sugerido (Roadmap de Sprints)
+
+#### Sprint A: Modelagem e Persistência (Banco de Dados & RLS)
+- Criação das colunas `status` e `consecutive_no_submissions` via Drizzle/SQL.
+- Atualização das políticas de Row Level Security (RLS) para permitir ao Tutor alterar manualmente ou reverter o status de uma equipe em caso de justificativa pedagógica fiduciária.
+
+#### Sprint B: Adaptação do Motor Contábil-Simulador (Back-end)
+- Alteração no `processRoundTurnover` para desconsiderar equipes com `status = 'wo_eliminated'` na alocação de demanda.
+- Implementação da lógica de custos fixos residuais e depreciação acelerada para marcas suspensas, mantendo a integridade matemática das demonstrações financeiras (DRE e Balanço).
+
+#### Sprint C: Lapidação Visual e Alertas (UI/UX)
+- Implementação de avisos preventivos no terminal de decisões.
+- Exibição destacada no Dashboard Geral de que a marca "X" foi desqualificada por inatividade, permitindo transparência comercial para os demais players concorrentes.
+
+---
+
+### 4. Conclusão e Recomendação do PMP
+O estudo demonstra que a implementação da eliminação por W.O. é **totalmente viável e altamente recomendável**. Ela promove a ética acadêmica, restaura a integridade das fórmulas econômicas e contábeis de mercado e eleva a qualidade da dinâmica de aprendizado.
+
+**Recomendação:** Aprovar este estudo de viabilidade e autorizar o início do desenvolvimento da **Sprint A** e **Sprint B** na próxima iteração do cronograma ágil.
+
+
+
 
 
 

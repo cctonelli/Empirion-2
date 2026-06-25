@@ -7,7 +7,7 @@ Este documento centraliza as definições de negócios, fórmulas, restrições 
 ## 📅 Controle de Governança e Versionamento
 
 - **Projeto:** EMPIRION ORACLE
-- **Versão Ativa de Regras:** v2026.132
+- **Versão Ativa de Regras:** v2026.134
 - **Responsável pela Governança:** Project Management Professional (PMP)
 - **Time Multidisciplinar Responsável:**
   - **Contador Sênior:** CPC / IFRS e validação de relatórios contábeis/financeiros.
@@ -18,6 +18,7 @@ Este documento centraliza as definições de negócios, fórmulas, restrições 
 
 | Data | Versão | Autor | Alterações / Decisões Importantes |
 | :--- | :--- | :--- | :--- |
+| **25/06/2026** | `v2026.134` | *PMP & Equipe* | **Governança Fiduciária de Walkover (W.O.) e Insolvência Assistida.** Implementação do motor fiduciário de eliminação e salvaguarda por ausência de decisões consecutivas (`MAX_CONSECUTIVE_MISSES = 2`). Sob estado de W.O. ativo, a equipe humana é desqualificada, o cockpit é bloqueado para novas transmissões, as compras normais e produção física são forçadas a zero, o mercado órfão é inteiramente redistribuído aos competidores remanescentes sadios via algoritmo de Spillover de Estoque, e os demonstrativos contábeis mantêm conformidade com as normas fiduciárias de suspensão de continuidade (*going concern*). |
 | **24/06/2026** | `v2026.133` | *PMP & Equipe* | **Alerta Visual de Rebalanceamento e Controle Pedagógico de Demanda.** Homologação do sistema de alerta em tempo real para o Tutor na criação de torneios (`TrialWizard`) e intervenção de rodadas (`TutorArenaControl`). Sempre que o somatório dos pesos das regiões divergir de 100%, o sistema orientará o Tutor didaticamente sobre os efeitos de hiper-demanda (&gt; 100%) ou recessão fiduciária (&lt; 100%), preservando sua soberania de simulação para prosseguir sem bloqueios técnicos de integridade. |
 | **23/06/2026** | `v2026.132` | *PMP & Equipe* | **Adição da Estrutura de Funding Imobiliário Greenfield & Diferenças BDI.** Documentação estrita do funcionamento financeiro e contábil do empréstimo de abertura imobiliário (`L-INIT-LT`), especificando a taxa nominal (10% a 12,5%), o prazo de amortização de 8 períodos (sistema SAC linear) e a ausência de carência inicial (`grace_period_remaining: 0`) para início imediato dos desembolsos e despesa financeira, diferenciando-se do financiamento de equipamentos industriais. |
 | **23/06/2026** | `v2026.131` | *PMP & Equipe* | **Criação de Torneio Flexível e Parametrização Greenfield Dinâmica.** Reestruturação do workflow do Tutor no `TrialWizard`: Arena Start & Templates torna-se o primeiro passo estratégico. Em modo *Start From Zero (Greenfield)*, os parâmetros da frota fabril inicial, capacidade das máquinas a 100%, valores monetários de revenda/obtenção, custos de implantação técnica, preços iniciais das matérias-primas e o dimensionamento do setor fiduciário administrativo e comercial (com multiplicador de salário-base) tornam-se 100% editáveis no assistente e integrados de ponta a ponta com o balanço patrimonial teórico, DRE operacional e fluxo de caixa subsequentes. O Monitor Fiduciário em tempo real é compactado na tela para zero-overlap de interface. |
@@ -335,4 +336,27 @@ No modo *Start from Zero (Greenfield)*, quando o Tutor ou a Equipe opta por pré
   3. **Saldo Devedor Final (Passivo):** O saldo devedor que transita para o próximo round é o valor líquido deduzido da amortização:
      $$\text{Saldo Devedor Novo} = \text{Saldo Devedor Ativo} - \text{Amortização}$$
      O valor consolidado atualiza diretamente a conta `liabilities.longterm.loans_lt` do Balanço Patrimonial (Passivo Não Circulante). Os juros calculados entram como Despesa Financeira no DRE consolidado e geram impacto negativo imediato no Fluxo de Caixa Operacional (`cf.outflow.loan_interest`).
+
+---
+
+## 13. 🛡️ Governança Fiduciária de Walkover (W.O.) e Insolvência Assistida
+
+O mecanismo de **Insolvência Assistida por W.O. (Walkover)** atua como uma barreira de proteção fiduciária ativa no motor do campeonato (`services/supabase.ts` e `services/simulation.ts`). Ele foi planejado para neutralizar o impacto de "equipes fantasmas" (competidores inativos ou evadidos) que abandonam o jogo, distorcendo o equilíbrio competitivo e contábil do campeonato.
+
+### 1. Gatilho de Desqualificação por Inação (Regra de Rodadas Limitadas)
+- **Definição:** Se uma equipe falha em submeter/transmitir suas decisões voluntariamente por **2 rodadas consecutivas** (`MAX_CONSECUTIVE_MISSES = 2`), o motor de simulação ativa o status de W.O. (`is_wo = true`).
+- **Sinalização de Estado:** O atributo `status` da equipe na tabela `teams` é marcado permanentemente como `'wo_eliminated'`. Seu registro de KPI no banco de dados fixa `is_wo = true` e o contador de ausências consecutivas passa para o valor limitador.
+
+### 2. Implicações Financeiras e de Operações (Rigor CPC/IFRS de Going Concern)
+Sob o rito de desqualificação fiduciária, a continuidade operacional da empresa é suspensa, gerando os seguintes efeitos no processamento do round:
+- **Demanda Comercial Forçada a Zero:** A atratividade e demanda do mercado direcionadas a essa marca em todas as regiões geográficas são forçadas imediatamente a **zero**. O market share que seria captado teoricamente por essa marca é zerado no painel da rodada.
+- **Produção Física Cancelada:** A produção física de manufatura (turnos, contratações e faturamento) é zerada. Nenhuma unidade de produto acabado é adicionada ao Kardex da equipe no round.
+- **Interdição de Decisões (Lockdown do Cockpit):** O cockpit da equipe exibe um banner de alerta visual pulsante em tom vermelho-coral de alta visibilidade e todas as seções (Vendas, Fábrica, RH, Ativos, Finanças) são colocadas em modo estrito de somente-leitura. Os botões de **Salvar** e **Transmitir Decisão** são bloqueados e desativados.
+- **Preservação de Auditoria Patrimonial:** Apesar da inatividade de faturamento e produção, o motor processa a manutenção básica e depreciação dos imobilizados preexistentes da empresa no banco de dados para que os demonstrativos financeiros (Balanço Patrimonial e DRE) permaneçam auditáveis e integrados até o final da competição, evitando distorções contábeis e de concorrência.
+
+### 3. Mecânica do Spillover do Mercado Órfão (Reequilíbrio de PIB da Indústria)
+Quando uma equipe entra em W.O., seu mercado teórico original de demanda torna-se órfão. A redistribuição é executada pelo algoritmo de concorrência direta:
+- **Redistribuição Imediata:** A demanda que seria inicialmente captada pela marca desqualificada é integralmente transferida e rateada entre as **equipes remanescentes ativas e sadias** que possuem produtos estocados fisicamente para entrega na região.
+- **Crescimento Orgânico da Indústria:** Isso assegura que o faturamento agregativo e o PIB setorial do campeonato não sofram recessões artificiais causadas por evasão escolar ou evasão corporativa, permitindo que marcas sadias capturem receita excedente e maximizem seu EBITDA proporcionalmente.
+
 

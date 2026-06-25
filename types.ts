@@ -154,6 +154,7 @@ export interface Team {
   strategic_profile?: StrategicProfile;
   insolvency_status?: InsolvencyStatus;
   locale?: string;
+  status?: string;
 }
 
 export interface DecisionData {

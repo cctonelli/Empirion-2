@@ -457,7 +457,8 @@ export const calculateProjections = (
   }, 0);
   
   // Mão de Obra Direta (MOD) reajustada por inflação ou decisão e pelos turnos extras
-  const payrollMOD = Math.max(0, operatorsAvailable) * currentSalary * activityLevel * modMult;
+  const isWO = !!team.kpis?.is_wo || team.status === 'wo_eliminated';
+  const payrollMOD = Math.max(0, operatorsAvailable) * currentSalary * (isWO ? 1.0 : activityLevel) * modMult;
   const socialChargesMOD = payrollMOD * (socialChargesAttr - 1);
   const productivityBonus = payrollMOD * (sanitize(decision.hr?.productivityBonusPercent, 0) / 100);
   const totalMOD = payrollMOD + socialChargesMOD + productivityBonus;
@@ -599,19 +600,21 @@ export const calculateProjections = (
   // Custo de Treinamento (Folha industrial afetada de treinamento)
   const trainingCost = payrollMOD * (trainingPercent / 100);
 
-  // Unidades produzidas efetivamente
-  let unitsProduced = Math.floor(effectiveCapacity * activityLevel * productivityIndex * strikeFactor);
+  // Unidades produzidas efetivamente (sob W.O., a produção é zerada inteiramente)
+  const isWOSim = !!team.kpis?.is_wo || team.status === 'wo_eliminated';
+  let unitsProduced = isWOSim ? 0 : Math.floor(effectiveCapacity * activityLevel * productivityIndex * strikeFactor);
 
   // Produção Extra (Hora Extra) - Custo MOD 50% superior para o excedente
-  if (extraProductionPercent > 0) {
+  if (extraProductionPercent > 0 && !isWOSim) {
     const extraUnits = Math.floor(unitsProduced * (extraProductionPercent / 100));
     unitsProduced += extraUnits;
   }
-  const extraProductionCost = extraProductionPercent > 0 ? (Math.floor(unitsProduced * (extraProductionPercent / (100 + extraProductionPercent))) / (unitsProduced || 1)) * totalMOD * 0.5 : 0;
+  const extraProductionCost = (extraProductionPercent > 0 && !isWOSim) ? (Math.floor(unitsProduced * (extraProductionPercent / (100 + extraProductionPercent))) / (unitsProduced || 1)) * totalMOD * 0.5 : 0;
 
   // --- 3.1 GESTÃO DE SUPRIMENTOS E COMPRAS DE EMERGÊNCIA (USER REQUEST) ---
-  const purchaseMPA = sanitize(decision.production?.purchaseMPA, 0);
-  const purchaseMPB = sanitize(decision.production?.purchaseMPB, 0);
+  // Sob W.O., compras normais são zeradas inteiramente
+  const purchaseMPA = isWOSim ? 0 : sanitize(decision.production?.purchaseMPA, 0);
+  const purchaseMPB = isWOSim ? 0 : sanitize(decision.production?.purchaseMPB, 0);
   const supplierPaymentType = sanitize(decision.production?.paymentType, 0); // 0: A Vista, 1: A VISTA + 50%, 2: A VISTA + 33% + 33%
   
   // Fator de Juros do Fornecedor (Proporcional ao Saldo Devedor Financiado - v19.12)
