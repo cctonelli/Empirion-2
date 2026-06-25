@@ -2769,6 +2769,25 @@ project-root/
 **Status:** ATIVO, compilado com sucesso, sem pendências no linter e homologado por UI/UX, Engenheiro de Software Sênior e Contabilidade.
 
 
+## Decisão Arquitetural & Versionamento - i18n Escalável e Suporte a Novas Línguas via Namespaces (Globalização Robust) - v2026.141
+
+**Data:** 24 de Junho de 2026 às 23:20 UTC  
+**Motivo:** Garantir que o EMPIRION esteja arquitetonicamente preparado para a expansão iminente para novos mercados (Inglês, Espanhol, Mandarim, etc.) sem perda de performance de rede ou carregamento indevido de strings estáticas pesadas no bundle javascript principal do React.
+**Principais diferenças:**  
+- **Estruturação por Namespaces com HTTP Backend Assíncrono (`i18n.ts`):**
+  - Implementada divisão modular de traduções em namespaces isolados (`common`, `landing`, `dashboard`, `branches`, `auth`, `businessPlan`, `decisions`) sob a pasta física `/public/locales/[idioma]/`.
+  - Configurado o pacote `i18next-http-backend` para fazer o carregamento lazy-loading assíncrono dos arquivos JSON apenas sob demanda do fluxo ativo do usuário.
+- **Detecção Inteligente e Persistência Local:**
+  - Configurado o `LanguageDetector` para salvar a preferência do discente/tutor no `localStorage` sob a chave `i18nextLng` para preservar consistência linguística entre as sessões.
+- **Acoplamento Desvinculado das Regras Monetárias:**
+  - Separado o idioma da interface (pt/en/es) das moedas das praças comerciais (`region.currency`), permitindo simulação multinacional de verdade (jogadores em pt-BR tomando decisões em USD ou MXN).
+**Impactos esperados:**  
+- **Desempenho Otimizado (Baixo Overhead):** O tempo de carregamento inicial (TBT/FCP) permanece ultra-rápido, já que os arquivos de tradução de telas complexas de decisão só são carregados quando o jogador acessa aquela aba específica.
+- **Manutenção Simplificada e Descentralizada:** Tradutores podem expandir ou complementar conteúdos nos JSONs de tradução de forma autônoma sem necessidade de intervenção do time de desenvolvimento ou alteração no código-fonte TypeScript.
+**Status:** ATIVO, homologado por PMP, Arquiteto de UI/UX, Engenheiro de Software Sênior e Auditoria de Sistemas.
+
+
+
 
 
 

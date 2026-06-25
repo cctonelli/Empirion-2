@@ -172,3 +172,29 @@ A implantação desta grande funcionalidade será executada de forma modular pro
 - [ ] **Discussão Fiduciária:** Definir o multiplicador ideal do Valuation de P0 para determinar o valor nominal mestre inicial (`initial_share_price`).
 - [ ] **Mapeamento de Performance:** Analisar se o motor sínclinal do Node-Vite sofrerá latências com simulação de compra em massa e programar índices no PostgreSQL para isso.
 - [ ] **Revisão de UI:** Integrar a prévia do Ticker Tape sob o cabeçalho mestre no configurador do Tutor (`TrialWizard.tsx`).
+
+---
+
+## 8. Internacionalização e Localização Global (i18n & Multi-Locale)
+
+**Versão da Iniciativa:** v1.1.0 (Planejamento de Globalização)  
+**Data:** 24 de Junho de 2026  
+**Autores:** Equipe Multidisciplinar (PMP, Engenheiro de Software Sênior, UI/UX e Inteligência de Mercado)
+
+### Diretrizes e Regras de Negócio de Tradução:
+1. **Idioma Base (Core):** Português do Brasil (pt-BR) permanecerá como a fundação de desenvolvimento de conteúdo do simulador.
+2. **Idiomas Alvo:** Inglês (en-US) e Espanhol (es-ES / es-MX).
+3. **Escopo de Tradução:** Todas as telas de decisão (Supply, Factory, HR, Assets, Legal, Marketing, Finance), relatórios contábeis de saída (Balanço, DRE, Fluxo de Caixa) e mensagens didáticas emitidas pelas inteligências do Tutor e Oráculo de IA.
+4. **Acoplamento Monetário:** O simulador herda a moeda regional cadastrada no ato da intervenção ou setup da arena (ex: USD, BRL, EUR, MXN), adaptando os símbolos contábeis dinamicamente sem forçar conversões fixas de câmbio, garantindo consistência técnica em qualquer mercado do mundo.
+
+### Arquitetura de Software Proposta (Visão Engenheiro Sênior):
+Para garantir uma transição extremamente limpa, rápida e de alto desempenho (DX excelente e baixo overhead de carregamento em produção), implementaremos o padrão de **Dicionários Estáticos de Tradução Baseados em Tipagem Estrita** antes de adicionar frameworks pesados de i18n, se necessário. 
+
+Esboço da estrutura de arquivos planejada para o diretório `/src/locales/`:
+- `pt.ts` -> Dicionário estático em português brasileiro.
+- `en.ts` -> Dicionário estático traduzido para inglês.
+- `es.ts` -> Dicionário estático traduzido para espanhol.
+- `index.ts` -> Gerenciador unificado de contexto React (`LocaleProvider`) para troca instantânea de idioma em tempo de execução sem flicagem visual ou reloads de página.
+
+---
+
