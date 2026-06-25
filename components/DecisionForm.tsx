@@ -38,6 +38,7 @@ const STEPS = [
 const DecisionForm: React.FC<{ 
   teamId?: string; 
   champId?: string; 
+  activeArena?: Championship | null;
   round: number; 
   branch?: Branch; 
   isReadOnly?: boolean; 
@@ -51,6 +52,7 @@ const DecisionForm: React.FC<{
 }> = ({ 
   teamId, 
   champId, 
+  activeArena: activeArenaProp,
   round = 1, 
   branch = 'industrial', 
   isReadOnly = false, 
@@ -296,6 +298,13 @@ const DecisionForm: React.FC<{
     };
     initializeForm();
   }, [champId, teamId, round]);
+
+  // Sincronização do activeArena vindo via prop do componente pai (Dashboard)
+  useEffect(() => {
+    if (activeArenaProp) {
+      setActiveArena(activeArenaProp);
+    }
+  }, [activeArenaProp]);
 
   // Sincronização em Tempo Real (Supabase Realtime) do Estado do Campeonato (Pausa, Config, etc.)
   useEffect(() => {

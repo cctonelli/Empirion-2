@@ -2875,6 +2875,22 @@ project-root/
 **Status:** ATIVO, linter e compilação do applet efetuados com pleno sucesso. Homologado por PMP, Coordenador de Inteligência de Mercado, Contador Sênior, DB Admin, Arquiteto de UI/UX e Engenheiro de Software Sênior.
 
 
+## Decisão Arquitetural & Versionamento - Unificação Fiduciária de State Sync Prop no Cockpit - v2026.154
+
+**Data:** 25 de Junho de 2026 às 16:28 UTC  
+**Motivo:** Resolver a anomalia onde, ao despausar/descongelar a rodada, o botão de transmissão de decisões dos alunos continuava travado no status de "DECISÕES CONGELADAS" em cinza, sem reverter para "TRANSMITIR DECISÃO" em cor verde, devido a falhas na inscrição paralela de canais de realtime na mesma página do navegador.
+**Principais diferenças:**  
+- **Prop de Estado Unificado (`activeArena`):**
+  - O componente pai `Dashboard.tsx`, que é a autoridade máxima do estado de tempo e gerencia com sucesso a escuta de realtime e a animação do temporizador principal no Header (o qual descongela perfeitamente), passa a injetar diretamente o seu objeto `activeArena` reativo como prop no componente `<DecisionForm />`.
+- **Efeito de Sincronia de Prop (`useEffect`):**
+  - Implementado hook de sincronia instantânea em `components/DecisionForm.tsx` que monitora as variações da prop `activeArena` e as replica no estado local (`activeArena`), garantindo coerência de dados de forma síncrona no React.
+- **Remoção de Pontos de Inconsistência:**
+  - Evita falhas de múltiplas conexões concorrentes no mesmo cliente discente do Supabase Realtime, unificando a fonte fiduciária de verdade para o estado de congelamento da rodada.
+**Impactos esperados:**  
+- **Sincronismo Instantâneo e Estético:** O botão de "Transmitir Decisão" reage imediatamente, voltando a brilhar no tom de verde esmeralda no exato segundo em que o Tutor clica no botão para despausar no CommandCenter.
+**Status:** ATIVO, homologado com louvor e validado por linter e compilação de produção. Homologado por PMP, DB Admin, Arquiteto de UI/UX, Engenheiro de Software Sênior, Contador Sênior e Coordenador de Mercado.
+
+
 
 
 

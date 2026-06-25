@@ -923,6 +923,7 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
                         <DecisionForm 
                           teamId={activeTeam?.id} 
                           champId={activeArena?.id} 
+                          activeArena={activeArena}
                           round={selectedRound} 
                           branch={activeArena?.branch}
                           isReadOnly={isTutorViewing || userRole === 'observer' || (requireBP && bpStatus !== 'submitted' && selectedRound === currentRound) || isPastRound || isFutureRound || isExpiredWaiting || isRoundExpired}
