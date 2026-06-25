@@ -337,8 +337,8 @@ const TutorArenaControl: React.FC<{ championship: Championship; onUpdate: (confi
                 <div className="bg-slate-900 p-10 rounded-[4rem] border border-white/10 shadow-2xl space-y-12">
                    <h3 className="text-2xl font-black text-white uppercase italic flex items-center gap-4"><Package className="text-orange-500"/> Insumos & CAPEX Máquinas</h3>
                    <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
-                      <MacroInput label="Preço MP-A ($)" val={macro.prices.mp_a} onChange={(v: number) => setMacro({...macro, prices: {...macro.prices, mp_a: v}})} />
-                      <MacroInput label="Preço M-P-B ($)" val={macro.prices.mp_b} onChange={(v: number) => setMacro({...macro, prices: {...macro.prices, mp_b: v}})} />
+                      <MacroInput label="Preço Unit. MP-A ($)" val={macro.prices.mp_a} onChange={(v: number) => setMacro({...macro, prices: {...macro.prices, mp_a: v}})} />
+                      <MacroInput label="Preço Unit. MP-B ($)" val={macro.prices.mp_b} onChange={(v: number) => setMacro({...macro, prices: {...macro.prices, mp_b: v}})} />
                       <MacroInput label="Compra Especial (%)" val={macro.special_purchase_premium} onChange={(v: number) => setMacro({...macro, special_purchase_premium: v})} />
                       <MacroInput label="Custo Unit. Estocagem MP ($)" val={macro.prices.storage_mp || 1.40} onChange={(v: number) => setMacro({...macro, prices: {...macro.prices, storage_mp: v}})} />
                       <MacroInput label="Custo Unit. Estocagem PA ($)" val={macro.prices.storage_finished || 20.00} onChange={(v: number) => setMacro({...macro, prices: {...macro.prices, storage_finished: v}})} />
