@@ -206,7 +206,6 @@ const TutorArenaControl: React.FC<{ championship: Championship; onUpdate: (confi
     };
 
     const payload = { 
-      market_indicators: finalMacro,
       observers: observersList,
       config: {
         ...(currentChampionship.config || {}),
@@ -277,7 +276,7 @@ const TutorArenaControl: React.FC<{ championship: Championship; onUpdate: (confi
                 <span className="text-[10px] font-black uppercase tracking-[0.25em] text-emerald-400">Canal de Intervenção Ativo</span>
              </div>
              <h2 className="text-3xl font-black text-white italic tracking-tight">{currentChampionship.name}</h2>
-             <p className="text-xs text-slate-400 font-medium">Configure os indexadores macroeconômicos e simulações para a rodada <strong className="text-orange-500 font-black">Round {nextRoundIdx}</strong>.</p>
+             <p className="text-xs text-slate-400 font-medium">Configure os indexadores macroeconômicos e simulações para o <strong className="text-orange-500 font-black">Round {nextRoundIdx}</strong>.</p>
           </div>
           <div className="flex items-center gap-4">
              <ChampionshipTimer 

@@ -46,6 +46,7 @@ interface ChampionshipTimerProps {
   remainingMsAtPause?: number;
   onStatusChange?: (isExpired: boolean) => void;
   isTournamentFinished?: boolean;
+  onTick?: (remainingMs: number) => void;
 }
 
 const ChampionshipTimer: React.FC<ChampionshipTimerProps> = ({ 
@@ -58,7 +59,8 @@ const ChampionshipTimer: React.FC<ChampionshipTimerProps> = ({
   isPaused = false,
   remainingMsAtPause,
   onStatusChange,
-  isTournamentFinished = false
+  isTournamentFinished = false,
+  onTick
 }) => {
   const [timeLeft, setTimeLeft] = useState<string>('Sincronizando...');
   const [isCritical, setIsCritical] = useState(false);
@@ -137,6 +139,9 @@ const ChampionshipTimer: React.FC<ChampionshipTimerProps> = ({
       const now = Date.now();
       const diff = targetDate - now;
 
+      // Dispara o callback informando os milissegundos restantes
+      onTick?.(diff);
+
       if (diff <= 0) {
         setTimeLeft('ENCERRADO');
         setIsCritical(true);
@@ -187,7 +192,7 @@ const ChampionshipTimer: React.FC<ChampionshipTimerProps> = ({
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [roundStartedAt, createdAt, deadlineValue, deadlineUnit, onExpire, isPaused, remainingMsAtPause, onStatusChange, isTournamentFinished]);
+  }, [roundStartedAt, createdAt, deadlineValue, deadlineUnit, onExpire, isPaused, remainingMsAtPause, onStatusChange, isTournamentFinished, onTick]);
 
   if (variant === 'compact') {
     return (

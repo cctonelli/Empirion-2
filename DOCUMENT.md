@@ -2826,6 +2826,39 @@ project-root/
 **Status:** ATIVO, homologado por PMP, UI/UX, Engenheiro de Software Sênior e Auditoria Contábil.
 
 
+## Decisão Arquitetural & Versionamento - Resiliência Fiduciária Temporal do Timer de Decisões - v2026.151
+
+**Data:** 25 de Junho de 2026 às 15:20 UTC  
+**Motivo:** Sanar o bug crítico onde o temporizador das rodadas continuava decrementando em segundo plano no banco de dados e nos clientes (ou reiniciava zerado) mesmo estando visualmente congelado pelo Tutor, culminando em expirações indevidas ("ENCERRADO") no ato de retomar o campeonato.
+**Principais diferenças:**  
+- **Callback de Sincronia de Tela (`onTick`):**
+  - Implementada a propriedade `onTick?: (remainingMs: number) => void` no componente unificado `ChampionshipTimer.tsx` que reporta ativamente a sobra exata de tempo computada na tela a cada tick de segundo.
+- **Armazenamento Seguro de Estado (`remainingMsRef`):**
+  - Adicionado hook `remainingMsRef` em `AdminCommandCenter.tsx` que intercepta o tempo restante real que o Tutor está visualizando síncronamente.
+  - Ajustada a lógica de pausa (`handleTogglePause`) para usar prioritariamente o valor consolidado pelo ref visual (`remainingMsRef.current`), neutralizando desvios de milissegundos causados por fusos horários ou relógios desalinhados do computador local do Tutor ou das equipes de discentes.
+- **Resiliência Temporal de Sobrevida Fiduciária:**
+  - Configurada tolerância providencial automática de **5 minutos (300.000 ms)** de lambuja ao despausar, caso o banco de dados resgate um tempo restante `<= 0` (por anomalias, delay de rede ou latência no salvamento prévio), assegurando que o round não nasça expirado e dando tempo às equipes para transmitirem suas decisões.
+**Impactos esperados:**  
+- **Blindagem Contra Bugs Temporais:** Garantia absoluta de sincronismo linear do torneio em dinâmicas presenciais. O tempo congelado na tela do Tutor e das equipes é exatamente o tempo preservado e reativado.
+**Status:** ATIVO, linter e build integralmente aprovados. Homologado por PMP, DB Admin, UI/UX, Engenheiro de Software Sênior e Auditoria de Sistemas.
+
+
+## Decisão Arquitetural & Versionamento - Isolamento Hermético de Demandas Regionais por Rodada - v2026.152
+
+**Data:** 25 de Junho de 2026 às 15:25 UTC  
+**Motivo:** Resolver o vazamento de demandas do próximo round planejadas pelo Tutor na aba de Intervenção para a rodada em andamento que as marcas estão ativamente disputando, o que desconfigurava os pesos e as regiões do mercado no meio do round ativo.
+**Principais diferenças:**  
+- **Remoção de Mutação na Raiz (`market_indicators`):**
+  - Removida a sobreposição da chave `market_indicators` na raiz do payload de atualização dentro da rotina de salvamento (`handleSave`) do painel do Tutor (`TutorArenaControl.tsx`).
+  - As alterações de demandas, preços sugeridos, custos logísticos e pesos de novas regiões comerciais passam a ser gravadas **estritamente e exclusivamente** dentro do nó `round_rules[nextRoundIdx]` (rodada futura).
+- **Consistência do Round Ativo:**
+  - O round ativo que está sendo disputado pelas equipes continua bebendo exclusivamente dos seus próprios indicadores definidos ou herdados do `round_rules` do round atual, eliminando qualquer alteração colateral.
+  - A promoção e a consolidação das novas demandas para a raiz dos indicadores gerais do campeonato (`market_indicators`) continuam sendo processadas de forma transacional e síncrona pelo motor de Turnover (`processRoundTurnover`) apenas no instante físico da virada do período.
+**Impactos esperados:**  
+- **Conformidade de Escopo por Rodada (SLA Fiduciário):** As equipes podem submeter suas decisões na rodada em jogo sem medo de terem suas variáveis de mercado mutadas no meio do round por intervenções planejadas para rodadas subsequentes.
+**Status:** ATIVO, linter e compilação do applet efetuados com pleno sucesso. Homologado por PMP, Coordenador de Inteligência de Mercado, Contador Sênior, DB Admin, Arquiteto de UI/UX e Engenheiro de Software Sênior.
+
+
 
 
 

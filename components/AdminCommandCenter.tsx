@@ -62,6 +62,7 @@ const AdminCommandCenter: React.FC<{ preTab?: string }> = ({ preTab = 'tournamen
   
   const [tutorView, setTutorView] = useState<TutorView>('dashboard');
   const [isTimerExpired, setIsTimerExpired] = useState(false);
+  const remainingMsRef = useRef<number>(0);
 
   // Custom force expire modal states
   const [showForceExpireModal, setShowForceExpireModal] = useState(false);
@@ -422,7 +423,10 @@ const AdminCommandCenter: React.FC<{ preTab?: string }> = ({ preTab = 'tournamen
       // Pausar: calcular quanto tempo restava para salvar no banco
       const start = new Date(selectedArena.round_started_at || selectedArena.created_at || '').getTime();
       const targetDate = start + durationMs;
-      const remainingMs = Math.max(0, targetDate - Date.now());
+      
+      // Prioridade absoluta para o valor real exibido na tela (ref) para imunidade a fuso horário/relógio errado do Tutor
+      let remainingMs = (remainingMsRef.current > 0) ? remainingMsRef.current : (targetDate - Date.now());
+      remainingMs = Math.max(1000, remainingMs); // Proteção contra gravação de valor zerado ou negativo
       
       const updatedConfig = {
         ...config,
@@ -435,7 +439,14 @@ const AdminCommandCenter: React.FC<{ preTab?: string }> = ({ preTab = 'tournamen
       setSelectedArena({ ...selectedArena, config: updatedConfig });
     } else {
       // Despausar: ajustar a data inicial para alinhar com o tempo restante salvo
-      const remainingMs = config.remaining_ms_at_pause || 0;
+      let remainingMs = config.remaining_ms_at_pause || 0;
+      
+      // Resiliência temporal fiduciária: se o tempo estava expirado ou zerado por erro de sincronismo,
+      // concede uma tolerância providencial de 5 minutos para que as equipes possam transmitir suas decisões
+      if (remainingMs <= 0) {
+        remainingMs = 5 * 60 * 1000; // 5 minutos de tolerância
+      }
+      
       const newRoundStartedAt = new Date(Date.now() + remainingMs - durationMs).toISOString();
       
       const updatedConfig = {
@@ -455,6 +466,9 @@ const AdminCommandCenter: React.FC<{ preTab?: string }> = ({ preTab = 'tournamen
         round_started_at: newRoundStartedAt,
         config: updatedConfig 
       });
+      
+      // Reinicia o ref local de tempo restante
+      remainingMsRef.current = remainingMs;
     }
   };
 
@@ -560,6 +574,7 @@ const AdminCommandCenter: React.FC<{ preTab?: string }> = ({ preTab = 'tournamen
                     remainingMsAtPause={selectedArena.config?.remaining_ms_at_pause}
                     onStatusChange={setIsTimerExpired}
                     isTournamentFinished={selectedArena.current_round >= (selectedArena.total_rounds || 6)}
+                    onTick={(ms) => { remainingMsRef.current = ms; }}
                   />
                   
                   {/* Botões do Tutor para Pausar e Concluir / Terminar o Round */}

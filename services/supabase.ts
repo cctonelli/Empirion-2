@@ -1097,7 +1097,7 @@ export const processRoundTurnover = async (id: string, round: number, isTrial?: 
         const nextIndicators = { ...indicatorsForRound, ...nextRules, avg_selling_price: avgPrice };
 
         // v19.59: Limpeza fiduciária de variáveis de pausa ao realizar Turnover de Rodada
-        // Se houver regras de região específicas para a rodada seguinte que agora se torna ativa (nextNextRound),
+        // Se houver regras de região específicas para o round seguinte que agora se torna ativa (nextNextRound),
         // nós as promovemos para a raiz do config para servir de linha de base fluida.
         const nextRoundRegions = champ.round_rules?.[nextNextRound]?.regions || 
                                  champ.round_rules?.[nextNextRound]?.region_configs;
