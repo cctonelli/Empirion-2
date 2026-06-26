@@ -4283,7 +4283,7 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                         />
                         <CompactMatrixRow
                           periods={totalPeriods}
-                          label="MÁQUINA GAMA (%)"
+                          label="MÁQUINA GAMMA (%)"
                           macroKey="machine_gamma_price_adjust"
                           rules={roundRules}
                           update={updateRoundMacro}
