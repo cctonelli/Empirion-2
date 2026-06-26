@@ -2,10 +2,31 @@
  
 ## 📋 Controle de Governança
 - **Produto:** EMPIRION ORACLE
-- **Versão Ativa:** v2026.181 Saneamento Estrutural e Blindagem contra Quebra de Templates P0 do Supabase.
+- **Versão Ativa:** v2026.182 Sincronização Dinâmica de Instalações Contábeis e Erradicação de Diferença Contábil Greenfield
 - **Tipo de Documento:** Master Index & Diretrizes de Engenharia Contínua
 - **Status da Documentação:** Sincronizado com o PRD.md, BUSINESS_RULES.md & ROADMAP.md
  
+---
+
+## Decisão Arquitetural: Sincronização Dinâmica de Instalações Contábeis e Erradicação de Diferença Contábil Greenfield - v2026.182
+
+**Data:** 26 de Junho de 2026 às 14:40 UTC  
+**Motivo:** Sanar por definitivo a divergência/discrepância fiduciária e diferença no fechamento contábil de equipes operando em modo "START FROM ZERO" (Greenfield) após o turnover para a primeira rodada (R1), causada pelo salvamento de valores de fallback/preset rígidos de benfeitorias (`installations_value = 500000.0`) enquanto o Tutor personalizava o valor das Instalações Administrativas para quantias menores (como USD 200.000,00).
+
+**Detalhamento Técnico de Planejamento e Modificações:**
+- **Identificação da Desconexão Fiduciária**:
+  - Quando o Tutor alterava o modo de início para "start_from_zero", o sistema inicializava `tutorConfig.installations_value = 500000.0` e `tutorConfig.admin_sales_installations = 500000.0`.
+  - Se o Tutor editasse o campo de "Instalações Admin/Vendas ($)" para `200.000,00`, o campo de formulário atualizava unicamente `tutorConfig.admin_sales_installations`, mantendo o `tutorConfig.installations_value` fixo em `500000.0`.
+  - Na geração do balanço de abertura (P0) via `generatePureP0`, a prioridade recaía sobre `config.installations_value ?? admin_sales_installations`. Como o primeiro estava definido como `500000.0`, o balanço de abertura inicializava com `$500.000,00` em instalações.
+  - Ao realizar o turnover para a rodada R1, o motor de simulação calculava as instalações ativas dinamicamente com base em `admin_sales_installations` ($200.000,00) + custo de instalação das máquinas ($0.00), resultando em `$200.000,00`.
+  - A diferença (`200.000,00 - 500.000,00 = -300.000,00`) gerava uma baixa contábil e redução do Ativo Imobilizado sem correspondência ou compensação na DRE/Fluxo de Caixa, violando a equação contábil fundamental (`Ativo = Passivo + PL`) por exatos `$300.000,00`.
+- **Sincronização Dinâmica e Bilateral no Wizard (`components/TrialWizard.tsx`)**:
+  - Modificou-se o manipulador `onChange` do campo "Instalações Admin/Vendas ($)" para calcular dinamicamente o valor consolidado de instalações (`installations_value`). Agora, se o usuário edita as instalações administrativas, o `installations_value` é sincronizado como o somatório de `admin_sales_installations` + custos de instalações das máquinas vigentes.
+- **Blindagem no Payload do Campeonato (`components/TrialWizard.tsx` -> `createChampionshipWithTeams`)**:
+  - Substituiu-se o fallback estático de `500000.0` / `10000000.0` no dispatch de `ecosystem_config.installations_value` por um cálculo perfeitamente dinâmico baseando-se em `admin_sales_installations` somado à frota instalada, garantindo que mesmo se o `installations_value` estiver undefined, a inicialização use os valores digitados de forma milimétrica.
+
+**Status atual:** v2026.182 - Em Produção / Compilação e Linter 100% Homologados.
+
 ---
 
 ## Decisão Arquitetural: Saneamento Estrutural e Blindagem contra Quebra de Templates P0 do Supabase - v2026.181

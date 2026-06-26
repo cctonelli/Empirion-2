@@ -1194,11 +1194,13 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                   : 10),
             installations_value:
               tutorConfig.installations_value ??
-              (tutorConfig.starting_mode === "start_from_zero"
-                ? 500000.0
-                : tutorConfig.starting_mode === "start_with_base"
-                  ? 500000.0
-                  : 10000000.0),
+              ((tutorConfig.admin_sales_installations || 0) + (
+                tutorConfig.starting_mode === "start_from_zero"
+                  ? 0
+                  : (tutorConfig.machines?.[0]?.qty || 0) * 150000 +
+                    (tutorConfig.machines?.[1]?.qty || 0) * 600000 +
+                    (tutorConfig.machines?.[2]?.qty || 0) * 1500000
+              )),
             land_value:
               tutorConfig.land_value ??
               (tutorConfig.starting_mode === "start_from_zero"
@@ -3856,12 +3858,24 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                         type="currency"
                         currency={tutorConfig.currency}
                         val={tutorConfig.admin_sales_installations ?? 0}
-                        onChange={(v: any) =>
+                        onChange={(v: any) => {
+                          const parsedVal = parseFloat(v) || 0;
+                          const alphaCost = 150000;
+                          const betaCost = 600000;
+                          const gammaCost = 1500000;
+                          const machinesInstallVal =
+                            tutorConfig.starting_mode === "start_from_zero"
+                              ? 0
+                              : (tutorConfig.machines?.[0]?.qty || 0) * alphaCost +
+                                (tutorConfig.machines?.[1]?.qty || 0) * betaCost +
+                                (tutorConfig.machines?.[2]?.qty || 0) * gammaCost;
+                          
                           setTutorConfig({
                             ...tutorConfig,
-                            admin_sales_installations: parseFloat(v) || 0,
-                          })
-                        }
+                            admin_sales_installations: parsedVal,
+                            installations_value: parsedVal + machinesInstallVal,
+                          });
+                        }}
                       />
 
                       <WizardField
