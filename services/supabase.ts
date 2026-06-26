@@ -602,6 +602,7 @@ export const getSystemSecret = async (name: string): Promise<string | null> => {
 };
 
 export const processRoundTurnover = async (id: string, round: number, isTrial?: boolean) => {
+    const nextRound = round + 1;
     try {
         const isTrialSession = isTrial !== undefined ? isTrial : (localStorage.getItem('is_trial_session') === 'true');
         const champTable = isTrialSession ? 'trial_championships' : 'championships';
@@ -618,8 +619,6 @@ export const processRoundTurnover = async (id: string, round: number, isTrial?: 
         if (champ.current_round >= maxRounds) {
             throw new Error(`BLOQUEIO DE SEGURANÇA: Esta arena já atingiu o final do torneio (${maxRounds} "rounds" planejados). Não é permitido efetuar turnovers adicionais.`);
         }
-
-        const nextRound = round + 1;
 
         // v2026.161: Saneamento preventivo e eliminação de duplicidades decorrentes de re-tentativas de turnovers parciais falhos.
         // Se este turnover falhou ou foi interrompido no meio do loop em execuções anteriores, limpamos todos os registros de resultado contábil
@@ -1223,7 +1222,23 @@ export const processRoundTurnover = async (id: string, round: number, isTrial?: 
         }
         
         return { success: true };
-    } catch (err: any) { return { success: false, error: err.message }; }
+    } catch (err: any) {
+        try {
+            // Salvar no log de erros do Supabase para notificação e análise do Administrador do Sistema
+            await supabase.from('error_logs').insert({
+                championship_id: id,
+                round: nextRound,
+                error_message: err.message,
+                context_data: {
+                    error_stack: err.stack,
+                    timestamp: new Date().toISOString()
+                }
+            });
+        } catch (logErr) {
+            console.error("Falha ao salvar log de erro fiduciário no Supabase:", logErr);
+        }
+        return { success: false, error: err.message };
+    }
 };
 
 export const getP0Templates = async (): Promise<any[]> => {

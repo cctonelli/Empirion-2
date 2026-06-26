@@ -70,7 +70,7 @@ function injectValues(tree: AccountNode[], values: Record<string, number>): Acco
  * 2. Consistência do Caixa: O saldo final de caixa na DFC deve bater exatamente com a conta Ativo Circulante Caixa.
  * 3. Consistência do Lucro: O Lucro Líquido apurado na DRE deve se refletir perfeitamente no PL (Lucros Acumulados / equity.profit).
  */
-export function validateTripleConsistency(statements: any): { isValid: boolean; errors: string[]; warnings: string[] } {
+export function validateTripleConsistency(statements: any, currency: string = 'BRL'): { isValid: boolean; errors: string[]; warnings: string[] } {
   const errors: string[] = [];
   const warnings: string[] = [];
   
@@ -127,15 +127,15 @@ export function validateTripleConsistency(statements: any): { isValid: boolean; 
     const nonCurrentAssetsVal = landVal + buildingsVal + buildingsDeprecVal + machinesVal + machinesDeprecVal;
     const currentLiabsVal = suppliersVal + vatPayableVal + taxesVal + dividendsVal + pprPayableVal + loansStVal;
 
-    errors.push(`Disparidade crítica de Equação Contábil detectada: O total do Ativo (${roundedAssets.toFixed(2)} BRL) diverge da soma do Passivo + PL (${roundedLiabPl.toFixed(2)} BRL) por ${accountingDiff.toFixed(2)} BRL. ` +
+    errors.push(`Disparidade crítica de Equação Contábil detectada: O total do Ativo (${roundedAssets.toFixed(2)} ${currency}) diverge da soma do Passivo + PL (${roundedLiabPl.toFixed(2)} ${currency}) por ${accountingDiff.toFixed(2)} ${currency}. ` +
       `[DETALHAMENTO AUDITORIA (SAPPHIRE)]: ` +
-      `ATIVO: ${roundedAssets.toFixed(2)} BRL ` +
-      `(Circulante: ${currentAssetsVal.toFixed(2)} BRL [Caixa: ${cashVal.toFixed(2)}, Aplicacao: ${investmentsVal.toFixed(2)}, Clientes: ${clientsVal.toFixed(2)}, PECLD: ${pecldVal.toFixed(2)}, IVA_Rec: ${vatRecoverableVal.toFixed(2)}, PA: ${stockPaVal.toFixed(2)}, MPA: ${stockMpaVal.toFixed(2)}, MPB: ${stockMpbVal.toFixed(2)}], ` +
-      `Nao Circulante: ${nonCurrentAssetsVal.toFixed(2)} BRL [Terrenos: ${landVal.toFixed(2)}, Edificios: ${buildingsVal.toFixed(2)}, Depr_Edif: ${buildingsDeprecVal.toFixed(2)}, Maquinas: ${machinesVal.toFixed(2)}, Depr_Maq: ${machinesDeprecVal.toFixed(2)}]); ` +
-      `PASSIVO + PL: ${roundedLiabPl.toFixed(2)} BRL ` +
-      `(Circulante: ${currentLiabsVal.toFixed(2)} BRL [Fornecedores: ${suppliersVal.toFixed(2)}, IVA_Recolher: ${vatPayableVal.toFixed(2)}, Impostos: ${taxesVal.toFixed(2)}, Dividendos: ${dividendsVal.toFixed(2)}, PPR: ${pprPayableVal.toFixed(2)}, Emprestimos_CP: ${loansStVal.toFixed(2)}], ` +
-      `Nao Circulante: ${loansLtVal.toFixed(2)} BRL [Emprestimos_LP: ${loansLtVal.toFixed(2)}], ` +
-      `Patrimonio Liquido: ${totalEquityVal.toFixed(2)} BRL [Capital: ${capitalVal.toFixed(2)}, Lucros: ${profitVal.toFixed(2)}]).`
+      `ATIVO: ${roundedAssets.toFixed(2)} ${currency} ` +
+      `(Circulante: ${currentAssetsVal.toFixed(2)} ${currency} [Caixa: ${cashVal.toFixed(2)}, Aplicacao: ${investmentsVal.toFixed(2)}, Clientes: ${clientsVal.toFixed(2)}, PECLD: ${pecldVal.toFixed(2)}, IVA_Rec: ${vatRecoverableVal.toFixed(2)}, PA: ${stockPaVal.toFixed(2)}, MPA: ${stockMpaVal.toFixed(2)}, MPB: ${stockMpbVal.toFixed(2)}], ` +
+      `Nao Circulante: ${nonCurrentAssetsVal.toFixed(2)} ${currency} [Terrenos: ${landVal.toFixed(2)}, Edificios: ${buildingsVal.toFixed(2)}, Depr_Edif: ${buildingsDeprecVal.toFixed(2)}, Maquinas: ${machinesVal.toFixed(2)}, Depr_Maq: ${machinesDeprecVal.toFixed(2)}]); ` +
+      `PASSIVO + PL: ${roundedLiabPl.toFixed(2)} ${currency} ` +
+      `(Circulante: ${currentLiabsVal.toFixed(2)} ${currency} [Fornecedores: ${suppliersVal.toFixed(2)}, IVA_Recolher: ${vatPayableVal.toFixed(2)}, Impostos: ${taxesVal.toFixed(2)}, Dividendos: ${dividendsVal.toFixed(2)}, PPR: ${pprPayableVal.toFixed(2)}, Emprestimos_CP: ${loansStVal.toFixed(2)}], ` +
+      `Nao Circulante: ${loansLtVal.toFixed(2)} ${currency} [Emprestimos_LP: ${loansLtVal.toFixed(2)}], ` +
+      `Patrimonio Liquido: ${totalEquityVal.toFixed(2)} ${currency} [Capital: ${capitalVal.toFixed(2)}, Lucros: ${profitVal.toFixed(2)}]).`
     );
   }
 
@@ -143,7 +143,7 @@ export function validateTripleConsistency(statements: any): { isValid: boolean; 
   const finalCfCash = findAccountValue(dfc, 'cf.final') || 0;
   const cashDiff = Math.abs(cashVal - finalCfCash);
   if (cashDiff > 0.05) {
-    errors.push(`Inconsistência tática no Fluxo de Caixa: O saldo de caixa final relatado no DFC (${finalCfCash.toFixed(2)} BRL) diverge do caixa líquido do Balanço Patrimonial (${cashVal.toFixed(2)} BRL) por ${cashDiff.toFixed(2)} BRL.`);
+    errors.push(`Inconsistência tática no Fluxo de Caixa: O saldo de caixa final relatado no DFC (${finalCfCash.toFixed(2)} ${currency}) diverge do caixa líquido do Balanço Patrimonial (${cashVal.toFixed(2)} ${currency}) por ${cashDiff.toFixed(2)} ${currency}.`);
   }
 
   return {
@@ -299,7 +299,7 @@ export const computeESDSDeterministic = (
   let hasAccountingInconsistency = false;
   const statementsForAudit = current.statements;
   if (statementsForAudit) {
-    const auditStatus = validateTripleConsistency(statementsForAudit);
+    const auditStatus = validateTripleConsistency(statementsForAudit, config?.currency || 'BRL');
     if (!auditStatus.isValid) {
       hasAccountingInconsistency = true;
       // Penalização de 3.0 pontos por discrepância severa de integridade contábil
@@ -1218,7 +1218,7 @@ export function processRoundWithValidation(
 
   // 2. Auditoria Contábil de Consistência Tripla Rígida se o resultado calculado for fornecido
   if (calculatedResult) {
-    const tripleCheck = validateTripleConsistency(calculatedResult.statements);
+    const tripleCheck = validateTripleConsistency(calculatedResult.statements, (ecosystem as any)?.currency || 'BRL');
     if (!tripleCheck.isValid) {
       errors.push(...tripleCheck.errors);
     }

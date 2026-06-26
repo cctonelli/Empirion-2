@@ -363,14 +363,23 @@ export const calculateProjections = (
 
   const adminSalesInstallations = Number(ecoConfig.admin_sales_installations || (ecosystem as any).config?.admin_sales_installations || 0);
 
-  // Obter instalações fiduciárias anteriores
-  const prevMachines = team.kpis?.machines || [];
-  let prevInstallationsVal = adminSalesInstallations;
-  prevMachines.forEach((m: any) => {
-    if (m.model === 'alpha' || m.model === 'alfa') prevInstallationsVal += alphaInstallCost;
-    else if (m.model === 'beta') prevInstallationsVal += betaInstallCost;
-    else if (m.model === 'gamma' || m.model === 'gama') prevInstallationsVal += gammaInstallCost;
-  });
+  const prevBuildingsVal = findAccountValue(prevBS, 'assets.noncurrent.fixed.buildings') || 0;
+  const buildingBaseValue = buildMode === 'owned' ? (ecoConfig.building_value ?? 2000000.00) : 0;
+  const calculatedLand = buildMode === 'owned' ? (ecoConfig.land_value ?? 1000000.00) : 0;
+
+  // Obter instalações fiduciárias anteriores: se houver valor acumulado no balancete anterior, herda o saldo residual real
+  let prevInstallationsVal = 0;
+  if (prevBuildingsVal > 0) {
+    prevInstallationsVal = Math.max(0, prevBuildingsVal - (buildMode === 'owned' ? buildingBaseValue : 0));
+  } else {
+    prevInstallationsVal = adminSalesInstallations;
+    const prevMachines = team.kpis?.machines || [];
+    prevMachines.forEach((m: any) => {
+      if (m.model === 'alpha' || m.model === 'alfa') prevInstallationsVal += alphaInstallCost;
+      else if (m.model === 'beta') prevInstallationsVal += betaInstallCost;
+      else if (m.model === 'gamma' || m.model === 'gama') prevInstallationsVal += gammaInstallCost;
+    });
+  }
 
   // Obter instalações fiduciárias atuais com base nas máquinas reais ativas
   let currentInstallationsVal = adminSalesInstallations;
@@ -380,27 +389,29 @@ export const calculateProjections = (
     else if (m.model === 'gamma' || m.model === 'gama') currentInstallationsVal += gammaInstallCost;
   });
 
-  const buildingBaseValue = buildMode === 'owned' ? (ecoConfig.building_value ?? 2000000.00) : 0;
-  const calculatedLand = buildMode === 'owned' ? (ecoConfig.land_value ?? 1000000.00) : 0;
-  
   // O valor do prédio/instalações e terrenos acompanha dinamicamente a frota e instalações formadas
   const buildingsCost = (buildMode === 'owned' ? buildingBaseValue : 0) + currentInstallationsVal;
   const land = buildMode === 'owned' ? calculatedLand : 0;
 
   // No Start from Zero, no round P1 (onde o imobilizado anterior acumulado em P0 era zero),
   // se prédio próprio, é feita a aquisição do imóvel e terreno em tempo de rodada, gerando desembolso ou dívida.
-  const prevBuildingsVal = findAccountValue(prevBS, 'assets.noncurrent.fixed.buildings') || 0;
   const isRealEstateFormedNow = prevBuildingsVal === 0 && buildMode === 'owned' && isZeroModeLocal;
   let realEstateCashOutflow = 0;
   let realEstateLoanLTAdded = 0;
+  let realEstateCapitalAdded = 0;
 
   if (isRealEstateFormedNow) {
     const realEstateCost = buildingBaseValue + calculatedLand;
     const funding = ecoConfig.real_estate_acquisition_funding ?? 'capital';
     if (funding === 'capital') {
-      realEstateCashOutflow = realEstateCost;
+      // v2026.163: "CAPITAL PRÓPRIO (CAPITAL SOCIAL)" significa que os sócios integralizam o imobiliário diretamente,
+      // expandindo o Capital Social fiduciário na exata medida do ativo líquido gerado, sem gerar saída de caixa operacional.
+      realEstateCapitalAdded = realEstateCost;
+      realEstateCashOutflow = 0;
     } else {
+      // "OBRIGAÇÕES DE LONGO PRAZO" significa que a aquisição é financiada por dívida a longo prazo.
       realEstateLoanLTAdded = realEstateCost;
+      realEstateCashOutflow = 0;
     }
   }
 
@@ -1248,6 +1259,7 @@ export const calculateProjections = (
     'liabilities.current.dividends': dividends, // Provisiona os novos dividendos, os anteriores (prevDividends) foram pagos
     'liabilities.current.ppr_payable': ppr, // Provisiona o PPR calculado nesta rodada para pagar na próxima
     'liabilities.longterm.loans_lt': totalLoansLT,
+    'equity.capital': (findAccountValue(prevBS, 'equity.capital') || 0) + realEstateCapitalAdded,
     'equity.profit': findAccountValue(prevBS, 'equity.profit') + netProfit - dividends
   };
 

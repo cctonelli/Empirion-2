@@ -5215,6 +5215,18 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                                   : "PRÓPRIO (INTEGRALIZADO)"}
                               </span>
                             </div>
+                            {tutorConfig.building_mode !== "rented" && (
+                              <div className="flex justify-between border-t border-white/5 pt-2">
+                                <span className="text-slate-500">
+                                  Método de Funding:
+                                </span>
+                                <span className="text-amber-400 font-bold uppercase">
+                                  {tutorConfig.real_estate_acquisition_funding === "debt"
+                                    ? "OBRIGAÇÕES DE LONGO PRAZO"
+                                    : "CAPITAL PRÓPRIO (CAPITAL SOCIAL)"}
+                                </span>
+                              </div>
+                            )}
                             <div className="flex justify-between border-t border-white/5 pt-2">
                               <span className="text-slate-500">
                                 Valor Imóvel (Prédio):

@@ -8,7 +8,7 @@ import {
   Trophy, Settings, ShieldAlert, Sparkles, Landmark, ArrowRight, Activity, LayoutDashboard,
   PenTool, Newspaper, History, Settings2, Rocket, Lock, ChevronLeft, ChevronRight, Zap, CheckCircle2,
   RefreshCw, Loader2, User, AlertOctagon, Flame, Factory, ShoppingCart, Briefcase, Tractor, DollarSign, Hammer,
-  LayoutGrid, FileJson, Languages, Database, Play, Pause, CheckSquare
+  LayoutGrid, FileJson, Languages, Database, Play, Pause, CheckSquare, Copy, Check
 } from 'lucide-react';
 import { 
   getChampionships, 
@@ -75,6 +75,14 @@ const AdminCommandCenter: React.FC<{ preTab?: string }> = ({ preTab = 'tournamen
   const [showTurnoverErrorModal, setShowTurnoverErrorModal] = useState(false);
   const [turnoverErrorDetails, setTurnoverErrorDetails] = useState<string | null>(null);
   const [turnoverSuccessRound, setTurnoverSuccessRound] = useState<number | null>(null);
+  const [copied, setCopied] = useState(false);
+  const handleCopyError = () => {
+    if (turnoverErrorDetails) {
+      navigator.clipboard.writeText(turnoverErrorDetails);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
 
   const adminConfettiRef = useRef<HTMLCanvasElement | null>(null);
   const [triggerConfettiKey, setTriggerConfettiKey] = useState(0);
@@ -632,7 +640,7 @@ const AdminCommandCenter: React.FC<{ preTab?: string }> = ({ preTab = 'tournamen
                       : 'bg-slate-800 text-slate-500 border-white/5 cursor-not-allowed opacity-40 shadow-none'
                   }`}
                 >
-                  {isProcessing ? <Loader2 size={12} className="animate-spin"/> : <RefreshCw size={12}/>} Turnover Round-0{(selectedArena?.current_round ?? 0) + 1}
+                  {isProcessing ? <Loader2 size={12} className="animate-spin"/> : <RefreshCw size={12}/>} Turnover R-{(selectedArena?.current_round ?? 0) + 1}
                 </button>
               )}
            </div>
@@ -861,7 +869,7 @@ const AdminCommandCenter: React.FC<{ preTab?: string }> = ({ preTab = 'tournamen
             )}
 
             {showTurnoverErrorModal && (
-              <div className="fixed inset-0 z-[7000] bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 font-sans text-slate-200">
+              <div className="fixed inset-0 z-[99999] bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 font-sans text-slate-200">
                 <motion.div 
                    initial={{ opacity: 0, scale: 0.95 }} 
                    animate={{ opacity: 1, scale: 1 }} 
@@ -887,7 +895,25 @@ const AdminCommandCenter: React.FC<{ preTab?: string }> = ({ preTab = 'tournamen
                        </p>
 
                        <div className="space-y-2">
-                         <label className="text-[9px] font-black uppercase tracking-widest text-slate-500 ml-1">Detalhes do erro analítico:</label>
+                          <div className="flex justify-between items-center mb-1">
+                            <label className="text-[9px] font-black uppercase tracking-widest text-slate-500">Detalhes do erro analítico:</label>
+                            <button
+                              onClick={handleCopyError}
+                              className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-rose-950/40 border border-rose-500/30 text-[9px] font-black uppercase tracking-wider text-rose-400 hover:bg-rose-900/60 hover:text-rose-300 transition-all active:scale-95 cursor-pointer"
+                            >
+                              {copied ? (
+                                <>
+                                  <Check size={10} className="text-emerald-400" />
+                                  <span>Copiado!</span>
+                                </>
+                              ) : (
+                                <>
+                                  <Copy size={10} />
+                                  <span>Copiar Erro</span>
+                                </>
+                              )}
+                            </button>
+                          </div>
                          <div className="bg-slate-950/80 border border-rose-500/20 p-4 rounded-xl max-h-[180px] overflow-y-auto custom-scrollbar font-mono text-xs text-rose-400 leading-relaxed break-words">
                            {turnoverErrorDetails || "Nenhuma mensagem de depuração adicional fornecida pela API."}
                          </div>

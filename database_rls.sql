@@ -633,4 +633,36 @@ CREATE POLICY "Gerenciamento de current_decisions" ON public.current_decisions
         )
     );
 
+-- ==============================================================================
+-- 15. TABELA DE LOGS DE ERROS DE SISTEMA E SIMULAÇÃO v2026.162 (SAPPHIRE CORE)
+-- ==============================================================================
+CREATE TABLE IF NOT EXISTS public.error_logs (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    championship_id TEXT,
+    round INTEGER,
+    error_message TEXT,
+    context_data JSONB,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    created_by TEXT
+);
+
+ALTER TABLE public.error_logs ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Leitura de error_logs para tutores e admins" ON public.error_logs;
+CREATE POLICY "Leitura de error_logs para tutores e admins" ON public.error_logs
+    FOR SELECT TO public
+    USING (
+        auth.uid() IS NULL
+        OR EXISTS (
+            SELECT 1 FROM public.user_profiles up
+            WHERE up.supabase_user_id::text = auth.uid()::text
+            AND up.role IN ('tutor', 'admin')
+        )
+    );
+
+DROP POLICY IF EXISTS "Escrita livre em error_logs" ON public.error_logs;
+CREATE POLICY "Escrita livre em error_logs" ON public.error_logs
+    FOR INSERT TO public
+    WITH CHECK (true);
+
 COMMIT;

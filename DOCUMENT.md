@@ -1984,6 +1984,15 @@ project-root/
   - *Atualização de Diretrizes Oficiais:* Inclusão da Seção 11 em `docs/BUSINESS_RULES.md` regulamentando a contabilidade de prédios locados.
 - **Status:** Em Produção (Linter 100% verde, compilação de produção homologada).
 
+### v19.27 Sapphire Diamond Enterprise - Estabilidade Contábil de Funding Imobiliário no Turnover Greenfield
+- **Data:** 26 de Junho de 2026
+- **Motivo:** Garantir a perfeita contabilização e o equilíbrio contábil do imobilizado próprio adquirido durante a transição de rodadas em arenas Greenfield ("Start from Zero"), contemplando de forma fiduciária os dois métodos de funding ("CAPITAL PRÓPRIO (CAPITAL SOCIAL)" e "OBRIGAÇÕES DE LONGO PRAZO") sem gerar saídas operacionais fantasmas de caixa ou inconsistências patrimoniais.
+- **Diferenças:**
+  - *Funding via Capital Próprio:* Quando a aquisição imobiliária ocorre em tempo de rodada (`isRealEstateFormedNow`), a opção de funding `'capital'` passa a ser tratada como um fato contábil permutativo e de integralização direta pelos sócios. O valor total do terreno e da edificação (`realEstateCost`) é incorporado diretamente ao Capital Social (`equity.capital`), resultando em impacto líquido zero no fluxo de caixa de tesouraria operacional (sem queimar a liquidez de caixa das equipes).
+  - *Funding via Obrigações de Longo Prazo:* Para o financiamento sob a opção de fundings terceiros (`'debt'`), o valor é adequadamente contratado a longo prazo, expandindo a conta de Financiamentos de Longo Prazo (`liabilities.longterm.loans_lt`) e preservando a liquidez corporativa imediata sem gerar fluxos de saída operacionais de caixa.
+  - *Sintonia Fiduciária Global:* Ambas as estratégias mantêm a equação fundamental da contabilidade `Ativo = Passivo + PL` rigorosamente batida nos centavos, assegurando auditoria perfeita pela consistência tripla do simulador.
+- **Status:** Em Produção (Compilação e Linter 100% Homologados).
+
 ### v19.26 Sapphire Diamond Enterprise - Correção de Depreciação Imediata de Novas Máquinas e Integração CPP/CIF
 - **Data:** 02 de Junho de 2026
 - **Motivo:** Garantir a conformidade com as regras contábeis brasileiras (CPC 27) e as melhores práticas contábeis, computando a depreciação de máquinas adquiridas no período a partir do próprio período de aquisição (P1 em diante), além de validar a formação do CPP (CIF) e do Balanço Patrimonial contemplando todas as depreciações (máquinas, prédios e instalações).
