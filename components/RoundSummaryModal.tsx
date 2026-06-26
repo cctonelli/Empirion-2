@@ -231,14 +231,14 @@ export const RoundSummaryModal: React.FC<RoundSummaryModalProps> = ({
                   Tempo Limite Concluído!
                 </h3>
                 <p className="text-slate-300 max-w-xl mx-auto text-sm leading-relaxed">
-                  O cronômetro fiduciário encerrou para o período **P-{round < 10 ? '0' : ''}{round}**. Suas decisões vigentes foram transmitidas com sucesso de maneira síncrona. O Oráculo está aguardando o processamento do Turnover pelo Tutor para liberar os relatórios fiscais e as apurações de mercado do próximo ciclo.
+                  O cronômetro fiduciário encerrou para o período **R-{roundNumber < 10 ? '0' : ''}{roundNumber}**. Suas decisões vigentes foram transmitidas com sucesso de maneira síncrona. O Oráculo está aguardando o processamento do Turnover pelo Tutor para liberar os relatórios fiscais e as apurações de mercado do próximo ciclo.
                 </p>
 
                 <div className="bg-slate-950/50 border border-white/5 p-6 rounded-2xl max-w-lg mx-auto text-left flex gap-4 items-center">
                   <AlertTriangle className="text-amber-500 shrink-0" size={24} />
                   <p className="text-xs text-slate-400 leading-snug">
                     <span className="font-bold text-slate-200 block mb-1 uppercase tracking-wider">Atenção Competidores</span>
-                    Sua equipe não conseguirá alterar as decisões do período P-{round < 10 ? '0' : ''}{round} a partir de agora. Aproveite para revisar o planejamento contábil da empresa.
+                    Sua equipe não conseguirá alterar as decisões do período R-{roundNumber < 10 ? '0' : ''}{roundNumber} a partir de agora. Aproveite para revisar o planejamento contábil da empresa.
                   </p>
                 </div>
                 
