@@ -2,10 +2,31 @@
  
 ## 📋 Controle de Governança
 - **Produto:** EMPIRION ORACLE
-- **Versão Ativa:** v2026.180 Reconciliação Fiduciária da Equação Contábil e Sincronização de Empréstimos Greenfield P0.
+- **Versão Ativa:** v2026.181 Saneamento Estrutural e Blindagem contra Quebra de Templates P0 do Supabase.
 - **Tipo de Documento:** Master Index & Diretrizes de Engenharia Contínua
 - **Status da Documentação:** Sincronizado com o PRD.md, BUSINESS_RULES.md & ROADMAP.md
  
+---
+
+## Decisão Arquitetural: Saneamento Estrutural e Blindagem contra Quebra de Templates P0 do Supabase - v2026.181
+
+**Data:** 26 de Junho de 2026 às 14:23 UTC  
+**Motivo:** Resolver em definitivo a ocorrência de tela preta (crash fatal de renderização no React) quando o Tutor busca e tenta carregar um template salvo do Supabase (`r0_templates`), assegurando imunidade contra dados corrompidos, strings codificadas ou estruturas aninhadas legadas.
+
+**Detalhamento Técnico de Planejamento e Modificações:**
+- **Identificação do Gárgula (Causa Raiz)**:
+  - Constatou-se que a coluna `config` no Supabase, em registros históricos ou gerados automaticamente por outros fluxos, continha a configuração fiduciária codificada como string de texto ou possuía a configuração aninhada de forma dupla (ex: `{ config: { config: { ... } } }`).
+  - No frontend, ao renderizar o `TrialWizard`, o React tentava mapear propriedades críticas aninhadas no preview do template (como `regions`, `machines`, `inventories` e `workforce`). A falta de coerência de tipos sob dados não saneados causava uma quebra fatal do componente, gerando a "tela preta".
+- **Implementação do Normalizador Fiduciário (`services/supabase.ts` -> `normalizeTemplates`)**:
+  - Criou-se uma função utilitária `normalizeTemplates` para sanear a lista de templates imediatamente após serem carregados de qualquer fonte (banco de dados ou fallback híbrido do `localStorage`).
+  - **Parsing Dinâmico**: Se `config` for uma string JSON, realiza-se o `JSON.parse(cfg)` com tratamento seguro de exceções.
+  - **Desaninhamento Estrutural**: Se o objeto obtido contiver uma propriedade `.config` filha, o normalizador extrai os parâmetros corretos do nível interno para o nível raiz do config, herdando os campos principais de controle (`currency`, `starting_mode`).
+  - **Blindagem Contra Nulos (Garantia de Esqueleto Mínimo)**: Garante-se que as chaves críticas de visualização do UI (`machines`, `regions`, `inventories` e `workforce`) sempre existam com valores ou arrays vazios padrão coerentes, evitando erros do tipo `Cannot read properties of undefined` no React.
+- **Saneamento no getP0Templates**:
+  - Todos os fluxos de retorno da API de listagem de templates (sucesso do banco de dados, falha com uso de dados locais e bloco genérico de catch) agora passam obrigatoriamente pela normalização.
+
+**Status atual:** v2026.181 - Em Produção / Sincronizado e Compilado com Sucesso.
+
 ---
 
 ## Decisão Arquitetural: Reconciliação Fiduciária da Equação Contábil e Sincronização de Empréstimos Greenfield P0 - v2026.180

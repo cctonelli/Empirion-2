@@ -1267,6 +1267,96 @@ export const processRoundTurnover = async (id: string, round: number, isTrial?: 
     }
 };
 
+const normalizeTemplates = (list: any[]): any[] => {
+  if (!list || !Array.isArray(list)) return [];
+  return list.map((item: any) => {
+    if (!item) return item;
+    let cfg = item.config;
+    if (typeof cfg === 'string') {
+      try {
+        cfg = JSON.parse(cfg);
+      } catch (e) {
+        console.error("Error parsing template config:", e);
+      }
+    }
+    
+    // Tratamento estrutural robusto caso haja aninhamento indesejado (versões legadas ou auto-geradas que salvaram o template todo em config)
+    if (cfg && typeof cfg === 'object' && cfg.config && typeof cfg.config === 'object') {
+      cfg = {
+        ...cfg.config,
+        currency: cfg.config.currency || cfg.currency || 'USD',
+        starting_mode: cfg.config.starting_mode || cfg.starting_mode || 'start_from_zero',
+      };
+    }
+    
+    // Garantir estrutura mínima para evitar telas pretas em propriedades críticas de visualização no UI/UX
+    if (cfg && typeof cfg === 'object') {
+      if (!cfg.machines || !Array.isArray(cfg.machines)) {
+        cfg.machines = [
+          { model: "alpha", qty: 0, age: 0, efficiency: 1.0 },
+          { model: "beta", qty: 0, age: 0, efficiency: 1.0 },
+          { model: "gamma", qty: 0, age: 0, efficiency: 1.0 },
+        ];
+      }
+      if (!cfg.regions || !Array.isArray(cfg.regions)) {
+        cfg.regions = [];
+      }
+      if (!cfg.inventories || typeof cfg.inventories !== 'object') {
+        cfg.inventories = {
+          mpa_qty: 0,
+          mpa_unit_val: 20.0,
+          mpb_qty: 0,
+          mpb_unit_val: 40.0,
+          finished_qty: 0,
+          finished_unit_val: 0.0,
+        };
+      }
+      if (!cfg.workforce || typeof cfg.workforce !== 'object') {
+        cfg.workforce = {
+          baseSalary: 2500,
+        };
+      }
+    } else {
+      // Se por algum motivo o config ainda for nulo ou inválido, criamos um esqueleto mínimo padrão fiduciário
+      cfg = {
+        starting_mode: 'start_from_zero',
+        currency: 'USD',
+        caixa_inicial: 10000000.0,
+        capital_social: 10000000.0,
+        financial_investments: 0,
+        building_mode: "rented",
+        building_value: 0.0,
+        land_value: 0.0,
+        building_age: 0,
+        installations_value: 500000.0,
+        admin_sales_installations: 500000.0,
+        machines: [
+          { model: "alpha", qty: 0, age: 0, efficiency: 1.0 },
+          { model: "beta", qty: 0, age: 0, efficiency: 1.0 },
+          { model: "gamma", qty: 0, age: 0, efficiency: 1.0 },
+        ],
+        regions: [],
+        inventories: {
+          mpa_qty: 0,
+          mpa_unit_val: 20.0,
+          mpb_qty: 0,
+          mpb_unit_val: 40.0,
+          finished_qty: 0,
+          finished_unit_val: 0.0,
+        },
+        workforce: {
+          baseSalary: 2500,
+        }
+      };
+    }
+    
+    return {
+      ...item,
+      config: cfg
+    };
+  });
+};
+
 export const getP0Templates = async (): Promise<any[]> => {
   try {
     const { data: authData } = await supabase.auth.getUser();
@@ -1293,10 +1383,10 @@ export const getP0Templates = async (): Promise<any[]> => {
     if (error) {
       console.warn("Using local fallback for r0_templates due to database response:", error);
       // Filtramos também a lista local no modo oficializado
-      if (!isTrialSession && currentUser_id) {
-        return localList.filter((item: any) => item.tutor_id === currentUser_id);
-      }
-      return localList;
+      const fallbackList = !isTrialSession && currentUser_id
+        ? localList.filter((item: any) => item.tutor_id === currentUser_id)
+        : localList;
+      return normalizeTemplates(fallbackList);
     }
 
     const remoteList = dbData || [];
@@ -1324,10 +1414,11 @@ export const getP0Templates = async (): Promise<any[]> => {
         new Date(a.created_at || a.updated_at || 0).getTime()
     );
 
-    return combined;
+    return normalizeTemplates(combined);
   } catch (err) {
     const local = localStorage.getItem('local_r0_templates');
-    return local ? JSON.parse(local) : [];
+    const fallbackList = local ? JSON.parse(local) : [];
+    return normalizeTemplates(fallbackList);
   }
 };
 
