@@ -305,7 +305,7 @@ const TutorDecisionMonitor: React.FC<MonitorProps> = ({ championshipId, round, i
                       onClick={() => setActiveTimelineNode(i)} 
                       className={`relative z-10 w-14 h-14 rounded-full border-4 transition-all flex items-center justify-center group ${activeTimelineNode === i ? 'bg-orange-600 border-orange-400 scale-125 shadow-[0_0_30px_#f97316]' : i <= round ? 'bg-slate-800 border-blue-500/50' : 'bg-slate-950 border-white/5 opacity-40'}`}
                     >
-                       <span className={`text-xs font-black font-mono ${activeTimelineNode === i ? 'text-white' : 'text-slate-500'}`}>P{i < 10 ? `0${i}` : i}</span>
+                       <span className={`text-xs font-black font-mono ${activeTimelineNode === i ? 'text-white' : 'text-slate-500'}`}>R-{i < 10 ? `0${i}` : i}</span>
                        
                        {/* Metadata Icons - Always visible but small */}
                        <div className="absolute -top-8 left-1/2 -translate-x-1/2 flex gap-1">

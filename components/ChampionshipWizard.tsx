@@ -252,7 +252,7 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void, isTrial?: boolean }
                               <th className="p-4 bg-slate-900 sticky left-0 min-w-[280px] border-r border-white/10">Indicador Oracle</th>
                               {Array.from({ length: totalPeriods }).map((_, i) => (
                                  <th key={i} className={`p-4 text-center min-w-[100px] border-r border-white/5 text-orange-500 ${i === 0 ? 'bg-orange-600/10' : ''}`}>
-                                    P{i < 10 ? `0${i}` : i}
+                                    R-{i < 10 ? `0${i}` : i}
                                  </th>
                               ))}
                            </tr>
