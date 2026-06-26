@@ -401,7 +401,7 @@ export const HRStep: React.FC<HRStepProps> = ({
 
             <div className="text-right shrink-0 bg-slate-900/50 border border-white/5 rounded-2xl px-6 py-4 w-full md:w-auto flex md:flex-col justify-between items-center md:items-end gap-2">
               <span className="text-xxs text-slate-400 uppercase tracking-widest font-bold">
-                Eficiência Máxima
+                Quadro M.O.D.
               </span>
               <span className={`text-3xl font-mono font-black ${
                 payrollProjection.operatorsAvailable < payrollProjection.operatorsRequired
