@@ -999,7 +999,7 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
                                   isClickable ? 'bg-slate-950 border-white/5 opacity-40 hover:opacity-80' : 'bg-slate-950 border-white/5 opacity-25 cursor-not-allowed'
                                 }`}
                               >
-                                  <span className={`text-[8px] font-black font-mono ${isSelected ? 'text-white' : 'text-slate-500'}`}>R-{i < 10 ? `${i}` : i}</span>
+                                  <span className={`text-[8px] font-black font-mono ${isSelected ? 'text-white' : 'text-slate-500'}`}>R-{i < 10 ? `0${i}` : i}</span>
                                   
                                   {/* Metadata Icons */}
                                   <div className="absolute -top-5 left-1/2 -translate-x-1/2 flex gap-1">
