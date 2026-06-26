@@ -985,11 +985,12 @@ export const calculateProjections = (
     if (bsLtVal > 0) {
       prevLoans.push({
         id: 'L-INIT-LT-AUTO',
-        type: 'normal',
+        type: 'bdi',
         amount: bsLtVal,
         interest_rate: branch === 'industrial' ? 10.0 : 12.5,
         term: 8,
-        remaining_rounds: 8
+        remaining_rounds: 8,
+        grace_period_remaining: 0
       });
     }
   }
@@ -1110,7 +1111,9 @@ export const calculateProjections = (
   }
 
   const operatingProfit = (revenue - ivaOnSales) - totalCPV - opex;
-  const lair = operatingProfit - interestExp + totalFinancialRevenue + totalFxVarianceBrl - machineSalesLoss;
+  // NOTA SÊNIOR: A perda por baixa/desmontagem de instalações (installationsChange < 0) é um evento não-operacional dedutível
+  const installationsLoss = installationsChange < 0 ? Math.abs(installationsChange) : 0;
+  const lair = operatingProfit - interestExp + totalFinancialRevenue + totalFxVarianceBrl - machineSalesLoss - installationsLoss;
   
   // PPR (Participação nos Lucros) - Dinâmico conforme decisão (0-20%)
   const ppr = lair > 0 ? lair * pprRate : 0;

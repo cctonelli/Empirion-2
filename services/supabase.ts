@@ -1331,6 +1331,12 @@ export const getP0Templates = async (): Promise<any[]> => {
   }
 };
 
+const isValidUUID = (str: string): boolean => {
+  if (!str) return false;
+  const regex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  return regex.test(str);
+};
+
 export const saveP0Template = async (template: any) => {
   try {
     const { data: authData } = await supabase.auth.getUser();
@@ -1341,11 +1347,18 @@ export const saveP0Template = async (template: any) => {
     // o que causaria um erro de Bad Request (Coluna inexistente).
     const { category, code, ...dbSafeTemplate } = template;
 
-    const payload = {
+    const payload: any = {
       ...dbSafeTemplate,
       tutor_id: authData?.user?.id || null,
       updated_at: new Date().toISOString()
     };
+
+    // Se o ID não for um UUID válido (ex: 'tpl-xxxx'), removemos para que o Supabase gere um novo UUID automaticamente.
+    // Se for um UUID válido, fazemos UPSERT para atualizar o template existente em vez de duplicar.
+    const isUpdating = payload.id && isValidUUID(payload.id);
+    if (!isUpdating) {
+      delete payload.id;
+    }
     
     // Identificador único local provisório (mantendo code e category para fallbacks em memória e LocalStorage)
     const initialId = template.id || `tpl-${Math.random().toString(36).substr(2, 9)}`;
@@ -1357,11 +1370,10 @@ export const saveP0Template = async (template: any) => {
       created_at: template.created_at || new Date().toISOString()
     };
 
-    // 1. Tenta gravar no banco de dados Supabase
-    const { data: dbData, error } = await supabase
-      .from('r0_templates')
-      .insert(payload)
-      .select();
+    // 1. Tenta gravar no banco de dados Supabase (upsert se estiver atualizando, insert se for novo)
+    const { data: dbData, error } = isUpdating
+      ? await supabase.from('r0_templates').upsert(payload).select()
+      : await supabase.from('r0_templates').insert(payload).select();
       
     if (error) {
       console.warn("Database storage failed, falling back to LocalStorage:", error);

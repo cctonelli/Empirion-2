@@ -2,10 +2,32 @@
  
 ## 📋 Controle de Governança
 - **Produto:** EMPIRION ORACLE
-- **Versão Ativa:** v2026.179 Persistência Automática e Unificada de Templates R0 no Supabase.
+- **Versão Ativa:** v2026.180 Reconciliação Fiduciária da Equação Contábil e Sincronização de Empréstimos Greenfield P0.
 - **Tipo de Documento:** Master Index & Diretrizes de Engenharia Contínua
 - **Status da Documentação:** Sincronizado com o PRD.md, BUSINESS_RULES.md & ROADMAP.md
  
+---
+
+## Decisão Arquitetural: Reconciliação Fiduciária da Equação Contábil e Sincronização de Empréstimos Greenfield P0 - v2026.180
+
+**Data:** 26 de Junho de 2026 às 14:15 UTC  
+**Motivo:** Sanar de forma definitiva a disparidade contábil de 100.000,00 USD ocorrida no fechamento de rodada (R-1 para R-2) em campeonatos criados a partir do modo "START FROM ZERO" (Greenfield), e blindar a classificação de curto/longo prazo dos empréstimos imobiliários de abertura regenerados.
+
+**Detalhamento Técnico de Planejamento e Modificações:**
+- **Inclusão da Baixa de Instalações no LAIR (`services/simulation.ts` -> `runSimulation`)**:
+  - Identificou-se que a diminuição física do imobilizado de instalações fiduciárias (`installationsChange < 0`) gerava um lançamento correto de despesa não-operacional (`non_op.exp`) no objeto DRE.
+  - No entanto, essa perda (write-off) não estava sendo deduzida da variável matemática `lair` (Lucro Antes do IR) e consequentemente do `netProfit` que atualiza a conta de Lucro Acumulado (`equity.profit`) no Balanço.
+  - Corrigiu-se a fórmula de apuração do `lair` subtraindo `installationsLoss` (perda por baixa/desmontagem de instalações) quando `installationsChange < 0`. Isso restabeleceu a igualdade matemática absoluta de 100% entre Ativos e Passivo + PL.
+- **Classificação Correta de Empréstimos Imobiliários de Abertura (`services/simulation.ts` -> `processLoans`)**:
+  - Em ecossistemas criados no modo "START FROM ZERO" com financiamento imobiliário via dívida (`debt`), a lista lógica de empréstimos inicia vazia devido ao reset de Greenfield (`loans: []`), enquanto o Balanço Patrimonial retém o saldo do passivo imobiliário em `loans_lt = 2.200.000`.
+  - No turnover de P1 para P2, a sentinela reconstrutora regenerava o empréstimo de abertura como `type: 'normal'`. Contudo, por regras de agregação de passivos, empréstimos normais eram consolidados integralmente em Curto Prazo (`loans_st`), esvaziando incorretamente a conta de Longo Prazo (`loans_lt`).
+  - Ajustou-se o regenerador automático do passivo imobiliário para instanciar a dívida sob o tipo `'bdi'` com `grace_period_remaining: 0`. Isso garante a segregação fiduciária precisa do principal: a parcela corrente vai para curto prazo (`loans_st`) e as parcelas remanescentes são mantidas em longo prazo (`loans_lt`).
+- **Prevenção de Duplicatas e Upsert em Templates de Abertura (`services/supabase.ts` -> `saveP0Template`)**:
+  - Adicionou-se uma validação rigorosa de UUID (`isValidUUID`) no payload de salvamento de templates.
+  - Caso o template já exista com um ID de UUID válido no banco de dados, o sistema executa um `.upsert()` para atualizar o registro existente em vez de acumular inserções duplicadas, solucionando o bug de templates duplicados. Se for um ID local de transporte provisório (ex: `tpl-xxxx`), remove-se o ID permitindo que a nuvem gere um UUID primário consistente e sem colisões de tipos de dados.
+
+**Status atual:** v2026.180 - Em Produção / Sincronizado e Compilado com Sucesso.
+
 ---
 
 ## Decisão Arquitetural: Persistência Automática e Unificada de Templates R0 no Supabase - v2026.179
