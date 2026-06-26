@@ -4115,7 +4115,7 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                         <tr>
                           <th className="p-4 bg-slate-900 border-b-2 border-r-2 border-white/10 w-[280px] min-w-[280px]">
                             <span className="text-[9px] font-black text-slate-400 uppercase tracking-[0.3em]">
-                              Indicadores e Ajustes
+                              Ajustes por Rounds
                             </span>
                           </th>
                           {Array.from({ length: totalPeriods }).map((_, i) => (
@@ -4135,7 +4135,7 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                       <tbody className="divide-y divide-white/5 font-mono">
                         <CompactMatrixRow
                           periods={totalPeriods}
-                          label="ICE CRESC. ECONÔMICO (%)"
+                          label="ICE (CONFIANÇA EMPRESARIAL) (%)"
                           macroKey="ice"
                           rules={roundRules}
                           update={updateRoundMacro}
@@ -4159,7 +4159,7 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                         />
                         <CompactMatrixRow
                           periods={totalPeriods}
-                          label="ÍNDICE DE INADIMPLÊNCIA (%)"
+                          label="PECLD (INADIMPLÊNCIA) (%)"
                           macroKey="customer_default_rate"
                           rules={roundRules}
                           update={updateRoundMacro}
@@ -4175,7 +4175,7 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                         />
                         <CompactMatrixRow
                           periods={totalPeriods}
-                          label="JUROS COMPRA A PRAZO (%)"
+                          label="JUROS COMPRA A PRAZO MP (%)"
                           macroKey="supplier_interest"
                           rules={roundRules}
                           update={updateRoundMacro}
@@ -4191,7 +4191,7 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                         />
                         <CompactMatrixRow
                           periods={totalPeriods}
-                          label="IVA SOBRE COMPRAS (%)"
+                          label="IVA S/ COMPRAS (%)"
                           macroKey="vat_purchases_rate"
                           rules={roundRules}
                           update={updateRoundMacro}
@@ -4199,7 +4199,7 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                         />
                         <CompactMatrixRow
                           periods={totalPeriods}
-                          label="IVA SOBRE VENDAS (%)"
+                          label="IVA S/ VENDAS (%)"
                           macroKey="vat_sales_rate"
                           rules={roundRules}
                           update={updateRoundMacro}
@@ -4207,7 +4207,7 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                         />
                         <CompactMatrixRow
                           periods={totalPeriods}
-                          label="IMPOSTO DE RENDA (%)"
+                          label="IRPJ (%)"
                           macroKey="tax_rate_ir"
                           rules={roundRules}
                           update={updateRoundMacro}
@@ -4304,7 +4304,7 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                         />
                         <CompactMatrixRow
                           periods={totalPeriods}
-                          label="GASTOS COM ESTOCAGEM (%)"
+                          label="CUSTO DE ESTOCAGEM (%)"
                           macroKey="storage_cost_adjust"
                           rules={roundRules}
                           update={updateRoundMacro}
@@ -4347,7 +4347,7 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                         />
                         <CompactMatrixRow
                           periods={totalPeriods}
-                          label="TARIFA IMPORTAÇÃO BLOCO BTC (%)"
+                          label="TARIFA IMPORTAÇÃO EM BTC (%)"
                           macroKey="import_tariff_btc"
                           rules={roundRules}
                           update={updateRoundMacro}

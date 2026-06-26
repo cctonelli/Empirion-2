@@ -293,6 +293,32 @@ export const createChampionshipWithTeams = async (config: any, teams: any[], isT
 
   const { data: champ, error: champError } = await supabase.from(champTable).insert(dbPayload).select().single();
   if (champError) throw champError;
+
+  // v2026.164: Gravação fiduciária automática de templates R0 na tabela r0_templates
+  // Todos os templates criados por Tutores em qualquer modo de jogos (Trial ou Pago) são persistidos.
+  try {
+    const { data: authData } = await supabase.auth.getUser();
+    const tutorId = authData?.user?.id || config.tutor_id || champ.tutor_id || null;
+    
+    const tplPayload = {
+      name: config.name || champ.name || `Template - ${new Date().toLocaleDateString('pt-BR')}`,
+      description: config.description || champ.description || `Template gerado automaticamente na criação da arena ${champ.name || ''}`,
+      category: config.branch || "industrial",
+      code: `TPL_${(config.name || 'AUTO').replace(/\s+/g, "_").toUpperCase()}_${Date.now()}`,
+      config: {
+        ...config,
+        humanTeamsCount: teams.length,
+        teamNames: teams.map(t => t.name),
+      },
+      is_public: config.is_public !== undefined ? config.is_public : true,
+      tutor_id: tutorId
+    };
+    
+    // Usamos diretamente saveP0Template para garantir consistência com a lógica de gravação e fallbacks
+    await saveP0Template(tplPayload);
+  } catch (tplErr) {
+    console.warn("Aviso: Falha ao registrar cópia em r0_templates graciosamente tratada:", tplErr);
+  }
   
   const financials = config.initial_financials || INITIAL_FINANCIAL_TREE;
   const balanceSheet = financials.balance_sheet;

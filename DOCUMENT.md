@@ -2,10 +2,29 @@
  
 ## 📋 Controle de Governança
 - **Produto:** EMPIRION ORACLE
-- **Versão Ativa:** v2026.178 Isolação Estrita de Novas Regiões e Prevenção de Off-by-One na Intervenção.
+- **Versão Ativa:** v2026.179 Persistência Automática e Unificada de Templates R0 no Supabase.
 - **Tipo de Documento:** Master Index & Diretrizes de Engenharia Contínua
 - **Status da Documentação:** Sincronizado com o PRD.md, BUSINESS_RULES.md & ROADMAP.md
  
+---
+
+## Decisão Arquitetural: Persistência Automática e Unificada de Templates R0 no Supabase - v2026.179
+
+**Data:** 26 de Junho de 2026 às 13:00 UTC  
+**Motivo:** Assegurar que absolutamente todos os cenários/templates configurados e executados por Tutores, em qualquer modo de jogo (seja modo Trial acadêmico ou modo Pago oficial corporativo), sejam devidamente salvos e sincronizados na tabela unificada `r0_templates` do Supabase com regras RLS universais robustas.
+
+**Detalhamento Técnico de Planejamento e Modificações:**
+- **Criação Físico-Garantida e Índices de Templates (`supabase/migrations/20260614184500_p0_templates_trial_rls.sql`)**:
+  - Atualizou-se a migração oficial do Supabase para garantir a existência física da tabela `public.r0_templates` no banco de dados via `CREATE TABLE IF NOT EXISTS`, incluindo todas as colunas de controle estrutural necessárias (`id`, `name`, `description`, `is_public`, `tutor_id`, `config`, `created_at`, `updated_at`).
+  - Garantiu-se a criação do índice de performance fiduciária composta `idx_r0_templates_tutor_public` para buscas rápidas.
+- **Políticas RLS Universais de Leitura e Escrita (`supabase/migrations/20260614184500_p0_templates_trial_rls.sql`)**:
+  - Consolidou-se a liberação de permissões via RLS de forma a abranger tanto a role `public` (permitindo gravação de usuários convidados em modo Trial) quanto usuários autenticados (tutores logados no modo Pago).
+  - Estabeleceu-se uma política unificada de `FOR SELECT TO public USING (true)` e `FOR ALL TO public USING (true) WITH CHECK (true)`, eliminando quaisquer fricções ou barramentos de segurança que pudessem quebrar a sincronização em ambientes de produção.
+- **Salvamento Automático na Criação de Campeonatos (`services/supabase.ts` -> `createChampionshipWithTeams`)**:
+  - Adicionou-se uma rotina de interceptação fiduciária no fluxo final de criação de campeonatos. Agora, ao gerar uma nova arena (seja Trial ou Pago), o sistema extrai as configurações vigentes (`config`), resolve a autoria do tutor ou sessão ativa de forma robusta (`authData?.user?.id || config.tutor_id`) e realiza de forma transparente a persistência do template na tabela `r0_templates` usando a infraestrutura unificada do `saveP0Template`.
+
+**Status atual:** v2026.179 - Em Produção / Compilado com Sucesso.
+
 ---
 
 ## Decisão Arquitetural: Isolação Estrita de Novas Regiões e Prevenção de Off-by-One na Intervenção - v2026.178
