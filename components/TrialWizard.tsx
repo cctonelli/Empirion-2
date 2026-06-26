@@ -4126,7 +4126,7 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                               <span
                                 className={`text-[12px] font-black uppercase tracking-widest ${i === 0 ? "text-white" : "text-orange-500"}`}
                               >
-                                P{i < 10 ? `0${i}` : i}
+                                R-{i < 10 ? `0${i}` : i}
                               </span>
                             </th>
                           ))}
