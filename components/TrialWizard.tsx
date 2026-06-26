@@ -1043,18 +1043,21 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
       }
     });
 
+    const cleanedTutorConfigForTpl = { ...tutorConfig };
+    delete (cleanedTutorConfigForTpl as any).round_rules;
+    delete (cleanedTutorConfigForTpl as any).DEFAULT_INDUSTRIAL_CHRONOGRAM;
+
     const tplPayload = {
       name: templateName,
       description: templateDesc,
       category: "industrial",
       code: `TPL_${templateName.replace(/\s+/g, "_").toUpperCase()}_${Date.now()}`,
       config: {
-        ...tutorConfig,
+        ...cleanedTutorConfigForTpl,
         humanTeamsCount,
         teamNames,
         botsCount,
         round_rules: cleanChronogram,
-        DEFAULT_INDUSTRIAL_CHRONOGRAM: cleanChronogram,
       },
       is_public: templateIsPublic,
     };
@@ -1143,6 +1146,10 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
       });
 
       // Preparação e despacho do payload
+      const cleanedTutorConfig = { ...tutorConfig };
+      delete (cleanedTutorConfig as any).round_rules;
+      delete (cleanedTutorConfig as any).DEFAULT_INDUSTRIAL_CHRONOGRAM;
+
       const champ = await createChampionshipWithTeams(
         {
           name: tutorConfig.tournamentName,
@@ -1168,7 +1175,7 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
           initial_stock_quantities: initialStockQty,
           is_trial: true,
           config: {
-            ...tutorConfig,
+            ...cleanedTutorConfig,
             round_rules: cleanChronogram,
           },
           ecosystem_config: {

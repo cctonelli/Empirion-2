@@ -2,10 +2,27 @@
  
 ## 📋 Controle de Governança
 - **Produto:** EMPIRION ORACLE
-- **Versão Ativa:** v2026.185 Saneamento Fiduciário de Indicadores Macroeconômicos e Sincronização Estrita do Cronograma
+- **Versão Ativa:** v2026.186 Erradicação de Duplicidades e Otimização de Carga Útil no Config
 - **Tipo de Documento:** Master Index & Diretrizes de Engenharia Contínua
 - **Status da Documentação:** Sincronizado com o PRD.md, BUSINESS_RULES.md & ROADMAP.md
  
+---
+
+## Decisão Arquitetural: Erradicação de Duplicidades e Otimização de Carga Útil no Config - v2026.186
+
+**Data:** 26 de Junho de 2026 às 16:47 UTC  
+**Motivo:** Reduzir a carga útil (*payload*) gravada no banco de dados e eliminar a redundância estrutural observada pelo usuário, onde o cronograma de indicadores do Tutor era gravado duas vezes no mesmo documento JSON (sob as chaves `round_rules` e `DEFAULT_INDUSTRIAL_CHRONOGRAM`).
+
+**Detalhamento Técnico de Planejamento e Modificações:**
+- **Remoção de Redundância Estática**:
+  - No fluxo de salvamento de templates (`handleSaveTpl`) e no fluxo de lançamento direto de campeonatos de teste (`handleLaunch`), clonamos o objeto `tutorConfig` e aplicamos `delete` cirúrgico sobre as chaves obsoletas `round_rules` e `DEFAULT_INDUSTRIAL_CHRONOGRAM`.
+  - Isso garante que a herança de templates não arraste lixo estático ou cronogramas redundantes de torneios antigos.
+- **Canalização Única de Regras de Rodada**:
+  - A persistência no campo `config` agora contém uma única propriedade unificada `round_rules` contendo o cronograma parametrizado pelo Tutor limpo pelas rodadas máximas configuradas.
+  - O front-end carrega transparentemente as regras via operador de coalescência: `parsedConfig.round_rules || parsedConfig.DEFAULT_INDUSTRIAL_CHRONOGRAM || DEFAULT_INDUSTRIAL_CHRONOGRAM`, mantendo 100% de retrocompatibilidade com torneios antigos e novos torneios extremamente limpos.
+
+**Status atual:** v2026.186 - Ativo, Compilado, Linter 100% Homologado e em Produção.
+
 ---
 
 ## Decisão Arquitetural: Saneamento Fiduciário de Indicadores Macroeconômicos e Sincronização Estrita do Cronograma - v2026.185
