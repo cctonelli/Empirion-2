@@ -1197,25 +1197,6 @@ export const processRoundTurnover = async (id: string, round: number, isTrial?: 
         const nextRoundRegions = champ.round_rules?.[nextNextRound]?.regions || 
                                  champ.round_rules?.[nextNextRound]?.region_configs;
         
-        const updatedConfig = {
-            ...(champ.config || {}),
-            is_paused: false,
-            paused_at: null,
-            remaining_ms_at_pause: null,
-            ...(nextRoundRegions ? {
-                regions: nextRoundRegions,
-                region_configs: nextRoundRegions.map((r: any) => ({
-                    id: r.id,
-                    name: r.name,
-                    currency: r.currency,
-                    demand_weight: r.demand_weight,
-                    suggested_price: r.suggested_price,
-                    distribution_cost: r.distribution_cost,
-                    marketing_cost: r.marketing_cost
-                }))
-            } : {})
-        };
-
         const updatedRoundRules = {
             ...(champ.round_rules || {}),
             // Congela as regiões utilizadas no round que acaba de ser concluído (nextRound)
@@ -1234,6 +1215,27 @@ export const processRoundTurnover = async (id: string, round: number, isTrial?: 
             }
         };
 
+        const updatedConfig = {
+            ...(champ.config || {}),
+            is_paused: false,
+            paused_at: null,
+            remaining_ms_at_pause: null,
+            round_rules: updatedRoundRules, // Salva também dentro de config para redundância perfeita
+            ...(nextRoundRegions ? {
+                regions: nextRoundRegions,
+                region_configs: nextRoundRegions.map((r: any) => ({
+                    id: r.id,
+                    name: r.name,
+                    currency: r.currency,
+                    demand_weight: r.demand_weight,
+                    suggested_price: r.suggested_price,
+                    distribution_cost: r.distribution_cost,
+                    marketing_cost: r.marketing_cost
+                }))
+            } : {})
+        };
+
+        // Gravação estrita na coluna física 'round_rules' e na coluna 'config'
         const { error: champUpdateErr } = await supabase.from(champTable).update({ 
             current_round: nextRound, 
             market_indicators: nextIndicators,
@@ -1243,8 +1245,34 @@ export const processRoundTurnover = async (id: string, round: number, isTrial?: 
         }).eq('id', id);
 
         if (champUpdateErr) {
-            console.error(`Erro ao atualizar campeonato:`, champUpdateErr);
-            throw new Error(`[ERRO CAMPEONATO] Não foi possível atualizar os dados do campeonato em ${champTable}: ${champUpdateErr.message}`);
+            console.error(`Erro crítico ao atualizar campeonato no Supabase:`, champUpdateErr);
+            
+            // Tratamento didático e estrito para erro de coluna inexistente ou cache de esquema desatualizado
+            const isMissingColumn = champUpdateErr.message?.includes('round_rules') || 
+                                    champUpdateErr.code === 'PGRST204' || 
+                                    champUpdateErr.code === '42703';
+            
+            if (isMissingColumn) {
+                throw new Error(
+                    `[ERRO CAMPEONATO - SUPABASE STRUCTURAL OUT OF SYNC]\n` +
+                    `Tabela física '${champTable}' não possui a coluna 'round_rules' ou o cache de esquemas está desatualizado no Supabase.\n` +
+                    `Detalhes do Erro: [${champUpdateErr.code}] ${champUpdateErr.message}\n\n` +
+                    `👉 COMO CORRIGIR (Ajuste SQL no SUPABASE):\n` +
+                    `1. Acesse o SQL Editor do seu Supabase e execute o seguinte comando DDL:\n` +
+                    `   ALTER TABLE ${champTable} ADD COLUMN IF NOT EXISTS round_rules JSONB;\n` +
+                    `2. Recarregue o cache de esquema (Schema Cache) executando:\n` +
+                    `   NOTIFY pgrst, 'reload schema';\n` +
+                    `3. Em seguida, re-execute o Turnover.`
+                );
+            } else {
+                throw new Error(
+                    `[ERRO CRÍTICO CRUD SUPABASE - ${champTable}]\n` +
+                    `Não foi possível persistir os dados da rodada ${nextRound} no banco de dados.\n` +
+                    `Código do Erro: ${champUpdateErr.code}\n` +
+                    `Mensagem: ${champUpdateErr.message}\n` +
+                    `Por favor, verifique a conexão com o Supabase, as políticas de segurança RLS ou a estrutura da tabela física.`
+                );
+            }
         }
         
         return { success: true };

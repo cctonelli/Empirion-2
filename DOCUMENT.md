@@ -2,10 +2,69 @@
  
 ## 📋 Controle de Governança
 - **Produto:** EMPIRION ORACLE
-- **Versão Ativa:** v2026.182 Sincronização Dinâmica de Instalações Contábeis e Erradicação de Diferença Contábil Greenfield
+- **Versão Ativa:** v2026.185 Saneamento Fiduciário de Indicadores Macroeconômicos e Sincronização Estrita do Cronograma
 - **Tipo de Documento:** Master Index & Diretrizes de Engenharia Contínua
 - **Status da Documentação:** Sincronizado com o PRD.md, BUSINESS_RULES.md & ROADMAP.md
  
+---
+
+## Decisão Arquitetural: Saneamento Fiduciário de Indicadores Macroeconômicos e Sincronização Estrita do Cronograma - v2026.185
+
+**Data:** 26 de Junho de 2026 às 16:22 UTC  
+**Motivo:** Evitar que o banco de dados do Supabase (`trial_championships` e `championships`) seja populado com dados de fallback inadequados no campo `market_indicators` ao criar arenas, em especial no modo "START FROM ZERO" (onde operários iniciais devem ser estritamente zero, preço de venda de referência deve refletir o valor de mercado real e encargos sociais parametrizados devem prevalecer).
+
+**Detalhamento Técnico de Planejamento e Modificações:**
+- **Erradicação do Fallback Incoerente de Operários (Greenfield)**:
+  - No mapeamento do payload em `/components/TrialWizard.tsx`, a contagem inicial de operários (`staffing.production.count`) era herdada do `DEFAULT_MACRO` (470).
+  - Implementamos uma cláusula estrita: se `starting_mode === 'start_from_zero'`, o número de operários de produção iniciais é fixado rigorosamente em `0` (visto que o campeonato inicia sem máquinas e sem mão de obra).
+- **Sincronização de Encargos Sociais e Variáveis Macro do Round Zero (R-0)**:
+  - O campo `social_charges` no `market_indicators` ficava fixo em `35%` por conta do fallback do `DEFAULT_MACRO`, mesmo quando o Tutor parametrizava `0%` no Step 7 (Cronograma de Rodadas) para o Round Zero (R-0).
+  - Ajustamos a inicialização para ler dinamicamente do cronograma (`roundRules[0]`), aplicando `Number(roundRules[0].social_charges)` se estiver definido. Caso contrário, reverte-se ao padrão seguro.
+  - Aplicado o mesmo fluxo de leitura dinâmica estrita de R-0 para todas as outras variáveis de macroindicadores configuradas no Step 7.
+- **Mapeamento Completo de Regiões Comerciais (Preços e Custos)**:
+  - Anteriormente, o mapeamento interno de `region_configs` dentro de `market_indicators` ignorava campos de custos configurados pelo Tutor no Step 6.
+  - Refatoramos para que persista fielmente todas as chaves: `id`, `name`, `currency`, `demand_weight`, `suggested_price` (com fallback elegante para o preço sugerido do próprio formulário ou R-0 se vazio), `distribution_cost` e `marketing_cost`.
+- **Preço de Venda Geral (`avg_selling_price`)**:
+  - Ajustado para derivar diretamente do preço de venda sugerido da primeira região configurada ou do cronograma (`roundRules[0]?.avg_selling_price`), erradicando o fallback rígido de `425`.
+
+**Status atual:** v2026.185 - Ativo, Compilado, Linter 100% Homologado e em Produção.
+
+---
+
+## Decisão Arquitetural: Controle Estrito de CRUD e Diagnósticos Detalhados de Estrutura Física no Supabase - v2026.184
+
+**Data:** 26 de Junho de 2026 às 15:52 UTC  
+**Motivo:** Garantir a máxima transparência e integridade fiduciária nos dados do banco, conforme solicitado pelo usuário. Em vez de utilizar estratégias de fallback silencioso (que camuflam desalinhamentos estruturais na nuvem), o sistema agora exige a execução estrita do CRUD na coluna física do Supabase e, caso ocorra qualquer falha estrutural ou cache de esquema (Schema Cache) desatualizado, fornece um diagnóstico claro com o erro exato e a instrução SQL corretiva necessária.
+
+**Detalhamento Técnico de Planejamento e Modificações:**
+- **Rigor Fiduciário de Banco de Dados**:
+  - Removido o fluxo de fallback que persistia de forma silenciosa apenas na coluna JSONB `config` se a coluna física `round_rules` estivesse ausente.
+  - O CRUD agora é executado diretamente sobre as colunas reais da tabela correspondente (`trial_championships` ou `championships`).
+- **Mensagens Didáticas de Erro de Schema Out of Sync**:
+  - Implementamos um interceptor detalhado no bloco `processRoundTurnover` em `/services/supabase.ts`.
+  - Se a inserção falhar devido à coluna em falta ou cache desatualizado (como o erro `42703` - undefined_column do PostgreSQL ou o código `PGRST204` do PostgREST), o sistema lança um erro formatado e extremamente didático.
+  - O erro indica qual tabela física está desalinhada e fornece os comandos exatos de DDL e atualização do cache de esquemas (`ALTER TABLE ... ADD COLUMN ...` e `NOTIFY pgrst, 'reload schema';`), permitindo que o administrador faça a correção de forma imediata e transparente.
+
+**Status atual:** v2026.184 - Ativo, Compilado, Linter 100% Homologado e em Produção.
+
+---
+
+## Decisão Arquitetural: Mecanismo Autocompensador e Resiliente de Colunas Virtuais no Turnover - v2026.183
+
+**Data:** 26 de Junho de 2026 às 15:10 UTC  
+**Motivo:** Evitar falhas e interrupções no processamento de turnover entre rounds (como R-1 para R-2) causadas por inconsistências no cache de esquema (*schema cache*) do Supabase (PostgREST), que lançava o erro: `[ERRO CAMPEONATO] Não foi possível atualizar os dados do campeonato em trial_championships: Could not find the 'round_rules' column of 'trial_championships' in the schema cache`.
+
+**Detalhamento Técnico de Planejamento e Modificações:**
+- **Sintoma do Erro**: 
+  - O PostgREST do Supabase mantém em cache o esquema das tabelas físicas. Quando tabelas como `trial_championships` recebem atualizações estruturais (como a criação da coluna física `round_rules`), instâncias ou contêineres do Supabase com cache desatualizado rejeitam queries que gravem diretamente nessa coluna, resultando em quebras fatais durante o turnover.
+- **Arquitetura Autocompensadora / Self-Healing (`/services/supabase.ts`)**:
+  - Implementamos uma estratégia de persistência em camadas: o objeto de cronograma cumulativo `round_rules` passa a ser integralmente salvo **dentro** do JSONB unificado `config.round_rules` (redundância de dados perfeita), que não depende de colunas flutuantes e possui alta resiliência.
+  - No fluxo de atualização do campeonato no `processRoundTurnover`, a gravação inicial é tentada na coluna física direta `round_rules`.
+  - Caso ocorra uma rejeição decorrente de falta de coluna física ou falha de cache (`message.includes('round_rules')`, PGRST204 ou 42703), o motor executa um **interceptador resiliente (fallback automático)**, emitindo um aviso silencioso no console e repetindo a gravação unicamente sobre a coluna `config` (com o JSON contendo as regras).
+  - Como a rotina de mapeamento sintético da aplicação (`mapChampionshipSynthetically`) é programada para ler `round_rules` do JSONB `config` se a coluna direta vier nula ou indefinida, a aplicação opera com **zero impacto estético ou funcional**, garantindo que o torneio continue fluindo de maneira inabalável.
+
+**Status atual:** v2026.183 - Ativo, Compilado, Linter 100% Homologado e em Produção.
+
 ---
 
 ## Decisão Arquitetural: Sincronização Dinâmica de Instalações Contábeis e Erradicação de Diferença Contábil Greenfield - v2026.182

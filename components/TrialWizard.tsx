@@ -1225,7 +1225,31 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
           },
           market_indicators: {
             ...DEFAULT_MACRO,
-            dividend_percent: tutorConfig.dividend_percent,
+            // Sincroniza dinamicamente as parametrizações de Rodada Inicial (R-0) do cronograma do Tutor
+            social_charges: (roundRules[0]?.social_charges !== undefined) ? Number(roundRules[0].social_charges) : DEFAULT_MACRO.social_charges,
+            avg_selling_price: tutorConfig.regions[0]?.suggested_price ?? roundRules[0]?.avg_selling_price ?? DEFAULT_MACRO.avg_selling_price,
+            inflation_rate: (roundRules[0]?.inflation_rate !== undefined) ? Number(roundRules[0].inflation_rate) : DEFAULT_MACRO.inflation_rate,
+            tax_rate_ir: (roundRules[0]?.tax_rate_ir !== undefined) ? Number(roundRules[0].tax_rate_ir) : DEFAULT_MACRO.tax_rate_ir,
+            customer_default_rate: (roundRules[0]?.customer_default_rate !== undefined) ? Number(roundRules[0].customer_default_rate) : DEFAULT_MACRO.customer_default_rate,
+            late_penalty_rate: (roundRules[0]?.late_penalty_rate !== undefined) ? Number(roundRules[0].late_penalty_rate) : DEFAULT_MACRO.late_penalty_rate,
+            supplier_interest: (roundRules[0]?.supplier_interest !== undefined) ? Number(roundRules[0].supplier_interest) : DEFAULT_MACRO.supplier_interest,
+            vat_sales_rate: (roundRules[0]?.vat_sales_rate !== undefined) ? Number(roundRules[0].vat_sales_rate) : DEFAULT_MACRO.vat_sales_rate,
+            vat_purchases_rate: (roundRules[0]?.vat_purchases_rate !== undefined) ? Number(roundRules[0].vat_purchases_rate) : DEFAULT_MACRO.vat_purchases_rate,
+            interest_rate_tr: (roundRules[0]?.interest_rate_tr !== undefined) ? Number(roundRules[0].interest_rate_tr) : DEFAULT_MACRO.interest_rate_tr,
+            compulsory_loan_agio: (roundRules[0]?.compulsory_loan_agio !== undefined) ? Number(roundRules[0].compulsory_loan_agio) : DEFAULT_MACRO.compulsory_loan_agio,
+            demand_variation: (roundRules[0]?.demand_variation !== undefined) ? Number(roundRules[0].demand_variation) : DEFAULT_MACRO.demand_variation,
+            dividend_percent: (roundRules[0]?.dividend_percent !== undefined) ? Number(roundRules[0].dividend_percent) : (tutorConfig.dividend_percent ?? DEFAULT_MACRO.dividend_percent),
+            allow_machine_sale: (roundRules[0]?.allow_machine_sale !== undefined) ? roundRules[0].allow_machine_sale : DEFAULT_MACRO.allow_machine_sale,
+            require_business_plan: (roundRules[0]?.require_business_plan !== undefined) ? roundRules[0].require_business_plan : DEFAULT_MACRO.require_business_plan,
+            raw_material_a_adjust: (roundRules[0]?.raw_material_a_adjust !== undefined) ? Number(roundRules[0].raw_material_a_adjust) : DEFAULT_MACRO.raw_material_a_adjust,
+            raw_material_b_adjust: (roundRules[0]?.raw_material_b_adjust !== undefined) ? Number(roundRules[0].raw_material_b_adjust) : DEFAULT_MACRO.raw_material_b_adjust,
+            storage_cost_adjust: (roundRules[0]?.storage_cost_adjust !== undefined) ? Number(roundRules[0].storage_cost_adjust) : DEFAULT_MACRO.storage_cost_adjust,
+            distribution_cost_adjust: (roundRules[0]?.distribution_cost_adjust !== undefined) ? Number(roundRules[0].distribution_cost_adjust) : DEFAULT_MACRO.distribution_cost_adjust,
+            marketing_campaign_adjust: (roundRules[0]?.marketing_campaign_adjust !== undefined) ? Number(roundRules[0].marketing_campaign_adjust) : DEFAULT_MACRO.marketing_campaign_adjust,
+            machine_alpha_price_adjust: (roundRules[0]?.machine_alpha_price_adjust !== undefined) ? Number(roundRules[0].machine_alpha_price_adjust) : DEFAULT_MACRO.machine_alpha_price_adjust,
+            machine_beta_price_adjust: (roundRules[0]?.machine_beta_price_adjust !== undefined) ? Number(roundRules[0].machine_beta_price_adjust) : DEFAULT_MACRO.machine_beta_price_adjust,
+            machine_gamma_price_adjust: (roundRules[0]?.machine_gamma_price_adjust !== undefined) ? Number(roundRules[0].machine_gamma_price_adjust) : DEFAULT_MACRO.machine_gamma_price_adjust,
+
             max_shifts: tutorConfig.workforce.max_shifts ?? 1,
             production_hours_period:
               tutorConfig.workforce.production_hours_period ?? 176,
@@ -1250,7 +1274,8 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
             staffing: {
               admin: { count: tutorConfig.workforce.admin_count ?? 20, salaries: 4 },
               sales: { count: tutorConfig.workforce.sales_count ?? 10, salaries: 4 },
-              production: { count: DEFAULT_MACRO.staffing.production.count, salaries: 1 }
+              // Erradica o fallback estático de 470 operadores do modo start_from_zero
+              production: { count: tutorConfig.starting_mode === "start_from_zero" ? 0 : DEFAULT_MACRO.staffing.production.count, salaries: 1 }
             },
             machine_specs: {
               ...DEFAULT_MACRO.machine_specs,
@@ -1276,11 +1301,15 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                   tutorConfig.workforce.operatorsPerGamma ?? 445,
               },
             },
+            // Persiste de forma fidedigna e completa todos os dados das regiões criadas pelo Tutor
             region_configs: tutorConfig.regions.map((r) => ({
               id: r.id,
               name: r.name,
               currency: r.currency,
               demand_weight: r.demand_weight,
+              suggested_price: r.suggested_price ?? tutorConfig.regions[0]?.suggested_price ?? roundRules[0]?.avg_selling_price ?? 500.0,
+              distribution_cost: r.distribution_cost ?? 50.0,
+              marketing_cost: r.marketing_cost ?? 10000.0,
             })),
           },
           round_rules: roundRules,
