@@ -19,7 +19,7 @@ import {
 } from '../types';
 import { generateBotDecision, calculateESDS } from './gemini';
 import { calculateProjections } from './simulation';
-import { INITIAL_FINANCIAL_TREE, INITIAL_MACHINES_R0, DEFAULT_INDUSTRIAL_CHRONOGRAM, MAX_CONSECUTIVE_MISSES } from '../constants';
+import { INITIAL_FINANCIAL_TREE, INITIAL_MACHINES_R0, DEFAULT_INDUSTRIAL_CHRONOGRAM, MAX_CONSECUTIVE_MISSES, DEFAULT_MACRO } from '../constants';
 
 // NOTA SÊNIOR: Suporte híbrido para leitura de envs em Vite e Node Standard (evita quebra em testes offline)
 const getEnvVal = (key: string): string => {
@@ -660,8 +660,31 @@ export const processRoundTurnover = async (id: string, round: number, isTrial?: 
         }
 
         // Get indicators for the round being processed (Round 1, 2, etc.)
-        const currentRules = champ.round_rules?.[nextRound] || DEFAULT_INDUSTRIAL_CHRONOGRAM[nextRound] || champ.market_indicators;
-        const indicatorsForRound = { ...champ.market_indicators, ...currentRules };
+        const currentRules = champ.round_rules?.[nextRound] || 
+                             champ.config?.round_rules?.[nextRound] || 
+                             champ.config?.DEFAULT_INDUSTRIAL_CHRONOGRAM?.[nextRound] || 
+                             DEFAULT_INDUSTRIAL_CHRONOGRAM[nextRound] || 
+                             champ.market_indicators || {};
+        const indicatorsForRound = {
+            ...DEFAULT_MACRO,
+            ...(champ.market_indicators || {}),
+            ...currentRules,
+            prices: {
+                ...DEFAULT_MACRO.prices,
+                ...(champ.market_indicators?.prices || {}),
+                ...(currentRules.prices || {})
+            },
+            exchange_rates: {
+                ...DEFAULT_MACRO.exchange_rates,
+                ...(champ.market_indicators?.exchange_rates || {}),
+                ...(currentRules.exchange_rates || {})
+            },
+            staffing: {
+                ...DEFAULT_MACRO.staffing,
+                ...(champ.market_indicators?.staffing || {}),
+                ...(currentRules.staffing || {})
+            }
+        };
 
         const teamResults: any[] = [];
         const marketDecisions: Record<string, any> = {};
@@ -1187,9 +1210,29 @@ export const processRoundTurnover = async (id: string, round: number, isTrial?: 
 
         // 5. Preparar indicadores para o PRÓXIMO round (round + 2)
         const nextNextRound = nextRound + 1;
-        const nextRules = champ.round_rules?.[nextNextRound] || DEFAULT_INDUSTRIAL_CHRONOGRAM[nextNextRound] || indicatorsForRound;
+        const nextRules = champ.round_rules?.[nextNextRound] || 
+                          champ.config?.round_rules?.[nextNextRound] || 
+                          champ.config?.DEFAULT_INDUSTRIAL_CHRONOGRAM?.[nextNextRound] || 
+                          DEFAULT_INDUSTRIAL_CHRONOGRAM[nextNextRound] || 
+                          indicatorsForRound;
         // Atualiza o preço médio de mercado para o próximo round baseado na realidade deste round
-        const nextIndicators = { ...indicatorsForRound, ...nextRules, avg_selling_price: avgPrice };
+        const nextIndicators = { 
+            ...indicatorsForRound, 
+            ...nextRules, 
+            avg_selling_price: avgPrice,
+            prices: {
+                ...(indicatorsForRound.prices || {}),
+                ...(nextRules.prices || {})
+            },
+            exchange_rates: {
+                ...(indicatorsForRound.exchange_rates || {}),
+                ...(nextRules.exchange_rates || {})
+            },
+            staffing: {
+                ...(indicatorsForRound.staffing || {}),
+                ...(nextRules.staffing || {})
+            }
+        };
 
         // v19.59: Limpeza fiduciária de variáveis de pausa ao realizar Turnover de Rodada
         // Se houver regras de região específicas para o round seguinte que agora se torna ativa (nextNextRound),

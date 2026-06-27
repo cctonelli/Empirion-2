@@ -31,64 +31,66 @@ const TutorArenaControl: React.FC<{ championship: Championship; onUpdate: (confi
   const [newRegionDistributionCost, setNewRegionDistributionCost] = useState<number>(50.0);
   const [newRegionMarketingCost, setNewRegionMarketingCost] = useState<number>(10000.0);
 
-  const nextRoundIdx = (currentChampionship.current_round || 0) + 2;
+  const [nextRoundIdx, setNextRoundIdx] = useState<number>(() => (championship.current_round || 0) + 1);
+
+  useEffect(() => {
+    setNextRoundIdx((currentChampionship.current_round || 0) + 1);
+  }, [currentChampionship.current_round]);
 
   // 1. Memorizar as regras herdadas com mesclagem profunda segura
   const inheritedRules = useMemo(() => {
      const rules = currentChampionship.round_rules?.[nextRoundIdx] || currentChampionship.config?.round_rules?.[nextRoundIdx] || {};
-     const chronogramRules = DEFAULT_INDUSTRIAL_CHRONOGRAM[nextRoundIdx] || {};
+     const chronogramRules = currentChampionship.config?.round_rules?.[nextRoundIdx] || 
+                             currentChampionship.config?.DEFAULT_INDUSTRIAL_CHRONOGRAM?.[nextRoundIdx] || 
+                             DEFAULT_INDUSTRIAL_CHRONOGRAM[nextRoundIdx] || {};
      const baseIndicators = currentChampionship.market_indicators || {};
-     
-     const isZeroMode = currentChampionship.starting_mode === 'start_from_zero';
-     const firstSource = isZeroMode ? chronogramRules : baseIndicators;
-     const secondSource = isZeroMode ? baseIndicators : chronogramRules;
 
      const merged: MacroIndicators = {
         ...DEFAULT_MACRO,
-        ...firstSource,
-        ...secondSource,
+        ...baseIndicators,
+        ...chronogramRules,
         ...rules,
         
         prices: {
            ...DEFAULT_MACRO.prices,
-           ...(firstSource.prices || {}),
-           ...(secondSource.prices || {}),
+           ...(baseIndicators.prices || {}),
+           ...(chronogramRules.prices || {}),
            ...(rules.prices || {})
         },
         machinery_values: {
            ...DEFAULT_MACRO.machinery_values,
-           ...(firstSource.machinery_values || {}),
-           ...(secondSource.machinery_values || {}),
+           ...(baseIndicators.machinery_values || {}),
+           ...(chronogramRules.machinery_values || {}),
            ...(rules.machinery_values || {})
         },
         staffing: {
            ...DEFAULT_MACRO.staffing,
-           ...(firstSource.staffing || {}),
-           ...(secondSource.staffing || {}),
+           ...(baseIndicators.staffing || {}),
+           ...(chronogramRules.staffing || {}),
            ...(rules.staffing || {})
         },
         hr_base: {
            ...DEFAULT_MACRO.hr_base,
-           ...(firstSource.hr_base || {}),
-           ...(secondSource.hr_base || {}),
+           ...(baseIndicators.hr_base || {}),
+           ...(chronogramRules.hr_base || {}),
            ...(rules.hr_base || {})
         },
         award_values: {
            ...DEFAULT_MACRO.award_values,
-           ...(firstSource.award_values || {}),
-           ...(secondSource.award_values || {}),
+           ...(baseIndicators.award_values || {}),
+           ...(chronogramRules.award_values || {}),
            ...(rules.award_values || {})
         },
         exchange_rates: {
            ...DEFAULT_MACRO.exchange_rates,
-           ...(firstSource.exchange_rates || {}),
-           ...(secondSource.exchange_rates || {}),
+           ...(baseIndicators.exchange_rates || {}),
+           ...(chronogramRules.exchange_rates || {}),
            ...(rules.exchange_rates || {})
         },
         machine_specs: {
            ...DEFAULT_MACRO.machine_specs,
-           ...(firstSource.machine_specs || {}),
-           ...(secondSource.machine_specs || {}),
+           ...(baseIndicators.machine_specs || {}),
+           ...(chronogramRules.machine_specs || {}),
            ...(rules.machine_specs || {})
         }
      };
@@ -277,6 +279,23 @@ const TutorArenaControl: React.FC<{ championship: Championship; onUpdate: (confi
              </div>
              <h2 className="text-3xl font-black text-white italic tracking-tight">{currentChampionship.name}</h2>
              <p className="text-xs text-slate-400 font-medium">Configure os indexadores macroeconômicos e simulações para o <strong className="text-orange-500 font-black">Round {nextRoundIdx}</strong>.</p>
+             <div className="flex flex-wrap items-center gap-4 mt-2">
+                <span className="text-xs text-slate-400 font-medium">Selecione a rodada para intervenção:</span>
+                <select 
+                   value={nextRoundIdx} 
+                   onChange={e => setNextRoundIdx(Number(e.target.value))} 
+                   className="bg-slate-950 border border-white/10 rounded-xl px-3 py-1.5 text-xs text-white font-black focus:border-orange-500 outline-none cursor-pointer"
+                >
+                   {Array.from({ length: (currentChampionship.total_rounds || 6) }).map((_, idx) => {
+                      const rNum = idx + 1;
+                      return (
+                         <option key={rNum} value={rNum}>
+                            Round {rNum} {rNum === (currentChampionship.current_round || 0) + 1 ? '(Ativo/Em Decisão)' : rNum <= (currentChampionship.current_round || 0) ? '(Concluído)' : '(Futuro)'}
+                         </option>
+                      );
+                   })}
+                </select>
+             </div>
           </div>
           <div className="flex items-center gap-4">
              <ChampionshipTimer 

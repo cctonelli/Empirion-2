@@ -512,7 +512,15 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
     const indicators = {
       ...DEFAULT_MACRO,
       ...(activeArena.market_indicators || {}),
-      ...(activeArena.round_rules?.[currentRound] || DEFAULT_INDUSTRIAL_CHRONOGRAM[currentRound] || {})
+      ...(activeArena.config?.round_rules?.[currentRound] || 
+          activeArena.config?.DEFAULT_INDUSTRIAL_CHRONOGRAM?.[currentRound] || 
+          DEFAULT_INDUSTRIAL_CHRONOGRAM[currentRound] || {}),
+      ...(activeArena.round_rules?.[currentRound] || {})
+    };
+    
+    const mergedRoundRules = {
+      ...(activeArena.config?.round_rules || activeArena.config?.DEFAULT_INDUSTRIAL_CHRONOGRAM || {}),
+      ...(activeArena.round_rules || {})
     };
     
     return calculateProjections(
@@ -523,7 +531,7 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
       activeTeam,
       history,
       currentRound,
-      activeArena.round_rules
+      mergedRoundRules
     );
   }, [decisions, activeArena, activeTeam, history]);
 
@@ -977,7 +985,11 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
                   <div className="w-full flex items-center justify-between relative">
                       <div className="absolute top-1/2 left-0 right-0 h-0.5 bg-slate-800 -translate-y-1/2 z-0" />
                       {Array.from({ length: (activeArena?.total_rounds || 12) + 1 }).map((_, i) => {
-                        const rules = activeArena?.round_rules?.[i] || DEFAULT_INDUSTRIAL_CHRONOGRAM[i] || activeArena?.market_indicators;
+                        const rules = activeArena?.round_rules?.[i] || 
+                                      activeArena?.config?.round_rules?.[i] || 
+                                      activeArena?.config?.DEFAULT_INDUSTRIAL_CHRONOGRAM?.[i] || 
+                                      DEFAULT_INDUSTRIAL_CHRONOGRAM[i] || 
+                                      activeArena?.market_indicators;
                         const hasBP = rules?.require_business_plan;
                         const isCurrent = i === currentRound;
                         const isSelected = i === selectedRound;

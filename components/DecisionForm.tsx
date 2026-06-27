@@ -153,7 +153,15 @@ const DecisionForm: React.FC<{
     const indicators = {
       ...DEFAULT_MACRO,
       ...(activeArena.market_indicators || {}),
-      ...(activeArena.round_rules?.[currentRound] || DEFAULT_INDUSTRIAL_CHRONOGRAM[currentRound] || {})
+      ...(activeArena.config?.round_rules?.[currentRound] || 
+          activeArena.config?.DEFAULT_INDUSTRIAL_CHRONOGRAM?.[currentRound] || 
+          DEFAULT_INDUSTRIAL_CHRONOGRAM[currentRound] || {}),
+      ...(activeArena.round_rules?.[currentRound] || {})
+    };
+    
+    const mergedRoundRules = {
+      ...(activeArena.config?.round_rules || activeArena.config?.DEFAULT_INDUSTRIAL_CHRONOGRAM || {}),
+      ...(activeArena.round_rules || {})
     };
     
     return calculateProjections(
@@ -164,7 +172,7 @@ const DecisionForm: React.FC<{
       activeTeam,
       [],
       round,
-      activeArena.round_rules
+      mergedRoundRules
     );
   }, [decisions, activeArena, activeTeam, round]);
 
@@ -271,7 +279,11 @@ const DecisionForm: React.FC<{
           }
         }
 
-        const currentRulesForRound = found?.round_rules?.[round] || DEFAULT_INDUSTRIAL_CHRONOGRAM[round] || found?.market_indicators || {};
+        const currentRulesForRound = found?.round_rules?.[round] || 
+                                     found?.config?.round_rules?.[round] || 
+                                     found?.config?.DEFAULT_INDUSTRIAL_CHRONOGRAM?.[round] || 
+                                     DEFAULT_INDUSTRIAL_CHRONOGRAM[round] || 
+                                     found?.market_indicators || {};
         const isAllowedToBuyMachines = currentRulesForRound.allow_machine_sale;
         const isRoundZeroAndZeroMode = (found?.config?.starting_mode === 'start_from_zero' || found?.starting_mode === 'start_from_zero') && round === 0;
 
@@ -284,6 +296,10 @@ const DecisionForm: React.FC<{
         const initialRegions: any = {};
         const allRegions = found?.round_rules?.[round]?.regions || 
                            found?.round_rules?.[round]?.region_configs || 
+                           found?.config?.round_rules?.[round]?.regions ||
+                           found?.config?.round_rules?.[round]?.region_configs ||
+                           found?.config?.DEFAULT_INDUSTRIAL_CHRONOGRAM?.[round]?.regions ||
+                           found?.config?.DEFAULT_INDUSTRIAL_CHRONOGRAM?.[round]?.region_configs ||
                            found?.config?.regions || 
                            found?.config?.region_configs || 
                            found?.region_configs || [];
