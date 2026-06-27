@@ -25,8 +25,8 @@ ADD COLUMN IF NOT EXISTS emergency_purchase_expenses NUMERIC(20,2) DEFAULT 0,
 ADD COLUMN IF NOT EXISTS emergency_units_total INTEGER DEFAULT 0;
 
 -- 2. ÍNDICES PARA MONITORAMENTO DE EFICIÊNCIA DE SUPRIMENTOS (Mapeamento JSONB)
-CREATE INDEX IF NOT EXISTS idx_companies_emergency_exp ON public.companies (((kpis->>'emergency_purchase_expenses')::numeric DESC));
-CREATE INDEX IF NOT EXISTS idx_companies_supplier_int ON public.companies (((kpis->>'supplier_interest_expenses')::numeric DESC));
+CREATE INDEX IF NOT EXISTS idx_companies_emergency_exp ON public.companies (((kpis->>'emergency_purchase_expenses')::numeric) DESC);
+CREATE INDEX IF NOT EXISTS idx_companies_supplier_int ON public.companies (((kpis->>'supplier_interest_expenses')::numeric) DESC);
 
 -- 3. VIEW DE AUDITORIA DE SUPRIMENTOS PARA O TUTOR (NOVA)
 DROP VIEW IF EXISTS public.view_supply_chain_health;
@@ -207,10 +207,10 @@ ALTER TABLE public.trial_teams ADD COLUMN IF NOT EXISTS insolvency_status TEXT D
 ALTER TABLE public.trial_teams ADD COLUMN IF NOT EXISTS locale TEXT DEFAULT 'pt-BR';
 
 -- 7. ÍNDICES PARA MONITORAMENTO DE "SAÚDE DOS ATIVOS" E KPIs (Mapeamento JSONB)
-CREATE INDEX IF NOT EXISTS idx_companies_asset_vcl ON public.companies (((kpis->>'fixed_assets_value')::numeric DESC));
-CREATE INDEX IF NOT EXISTS idx_companies_ccc ON public.companies (((kpis->>'ccc')::numeric ASC));
-CREATE INDEX IF NOT EXISTS idx_companies_tsr ON public.companies (((kpis->>'tsr')::numeric DESC));
-CREATE INDEX IF NOT EXISTS idx_companies_esds ON public.companies (((kpis->'esds'->>'esds_display')::numeric DESC));
+CREATE INDEX IF NOT EXISTS idx_companies_asset_vcl ON public.companies (((kpis->>'fixed_assets_value')::numeric) DESC);
+CREATE INDEX IF NOT EXISTS idx_companies_ccc ON public.companies (((kpis->>'ccc')::numeric) ASC);
+CREATE INDEX IF NOT EXISTS idx_companies_tsr ON public.companies (((kpis->>'tsr')::numeric) DESC);
+CREATE INDEX IF NOT EXISTS idx_companies_esds ON public.companies (((kpis->'esds'->>'esds_display')::numeric) DESC);
 
 -- 4. VIEW DE AUDITORIA DE CAPEX PARA O TUTOR (HELPER)
 -- Fix: DROP VIEW antes de recriar para permitir mudança na estrutura de colunas
@@ -670,6 +670,7 @@ CREATE POLICY "Escrita livre em error_logs" ON public.error_logs
 -- ==============================================================================
 DO $$
 BEGIN
+    -- Migração para trial_championships
     IF EXISTS (
         SELECT 1 
         FROM information_schema.columns 
@@ -677,9 +678,25 @@ BEGIN
           AND table_name = 'trial_championships' 
           AND column_name = 'market_indicators'
     ) THEN
-        ALTER TABLE public.trial_championships RENAME COLUMN market_indicators TO general_settings;
+        IF NOT EXISTS (
+            SELECT 1 
+            FROM information_schema.columns 
+            WHERE table_schema = 'public' 
+              AND table_name = 'trial_championships' 
+              AND column_name = 'general_settings'
+        ) THEN
+            ALTER TABLE public.trial_championships RENAME COLUMN market_indicators TO general_settings;
+        ELSE
+            -- Se ambas as colunas existem por rodadas anteriores, migra os dados persistidos e limpa a coluna antiga
+            UPDATE public.trial_championships 
+            SET general_settings = COALESCE(general_settings, market_indicators)
+            WHERE market_indicators IS NOT NULL;
+            
+            ALTER TABLE public.trial_championships DROP COLUMN market_indicators;
+        END IF;
     END IF;
 
+    -- Migração para championships
     IF EXISTS (
         SELECT 1 
         FROM information_schema.columns 
@@ -687,7 +704,22 @@ BEGIN
           AND table_name = 'championships' 
           AND column_name = 'market_indicators'
     ) THEN
-        ALTER TABLE public.championships RENAME COLUMN market_indicators TO general_settings;
+        IF NOT EXISTS (
+            SELECT 1 
+            FROM information_schema.columns 
+            WHERE table_schema = 'public' 
+              AND table_name = 'championships' 
+              AND column_name = 'general_settings'
+        ) THEN
+            ALTER TABLE public.championships RENAME COLUMN market_indicators TO general_settings;
+        ELSE
+            -- Se ambas as colunas existem por rodadas anteriores, migra os dados persistidos e limpa a coluna antiga
+            UPDATE public.championships 
+            SET general_settings = COALESCE(general_settings, market_indicators)
+            WHERE market_indicators IS NOT NULL;
+            
+            ALTER TABLE public.championships DROP COLUMN market_indicators;
+        END IF;
     END IF;
 END $$;
 

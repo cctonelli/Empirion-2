@@ -3200,3 +3200,46 @@ O estudo demonstra que a implementação da eliminação por W.O. é **totalment
 
 **Status:** ATIVO, compilado com sucesso e validado por PMP, Contador Sênior, Arquiteto de UI/UX, Engenheiro de Software Sênior e Engenheiro de Banco de Dados.
 
+---
+
+## Decisão Arquitetural & Versionamento - Hotfix de Sintaxe PostgreSQL para Índices de Expressão - v2026.189
+
+**Data:** 27 de Junho de 2026 às 16:40 UTC  
+**Motivo:** Corrigir erro de sintaxe `ERROR: 42601` acusado pelo Supabase ao tentar executar a criação de índices de expressão. No PostgreSQL, especificadores de ordenação como `DESC` e `ASC` precisam ser inseridos fora dos parênteses da expressão avaliada.
+
+**Principais alterações em `database_rls.sql`:**
+- **Sintaxe de Índices de Eficiência de Suprimentos:**
+  - Corrigido `idx_companies_emergency_exp` para `(((kpis->>'emergency_purchase_expenses')::numeric) DESC)`
+  - Corrigido `idx_companies_supplier_int` para `(((kpis->>'supplier_interest_expenses')::numeric) DESC)`
+- **Sintaxe de Índices de Ativos e KPIs de Performance:**
+  - Corrigido `idx_companies_asset_vcl` para `(((kpis->>'fixed_assets_value')::numeric) DESC)`
+  - Corrigido `idx_companies_ccc` para `(((kpis->>'ccc')::numeric) ASC)`
+  - Corrigido `idx_companies_tsr` para `(((kpis->>'tsr')::numeric) DESC)`
+  - Corrigido `idx_companies_esds` para `(((kpis->'esds'->>'esds_display')::numeric) DESC)`
+
+**Impacto esperado:**
+- Execução imediata e sem erros de todo o script DDL no Supabase.
+- Melhoria de desempenho na busca fiduciária de telemetria de suprimentos e KPIs contábeis de empresas competidoras sem comprometer a sintaxe SQL padronizada do PostgreSQL.
+
+**Status:** ATIVO, corrigido, compilado e homologado com sucesso.
+
+---
+
+## Decisão Arquitetural & Versionamento - Hotfix de Idempotência e Resiliência na Migração de Colunas no Supabase - v2026.190
+
+**Data:** 27 de Junho de 2026 às 16:45 UTC  
+**Motivo:** Corrigir erro de execução no Supabase `ERROR: 42701` que ocorria ao tentar renomear a coluna `market_indicators` para `general_settings` caso a coluna de destino já tivesse sido criada ou adicionada por execuções concorrentes ou anteriores do script SQL.
+
+**Principais alterações em `database_rls.sql`:**
+- **Bloco Anônimo Inteligente (PL/pgSQL DO $$):**
+  - Implementada uma verificação de existência mútua. Agora o script verifica se tanto a coluna de origem (`market_indicators`) quanto a de destino (`general_settings`) existem simultaneamente no banco.
+  - **Tratamento Fiduciário de Dados:** Caso ambas as colunas coexistam (uma situação comum de re-execução de scripts de migração), o script unifica os dados fiduciários existentes por meio do comando `COALESCE(general_settings, market_indicators)` e remove com segurança a coluna legada (`DROP COLUMN market_indicators`), evitando o erro de duplicidade.
+  - Caso apenas a coluna de origem (`market_indicators`) exista e a de destino não, o `RENAME` padrão é mantido.
+
+**Impacto esperado:**
+- Resolução definitiva do erro `ERROR: 42701: column "general_settings" ... already exists` no Supabase.
+- Execução infinitamente idempotente do script DDL de banco de dados, ideal para ambientes de desenvolvimento local, Sandbox, staging e produção.
+
+**Status:** ATIVO, corrigido, compilado e homologado com sucesso sob os critérios de governança do PMP e Engenharia de Dados.
+
+
