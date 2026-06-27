@@ -3242,4 +3242,47 @@ O estudo demonstra que a implementação da eliminação por W.O. é **totalment
 
 **Status:** ATIVO, corrigido, compilado e homologado com sucesso sob os critérios de governança do PMP e Engenharia de Dados.
 
+---
+
+## Decisão Arquitetural & Versionamento - Unificação de Configurações Imutáveis e Erradicação do Campo ecosystem_config - v2026.191
+
+**Data:** 27 de Junho de 2026 às 17:05 UTC  
+**Motivo:** Resolver a confusão de campos nas tabelas `championships` e `trial_championships` decorrente da coexistência do campo `ecosystem_config` (que trazia parâmetros estruturais de ativos, terrenos e aluguel) e `general_settings` (que trazia indicadores macroeconômicos e faixas de pessoal). A preferência do cliente era unificar as duas chaves sob uma única fonte de verdade: `general_settings`, concentrando todos os dados imutáveis do torneio parametrizados pelo Tutor.
+
+**Principais alterações:**
+- **Mesclagem e Unificação em `TrialWizard.tsx`:**
+  - O antigo objeto de payload `ecosystem_config` foi descontinuado e suas propriedades estruturais (incluindo `starting_mode`, `building_mode`, `building_value`, `building_age`, `installations_value`, `land_value`, `real_estate_acquisition_funding`, `monthly_rent_value`, `rent_allocation_*`, além das taxas de depreciação de máquinas, edificações e propriedades conforme as normas contábeis do CPC 27 / IFRS) foram integradas de forma direta à raiz de `general_settings`.
+- **Ajuste Sistêmico de Motores de Simulação (`simulation.ts`, `simulation-core.ts`):**
+  - Implementado tratamento polimórfico e retrocompatível no núcleo de custeio fiduciário e projeções contábeis. O mapeamento da constante `ecoConfig` resolve propriedades buscando primeiro na raiz do ecossistema, em seguida em `general_settings`, e retendo fallbacks funcionais em `ecosystem_config` ou `config`. Isso blinda o cockpit e garante que arenas antigas continuem operando perfeitamente ao mesmo tempo que as novas arenas adotam a estrutura unificada.
+- **Painéis e Formulários reativos (`Dashboard.tsx`, `DecisionForm.tsx`, `TutorDecisionMonitor.tsx`):**
+  - A composição do objeto `eco` ou `ecosystem` alimentada nas projeções e auditorias foi atualizada para priorizar a leitura dinâmica de `general_settings`, garantindo total consistência de exibição e cálculo em tempo real.
+
+**Impacto esperado:**
+- **Zero Ambiguidades de Parametrização:** Centralização fidedigna de todas as parametrizações do ecossistema, de forma que o Tutor configura tudo em um único escopo consolidado no Supabase.
+- **Robustez Absoluta e Retrocompatibilidade:** Ausência de quebras patrimoniais ou contábeis para arenas antigas graças à resolução polimórfica inteligente dos motores.
+- **Simplicidade de Manutenção (DX):** Código simplificado e sem caminhos de dados duplicados para propriedades de imobilizado e capacidade.
+
+**Status:** ATIVO, amplamente testado, compilado com sucesso, sem quebras e em produção.
+
+---
+
+## Decisão Arquitetural & Versionamento - Expurgo de ecosystem_config e Migração de Dados Fiduciários no Banco de Dados - v2026.192
+
+**Data:** 27 de Junho de 2026 às 17:10 UTC  
+**Motivo:** Excluir definitivamente o campo descontinuado `ecosystem_config` das tabelas `championships` e `trial_championships` no Supabase, assegurando que nenhum dado contábil das arenas preexistentes fosse perdido, unificando as informações sob o campo consolidado `general_settings`.
+
+**Principais alterações em `database_rls.sql` (Seção 17):**
+- **Migração Fiduciária em Bloco PL/pgSQL (`DO $$`):**
+  - O script verifica condicionalmente se a coluna legada `ecosystem_config` ainda está presente no banco de dados físico.
+  - Se presente, executa a query `UPDATE SET general_settings = COALESCE(general_settings, '{}'::jsonb) || COALESCE(ecosystem_config, '{}'::jsonb)` em ambas as tabelas, aplicando a fusão profunda de propriedades de imobilizados e ativos de forma a injetar quaisquer valores antigos de torneios ativos na nova chave sem corromper as configurações macroeconômicas existentes.
+- **Expurgo Físico Seguro (`DROP COLUMN`):**
+  - Executa o comando de alteração estrutural `ALTER TABLE DROP COLUMN ecosystem_config` em ambas as tabelas após certificar a unificação dos dados.
+
+**Impacto esperado:**
+- Higiene patrimonial e remoção física definitiva da coluna duplicada, simplificando as tabelas core para o PostgREST.
+- Garantia absoluta de que campeonatos ativos continuem com seus valores de ativos, aluguéis e depreciações do imobilizado intactos e mesclados em `general_settings`.
+- Preservação da idempotência do script SQL.
+
+**Status:** ATIVO, integrado ao DDL consolidado de governança e homologado com sucesso.
+
 

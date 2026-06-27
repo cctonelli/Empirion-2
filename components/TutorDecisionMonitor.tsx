@@ -67,7 +67,7 @@ const TutorDecisionMonitor: React.FC<MonitorProps> = ({ championshipId, round, i
           const decision = decisionsData?.find(d => d.team_id === t.id);
           const branch = (synthArena?.branch || 'industrial') as Branch;
           const eco = { 
-            ...(synthArena?.config || synthArena?.ecosystem_config || {}), 
+            ...(synthArena?.general_settings || synthArena?.config || synthArena?.ecosystem_config || {}), 
             currency: synthArena?.currency 
           } as EcosystemConfig;
           

@@ -723,4 +723,44 @@ BEGIN
     END IF;
 END $$;
 
+-- ==============================================================================
+-- 17. EXPURGO DE ECOSYSTEM_CONFIG COM UNIFICAÇÃO EM GENERAL_SETTINGS (v2026.192)
+-- ==============================================================================
+DO $$
+BEGIN
+    -- Migração e Exclusão em trial_championships
+    IF EXISTS (
+        SELECT 1 
+        FROM information_schema.columns 
+        WHERE table_schema = 'public' 
+          AND table_name = 'trial_championships' 
+          AND column_name = 'ecosystem_config'
+    ) THEN
+        -- Garante que todos os dados de ecosystem_config sejam fundidos em general_settings
+        UPDATE public.trial_championships 
+        SET general_settings = COALESCE(general_settings, '{}'::jsonb) || COALESCE(ecosystem_config, '{}'::jsonb)
+        WHERE ecosystem_config IS NOT NULL;
+        
+        -- Exclui a coluna definitivamente após a fusão de dados
+        ALTER TABLE public.trial_championships DROP COLUMN ecosystem_config;
+    END IF;
+
+    -- Migração e Exclusão em championships
+    IF EXISTS (
+        SELECT 1 
+        FROM information_schema.columns 
+        WHERE table_schema = 'public' 
+          AND table_name = 'championships' 
+          AND column_name = 'ecosystem_config'
+    ) THEN
+        -- Garante que todos os dados de ecosystem_config sejam fundidos em general_settings
+        UPDATE public.championships 
+        SET general_settings = COALESCE(general_settings, '{}'::jsonb) || COALESCE(ecosystem_config, '{}'::jsonb)
+        WHERE ecosystem_config IS NOT NULL;
+        
+        -- Exclui a coluna definitivamente após a fusão de dados
+        ALTER TABLE public.championships DROP COLUMN ecosystem_config;
+    END IF;
+END $$;
+
 COMMIT;

@@ -989,16 +989,22 @@ export function processRoundWithValidation(
 
   const rawEco = ecosystem as any || {};
   const ecoConfig = {
-    machines_depreciation_rate: rawEco.machines_depreciation_rate ?? rawEco.ecosystem_config?.machines_depreciation_rate ?? rawEco.config?.machines_depreciation_rate ?? rawEco.config?.ecosystem_config?.machines_depreciation_rate,
-    building_mode: rawEco.building_mode ?? rawEco.ecosystem_config?.building_mode ?? rawEco.config?.building_mode ?? rawEco.config?.ecosystem_config?.building_mode,
-    machines: rawEco.machines ?? rawEco.ecosystem_config?.machines ?? rawEco.config?.machines ?? rawEco.config?.ecosystem_config?.machines,
-    building_value: rawEco.building_value ?? rawEco.ecosystem_config?.building_value ?? rawEco.config?.building_value ?? rawEco.config?.ecosystem_config?.building_value,
-    land_value: rawEco.land_value ?? rawEco.ecosystem_config?.land_value ?? rawEco.config?.land_value ?? rawEco.config?.ecosystem_config?.land_value,
-    real_estate_acquisition_funding: rawEco.real_estate_acquisition_funding ?? rawEco.ecosystem_config?.real_estate_acquisition_funding ?? rawEco.config?.real_estate_acquisition_funding ?? rawEco.config?.ecosystem_config?.real_estate_acquisition_funding,
-    buildings_depreciation_rate: rawEco.buildings_depreciation_rate ?? rawEco.ecosystem_config?.buildings_depreciation_rate ?? rawEco.config?.buildings_depreciation_rate ?? rawEco.config?.ecosystem_config?.buildings_depreciation_rate,
-    property_depreciation_rate: rawEco.property_depreciation_rate ?? rawEco.ecosystem_config?.property_depreciation_rate ?? rawEco.config?.property_depreciation_rate ?? rawEco.config?.ecosystem_config?.property_depreciation_rate,
-    starting_mode: rawEco.starting_mode ?? rawEco.ecosystem_config?.starting_mode ?? rawEco.config?.starting_mode ?? rawEco.config?.ecosystem_config?.starting_mode,
-    admin_sales_installations: rawEco.admin_sales_installations ?? rawEco.ecosystem_config?.admin_sales_installations ?? rawEco.config?.admin_sales_installations ?? rawEco.config?.ecosystem_config?.admin_sales_installations,
+    machines_depreciation_rate: rawEco.machines_depreciation_rate ?? rawEco.general_settings?.machines_depreciation_rate ?? rawEco.ecosystem_config?.machines_depreciation_rate ?? rawEco.config?.machines_depreciation_rate ?? rawEco.config?.ecosystem_config?.machines_depreciation_rate,
+    building_mode: rawEco.building_mode ?? rawEco.general_settings?.building_mode ?? rawEco.ecosystem_config?.building_mode ?? rawEco.config?.building_mode ?? rawEco.config?.ecosystem_config?.building_mode,
+    machines: rawEco.machines ?? rawEco.general_settings?.machines ?? rawEco.ecosystem_config?.machines ?? rawEco.config?.machines ?? rawEco.config?.ecosystem_config?.machines,
+    building_value: rawEco.building_value ?? rawEco.general_settings?.building_value ?? rawEco.ecosystem_config?.building_value ?? rawEco.config?.building_value ?? rawEco.config?.ecosystem_config?.building_value,
+    land_value: rawEco.land_value ?? rawEco.general_settings?.land_value ?? rawEco.ecosystem_config?.land_value ?? rawEco.config?.land_value ?? rawEco.config?.ecosystem_config?.land_value,
+    real_estate_acquisition_funding: rawEco.real_estate_acquisition_funding ?? rawEco.general_settings?.real_estate_acquisition_funding ?? rawEco.ecosystem_config?.real_estate_acquisition_funding ?? rawEco.config?.real_estate_acquisition_funding ?? rawEco.config?.ecosystem_config?.real_estate_acquisition_funding,
+    buildings_depreciation_rate: rawEco.buildings_depreciation_rate ?? rawEco.general_settings?.buildings_depreciation_rate ?? rawEco.ecosystem_config?.buildings_depreciation_rate ?? rawEco.config?.buildings_depreciation_rate ?? rawEco.config?.ecosystem_config?.buildings_depreciation_rate,
+    property_depreciation_rate: rawEco.property_depreciation_rate ?? rawEco.general_settings?.property_depreciation_rate ?? rawEco.ecosystem_config?.property_depreciation_rate ?? rawEco.config?.property_depreciation_rate ?? rawEco.config?.ecosystem_config?.property_depreciation_rate,
+    starting_mode: rawEco.starting_mode ?? rawEco.general_settings?.starting_mode ?? rawEco.ecosystem_config?.starting_mode ?? rawEco.config?.starting_mode ?? rawEco.config?.ecosystem_config?.starting_mode,
+    admin_sales_installations: rawEco.admin_sales_installations ?? rawEco.general_settings?.admin_sales_installations ?? rawEco.ecosystem_config?.admin_sales_installations ?? rawEco.config?.admin_sales_installations ?? rawEco.config?.ecosystem_config?.admin_sales_installations,
+    installations_value: rawEco.installations_value ?? rawEco.general_settings?.installations_value ?? rawEco.ecosystem_config?.installations_value,
+    monthly_rent_value: rawEco.monthly_rent_value ?? rawEco.general_settings?.monthly_rent_value ?? rawEco.ecosystem_config?.monthly_rent_value,
+    rent_allocation_productive: rawEco.rent_allocation_productive ?? rawEco.general_settings?.rent_allocation_productive ?? rawEco.ecosystem_config?.rent_allocation_productive,
+    rent_allocation_administrative: rawEco.rent_allocation_administrative ?? rawEco.general_settings?.rent_allocation_administrative ?? rawEco.ecosystem_config?.rent_allocation_administrative,
+    rent_allocation_sales: rawEco.rent_allocation_sales ?? rawEco.general_settings?.rent_allocation_sales ?? rawEco.ecosystem_config?.rent_allocation_sales,
+    building_age: rawEco.building_age ?? rawEco.general_settings?.building_age ?? rawEco.ecosystem_config?.building_age,
   };
   const machinesDepRateAnnual = ecoConfig.machines_depreciation_rate !== undefined 
     ? Number(ecoConfig.machines_depreciation_rate) 

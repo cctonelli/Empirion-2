@@ -1178,7 +1178,9 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
             ...cleanedTutorConfig,
             round_rules: cleanChronogram,
           },
-          ecosystem_config: {
+          general_settings: {
+            ...DEFAULT_MACRO,
+            // Propriedades do ecossistema integradas em general_settings
             starting_mode: tutorConfig.starting_mode,
             building_mode:
               tutorConfig.building_mode ??
@@ -1229,9 +1231,7 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
               tutorConfig.property_depreciation_rate ?? 5,
             machines_depreciation_rate:
               tutorConfig.machines_depreciation_rate ?? 5,
-          },
-          general_settings: {
-            ...DEFAULT_MACRO,
+
             // Sincroniza dinamicamente as parametrizações de Rodada Inicial (R-0) do cronograma do Tutor
             social_charges: (roundRules[0]?.social_charges !== undefined) ? Number(roundRules[0].social_charges) : DEFAULT_MACRO.social_charges,
             avg_selling_price: tutorConfig.regions[0]?.suggested_price ?? roundRules[0]?.avg_selling_price ?? DEFAULT_MACRO.avg_selling_price,
