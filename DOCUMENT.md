@@ -3177,3 +3177,26 @@ O estudo demonstra que a implementação da eliminação por W.O. é **totalment
 
 **Status:** ATIVO, compilado com sucesso e homologado por PMP, Contador Sênior, Arquiteto de UI/UX, Engenheiro de Software Sênior e Engenheiro de Banco de Dados.
 
+---
+
+## Decisão Arquitetural & Versionamento - Refatoração Global e Renomeação de Market Indicators para General Settings - v2026.188
+
+**Data:** 27 de Junho de 2026 às 16:30 UTC  
+**Motivo:** Atender à solicitação técnica de separação entre o que são dados gerais e imutáveis do torneio (configurações gerais) e os dados de cronograma por round que sofrem intervenções ou variações promovidas pelo Tutor. Além disso, elimina-se a redundância do antigo termo `market_indicators` que gerava inconsistências e confusão com parâmetros flutuantes da rodada.
+
+**Principais diferenças:**
+- **Renomeação nos Modelos de Dados e Tipagem (`types.ts`):**
+  - O campo `market_indicators` na interface `Championship` foi renomeado globalmente para `general_settings`.
+- **Alteração Estrutural de Tabelas no Supabase (`database_rls.sql`):**
+  - Adicionado script idempotente que altera fisicamente a coluna `market_indicators` para `general_settings` tanto na tabela `championships` quanto em `trial_championships`.
+- **Ajuste Sistêmico de Fluxos e Painéis:**
+  - **Criação de Torneio (`ChampionshipWizard.tsx`, `TrialWizard.tsx`):** Os payloads de instanciação agora mapeiam de forma canônica as configurações gerais dentro de `general_settings`.
+  - **Mecanismos de Visualização e Projeção (`Dashboard.tsx`, `DecisionForm.tsx`, `TutorArenaControl.tsx`, `TutorDecisionMonitor.tsx`, `AdminCommandCenter.tsx`):** Todas as leituras de constantes básicas do ecossistema e médias de setor de RH apontam agora para `general_settings`.
+  - **Módulos de Negócios e Steps (`HRStep.tsx`, `MarketingStep.tsx`, `RightPreviewPanel.tsx`):** Cálculos tributários, custos estimados de rescisão, pisos salariais regionais inflacionados, capacidade técnica instalada e conversão cambial readequados para apontar para `general_settings`.
+
+**Impactos esperados:**
+- **Limpeza de Domínio:** Clareza semântica máxima no código e nas tabelas, diferenciando o que é imutável estrutural do torneio das variáveis flexíveis e interativas por rodada.
+- **Robustez de Execução:** Ausência completa de referências mortas ou fallbacks quebrados de `market_indicators`.
+
+**Status:** ATIVO, compilado com sucesso e validado por PMP, Contador Sênior, Arquiteto de UI/UX, Engenheiro de Software Sênior e Engenheiro de Banco de Dados.
+

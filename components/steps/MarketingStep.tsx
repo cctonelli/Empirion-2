@@ -53,9 +53,9 @@ export const MarketingStep: React.FC<MarketingStepProps> = ({
     if (!activeArena || !activeTeam) return null;
     try {
       const targetRound = round !== undefined ? round : ((activeArena.current_round || 0) + 1);
-      const currentRules = activeArena.round_rules?.[targetRound] || DEFAULT_INDUSTRIAL_CHRONOGRAM[targetRound] || activeArena.market_indicators || {};
+      const currentRules = activeArena.round_rules?.[targetRound] || DEFAULT_INDUSTRIAL_CHRONOGRAM[targetRound] || activeArena.general_settings || {};
       const indicatorsForRound = {
-        ...(activeArena.market_indicators || {}),
+        ...(activeArena.general_settings || {}),
         ...currentRules
       };
 
@@ -113,8 +113,8 @@ export const MarketingStep: React.FC<MarketingStepProps> = ({
     }
 
     // 4. Parâmetros nominais de reajuste inicial
-    const mpaPrice = activeArena?.market_indicators?.prices?.mp_a || 20;
-    const mpbPrice = activeArena?.market_indicators?.prices?.mp_b || 40;
+    const mpaPrice = activeArena?.general_settings?.prices?.mp_a || 20;
+    const mpbPrice = activeArena?.general_settings?.prices?.mp_b || 40;
     const baseMPCost = 3 * mpaPrice + 2 * mpbPrice;
     const standardOverhead = 150;
     return baseMPCost + standardOverhead;
@@ -159,7 +159,7 @@ export const MarketingStep: React.FC<MarketingStepProps> = ({
       capMult = 1.8; // Match real backend multiplier 1.8
     else if (shifts === 3) capMult = 2.3;
 
-    const specs = activeArena?.market_indicators?.machine_specs || {
+    const specs = activeArena?.general_settings?.machine_specs || {
       alpha: { production_capacity: 10000 },
       beta: { production_capacity: 18000 },
       gamma: { production_capacity: 30000 },
@@ -236,8 +236,8 @@ export const MarketingStep: React.FC<MarketingStepProps> = ({
     }
 
     // 3. Parâmetros nominais clássicos se nada houver
-    const mpaPrice = activeArena?.market_indicators?.prices?.mp_a || 20;
-    const mpbPrice = activeArena?.market_indicators?.prices?.mp_b || 40;
+    const mpaPrice = activeArena?.general_settings?.prices?.mp_a || 20;
+    const mpbPrice = activeArena?.general_settings?.prices?.mp_b || 40;
     return 3 * mpaPrice + 2 * mpbPrice + 40; // custo base mp + mod/cif
   };
 
@@ -282,9 +282,9 @@ export const MarketingStep: React.FC<MarketingStepProps> = ({
     const baseSuggestedPrice =
       regionConf?.suggested_price !== undefined
         ? Number(regionConf.suggested_price)
-        : activeArena?.market_indicators?.avg_selling_price || 425;
+        : activeArena?.general_settings?.avg_selling_price || 425;
     const demandVariation =
-      activeArena?.market_indicators?.demand_variation || 0;
+      activeArena?.general_settings?.demand_variation || 0;
 
     const targetRound = useHistoricalOnly 
       ? (activeArena?.current_round || 0) 
@@ -707,15 +707,15 @@ export const MarketingStep: React.FC<MarketingStepProps> = ({
           const sugPrice =
             regionConf?.suggested_price !== undefined
               ? Number(regionConf.suggested_price)
-              : activeArena?.market_indicators?.avg_selling_price || 425;
+              : activeArena?.general_settings?.avg_selling_price || 425;
           const distCost =
             regionConf?.distribution_cost !== undefined
               ? Number(regionConf.distribution_cost)
-              : activeArena?.market_indicators?.prices?.distribution_unit || 50;
+              : activeArena?.general_settings?.prices?.distribution_unit || 50;
           const mktCost =
             regionConf?.marketing_cost !== undefined
               ? Number(regionConf.marketing_cost)
-              : activeArena?.market_indicators?.prices?.marketing_campaign ||
+              : activeArena?.general_settings?.prices?.marketing_campaign ||
                 10000;
           const currency =
             regionConf?.currency || activeArena?.currency || "BRL";
@@ -971,21 +971,21 @@ export const MarketingStep: React.FC<MarketingStepProps> = ({
                           }
 
                           if (
-                            activeArena?.market_indicators?.exchange_rates?.[
+                            activeArena?.general_settings?.exchange_rates?.[
                               curr
                             ] !== undefined
                           ) {
                             return Number(
-                              activeArena.market_indicators.exchange_rates[
+                              activeArena.general_settings.exchange_rates[
                                 curr
                               ],
                             );
                           }
 
                           if (
-                            activeArena?.market_indicators?.[curr] !== undefined
+                            activeArena?.general_settings?.[curr] !== undefined
                           ) {
-                            return Number(activeArena.market_indicators[curr]);
+                            return Number(activeArena.general_settings[curr]);
                           }
 
                           switch (curr) {
@@ -1014,10 +1014,10 @@ export const MarketingStep: React.FC<MarketingStepProps> = ({
                         const vatSalesRate =
                           activeTeamHist?.kpis?.vat_sales_rate !== undefined
                             ? Number(activeTeamHist.kpis.vat_sales_rate)
-                            : activeArena?.market_indicators?.vat_sales_rate !==
+                            : activeArena?.general_settings?.vat_sales_rate !==
                                 undefined
                               ? Number(
-                                  activeArena.market_indicators.vat_sales_rate,
+                                  activeArena.general_settings.vat_sales_rate,
                                 )
                               : 0;
 
@@ -1124,12 +1124,12 @@ export const MarketingStep: React.FC<MarketingStepProps> = ({
                           const rDistCostLocal =
                             rRegionConf?.distribution_cost !== undefined
                               ? Number(rRegionConf.distribution_cost)
-                              : activeArena?.market_indicators?.prices
+                              : activeArena?.general_settings?.prices
                                   ?.distribution_unit || 50;
                           const rMktCostLocal =
                             rRegionConf?.marketing_cost !== undefined
                               ? Number(rRegionConf.marketing_cost)
-                              : activeArena?.market_indicators?.prices
+                              : activeArena?.general_settings?.prices
                                   ?.marketing_campaign || 10000;
 
                           const rAdjustedDistCostLocal = getAdjustedPrice(

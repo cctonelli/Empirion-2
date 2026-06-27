@@ -84,7 +84,7 @@ const GazetteViewer: React.FC<GazetteViewerProps> = ({ arena, aiNews, round, act
   // Captura dos parâmetros macroeconômicos dinâmicos do round
   const currentMacro = useMemo((): MacroIndicators => {
     const rules = arena.round_rules?.[round] || DEFAULT_INDUSTRIAL_CHRONOGRAM[round] || {};
-    return { ...DEFAULT_MACRO, ...arena.market_indicators, ...rules } as MacroIndicators;
+    return { ...DEFAULT_MACRO, ...arena.general_settings, ...rules } as MacroIndicators;
   }, [arena, round]);
 
   const chronogramHistory = useMemo(() => {
@@ -92,7 +92,7 @@ const GazetteViewer: React.FC<GazetteViewerProps> = ({ arena, aiNews, round, act
     const totalMax = 12;
     for (let r = 0; r <= totalMax; r++) {
       const rules = arena.round_rules?.[r] || DEFAULT_INDUSTRIAL_CHRONOGRAM[r] || {};
-      const activeMacro = { ...DEFAULT_MACRO, ...arena.market_indicators, ...rules };
+      const activeMacro = { ...DEFAULT_MACRO, ...arena.general_settings, ...rules };
       list.push({
         round: r,
         BRL: activeMacro.BRL ?? 1.0,
@@ -464,7 +464,7 @@ const GazetteViewer: React.FC<GazetteViewerProps> = ({ arena, aiNews, round, act
                                          </td>
                                          {Array.from({ length: 13 }).map((_, r) => {
                                             const rules = arena.round_rules?.[r] || DEFAULT_INDUSTRIAL_CHRONOGRAM[r] || {};
-                                            const activeMacro = { ...DEFAULT_MACRO, ...arena.market_indicators, ...rules };
+                                            const activeMacro = { ...DEFAULT_MACRO, ...arena.general_settings, ...rules };
                                             const val = Number(activeMacro[region.key] ?? 0);
                                             return (
                                                <td

@@ -267,7 +267,7 @@ export const createChampionshipWithTeams = async (config: any, teams: any[], isT
   // em memória para serem usadas nos KPIs iniciais abaixo, mas não quebram a query INSERT do PostgREST.
   const validTrialCols = [
     'name', 'branch', 'status', 'current_round', 'total_rounds', 'config',
-    'initial_financials', 'initial_market_data', 'market_indicators', 'tutor_id',
+    'initial_financials', 'initial_market_data', 'general_settings', 'tutor_id',
     'deadline_value', 'deadline_unit', 'description', 'gazeta_mode', 'transparency_level',
     'observers', 'round_started_at', 'is_public', 'dividend_percent', 'ecosystem_config',
     'is_trial', 'initial_share_price', 'starting_mode'
@@ -504,7 +504,7 @@ export const updateEcosystem = async (id: string, data: any, isTrial?: boolean) 
 
   const realCols = [
     'name', 'branch', 'status', 'current_round', 'total_rounds', 'config',
-    'initial_financials', 'initial_market_data', 'market_indicators', 'tutor_id',
+    'initial_financials', 'initial_market_data', 'general_settings', 'tutor_id',
     'deadline_value', 'deadline_unit', 'description', 'gazeta_mode', 'transparency_level',
     'observers', 'round_started_at', 'is_public', 'dividend_percent', 'ecosystem_config',
     'is_trial', 'initial_share_price', 'starting_mode',
@@ -664,24 +664,24 @@ export const processRoundTurnover = async (id: string, round: number, isTrial?: 
                              champ.config?.round_rules?.[nextRound] || 
                              champ.config?.DEFAULT_INDUSTRIAL_CHRONOGRAM?.[nextRound] || 
                              DEFAULT_INDUSTRIAL_CHRONOGRAM[nextRound] || 
-                             champ.market_indicators || {};
+                             champ.general_settings || {};
         const indicatorsForRound = {
             ...DEFAULT_MACRO,
-            ...(champ.market_indicators || {}),
+            ...(champ.general_settings || {}),
             ...currentRules,
             prices: {
                 ...DEFAULT_MACRO.prices,
-                ...(champ.market_indicators?.prices || {}),
+                ...(champ.general_settings?.prices || {}),
                 ...(currentRules.prices || {})
             },
             exchange_rates: {
                 ...DEFAULT_MACRO.exchange_rates,
-                ...(champ.market_indicators?.exchange_rates || {}),
+                ...(champ.general_settings?.exchange_rates || {}),
                 ...(currentRules.exchange_rates || {})
             },
             staffing: {
                 ...DEFAULT_MACRO.staffing,
-                ...(champ.market_indicators?.staffing || {}),
+                ...(champ.general_settings?.staffing || {}),
                 ...(currentRules.staffing || {})
             }
         };
@@ -1281,7 +1281,7 @@ export const processRoundTurnover = async (id: string, round: number, isTrial?: 
         // Gravação estrita na coluna física 'round_rules' e na coluna 'config'
         const { error: champUpdateErr } = await supabase.from(champTable).update({ 
             current_round: nextRound, 
-            market_indicators: nextIndicators,
+            general_settings: nextIndicators,
             round_started_at: new Date().toISOString(),
             config: updatedConfig,
             round_rules: updatedRoundRules

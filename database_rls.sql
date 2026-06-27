@@ -135,7 +135,7 @@ ADD COLUMN IF NOT EXISTS gazeta_mode TEXT DEFAULT 'anonymous',
 ADD COLUMN IF NOT EXISTS region_names TEXT[],
 ADD COLUMN IF NOT EXISTS region_configs JSONB,
 ADD COLUMN IF NOT EXISTS initial_financials JSONB,
-ADD COLUMN IF NOT EXISTS market_indicators JSONB,
+ADD COLUMN IF NOT EXISTS general_settings JSONB,
 ADD COLUMN IF NOT EXISTS round_rules JSONB,
 ADD COLUMN IF NOT EXISTS brl_rate NUMERIC(20,6) DEFAULT 1,
 ADD COLUMN IF NOT EXISTS gbp_rate NUMERIC(20,6) DEFAULT 0,
@@ -664,5 +664,31 @@ DROP POLICY IF EXISTS "Escrita livre em error_logs" ON public.error_logs;
 CREATE POLICY "Escrita livre em error_logs" ON public.error_logs
     FOR INSERT TO public
     WITH CHECK (true);
+
+-- ==============================================================================
+-- 16. MIGRAÇÃO DE COLUNA PARA SEPARAÇÃO DE DADOS GERAIS (v2026.2706)
+-- ==============================================================================
+DO $$
+BEGIN
+    IF EXISTS (
+        SELECT 1 
+        FROM information_schema.columns 
+        WHERE table_schema = 'public' 
+          AND table_name = 'trial_championships' 
+          AND column_name = 'market_indicators'
+    ) THEN
+        ALTER TABLE public.trial_championships RENAME COLUMN market_indicators TO general_settings;
+    END IF;
+
+    IF EXISTS (
+        SELECT 1 
+        FROM information_schema.columns 
+        WHERE table_schema = 'public' 
+          AND table_name = 'championships' 
+          AND column_name = 'market_indicators'
+    ) THEN
+        ALTER TABLE public.championships RENAME COLUMN market_indicators TO general_settings;
+    END IF;
+END $$;
 
 COMMIT;

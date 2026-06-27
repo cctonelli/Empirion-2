@@ -201,7 +201,7 @@ export interface Championship {
   total_rounds: number;
   branch: Branch;
   regions_count: number;
-  market_indicators: MacroIndicators;
+  general_settings: MacroIndicators;
   round_rules?: Record<number, any>;
   teams?: Team[];
   region_names?: string[];

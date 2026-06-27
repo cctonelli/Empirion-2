@@ -2336,11 +2336,11 @@ export const EmpirionDashboards: React.FC<EmpirionDashboardsProps> = ({
                         { 
                           name: 'Média de Setor', 
                           data: [
-                            Math.min(100, (activeArena?.market_indicators?.ppr_average !== undefined ? Number(activeArena.market_indicators.ppr_average) * 10 : 65)),
-                            Math.min(100, (activeArena?.market_indicators?.training_average !== undefined ? Number(activeArena.market_indicators.training_average) * 10 : 70)),
-                            Math.min(100, (activeArena?.market_indicators?.extra_hours_average !== undefined ? Number(activeArena.market_indicators.extra_hours_average) * 100 : 50)),
-                            Math.min(100, (activeArena?.market_indicators?.research_average !== undefined ? Number(activeArena.market_indicators.research_average) * 100 : 55)),
-                            Math.min(100, (activeArena?.market_indicators?.bonus_average !== undefined ? Number(activeArena.market_indicators.bonus_average) * 10 : 45))
+                            Math.min(100, (activeArena?.general_settings?.ppr_average !== undefined ? Number(activeArena.general_settings.ppr_average) * 10 : 65)),
+                            Math.min(100, (activeArena?.general_settings?.training_average !== undefined ? Number(activeArena.general_settings.training_average) * 10 : 70)),
+                            Math.min(100, (activeArena?.general_settings?.extra_hours_average !== undefined ? Number(activeArena.general_settings.extra_hours_average) * 100 : 50)),
+                            Math.min(100, (activeArena?.general_settings?.research_average !== undefined ? Number(activeArena.general_settings.research_average) * 100 : 55)),
+                            Math.min(100, (activeArena?.general_settings?.bonus_average !== undefined ? Number(activeArena.general_settings.bonus_average) * 10 : 45))
                           ]
                         }
                       ]}

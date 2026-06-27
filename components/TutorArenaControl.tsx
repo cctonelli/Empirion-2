@@ -43,7 +43,7 @@ const TutorArenaControl: React.FC<{ championship: Championship; onUpdate: (confi
      const chronogramRules = currentChampionship.config?.round_rules?.[nextRoundIdx] || 
                              currentChampionship.config?.DEFAULT_INDUSTRIAL_CHRONOGRAM?.[nextRoundIdx] || 
                              DEFAULT_INDUSTRIAL_CHRONOGRAM[nextRoundIdx] || {};
-     const baseIndicators = currentChampionship.market_indicators || {};
+     const baseIndicators = currentChampionship.general_settings || {};
 
      const merged: MacroIndicators = {
         ...DEFAULT_MACRO,

@@ -358,7 +358,7 @@ const AdminCommandCenter: React.FC<{ preTab?: string }> = ({ preTab = 'tournamen
       const event: BlackSwanEvent = await generateBlackSwanEvent(selectedArena.branch);
       if (confirm(`DESEJA EXECUTAR EVENTO: "${event.title}"?\n\n${event.description}\n\nImpacto: ${event.impact}`)) {
          const nextRound = selectedArena.current_round + 1;
-         const currentMacro = selectedArena.round_rules?.[nextRound] || selectedArena.market_indicators;
+         const currentMacro = selectedArena.round_rules?.[nextRound] || selectedArena.general_settings;
          const updatedMacro = {
             ...currentMacro,
             inflation_rate: (currentMacro.inflation_rate || 1) + event.modifiers.inflation,

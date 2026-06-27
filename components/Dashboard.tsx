@@ -334,7 +334,7 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
               // Preserva as propriedades relacionais locais que não vêm no payload bruto
               teams: prev.teams,
               round_rules: (payload.new as any).round_rules || prev.round_rules,
-              market_indicators: (payload.new as any).market_indicators || prev.market_indicators
+              general_settings: (payload.new as any).general_settings || prev.general_settings
             });
           });
         }
@@ -511,7 +511,7 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
     const currentRound = (activeArena.current_round || 0) + 1;
     const indicators = {
       ...DEFAULT_MACRO,
-      ...(activeArena.market_indicators || {}),
+      ...(activeArena.general_settings || {}),
       ...(activeArena.config?.round_rules?.[currentRound] || 
           activeArena.config?.DEFAULT_INDUSTRIAL_CHRONOGRAM?.[currentRound] || 
           DEFAULT_INDUSTRIAL_CHRONOGRAM[currentRound] || {}),
@@ -989,7 +989,7 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
                                       activeArena?.config?.round_rules?.[i] || 
                                       activeArena?.config?.DEFAULT_INDUSTRIAL_CHRONOGRAM?.[i] || 
                                       DEFAULT_INDUSTRIAL_CHRONOGRAM[i] || 
-                                      activeArena?.market_indicators;
+                                      activeArena?.general_settings;
                         const hasBP = rules?.require_business_plan;
                         const isCurrent = i === currentRound;
                         const isSelected = i === selectedRound;

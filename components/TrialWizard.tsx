@@ -1230,7 +1230,7 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
             machines_depreciation_rate:
               tutorConfig.machines_depreciation_rate ?? 5,
           },
-          market_indicators: {
+          general_settings: {
             ...DEFAULT_MACRO,
             // Sincroniza dinamicamente as parametrizações de Rodada Inicial (R-0) do cronograma do Tutor
             social_charges: (roundRules[0]?.social_charges !== undefined) ? Number(roundRules[0].social_charges) : DEFAULT_MACRO.social_charges,

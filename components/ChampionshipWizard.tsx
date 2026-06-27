@@ -105,7 +105,7 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void, isTrial?: boolean }
         status: 'active',
         region_names: regionNames,
         initial_financials: financials,
-        market_indicators: marketIndicators,
+        general_settings: marketIndicators,
         round_rules: cleanChronogram,
         config: customConfig,
       }, teamsToCreate, isTrial);

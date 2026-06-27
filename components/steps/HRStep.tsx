@@ -41,7 +41,7 @@ export const HRStep: React.FC<HRStepProps> = ({
     const chronogram = activeArena.round_rules || DEFAULT_INDUSTRIAL_CHRONOGRAM;
     // O reajuste acumulado aplicado ao round atual
     const inflationMult = getCumulativeAdjust(chronogram, currentRound, 'inflation_rate');
-    const baseSal = activeArena.market_indicators?.hr_base?.salary || 2500;
+    const baseSal = activeArena.general_settings?.hr_base?.salary || 2500;
     return baseSal * inflationMult;
   }, [activeArena, currentRound]);
 
@@ -56,7 +56,7 @@ export const HRStep: React.FC<HRStepProps> = ({
       try {
         const targetRound = Math.max(0, currentRound - 1);
         if (targetRound === 0) {
-          setSectorAvgSalary(activeArena.market_indicators?.hr_base?.salary || 2500);
+          setSectorAvgSalary(activeArena.general_settings?.hr_base?.salary || 2500);
           setLoadingSectorSalary(false);
           return;
         }
@@ -87,7 +87,7 @@ export const HRStep: React.FC<HRStepProps> = ({
 
         const chronogram = activeArena.round_rules || DEFAULT_INDUSTRIAL_CHRONOGRAM;
         const lastRoundCumulative = getCumulativeAdjust(chronogram, targetRound, 'inflation_rate');
-        const baseSal = activeArena.market_indicators?.hr_base?.salary || 2500;
+        const baseSal = activeArena.general_settings?.hr_base?.salary || 2500;
         setSectorAvgSalary(baseSal * lastRoundCumulative);
       } catch (err) {
         console.error("Erro ao carregar média salarial do setor:", err);
@@ -104,7 +104,7 @@ export const HRStep: React.FC<HRStepProps> = ({
 
   // 5. Projeções de Folha de Pagamento em Tempo Real
   const payrollProjection = useMemo(() => {
-    const baseSal = activeArena?.market_indicators?.hr_base?.salary || 2500;
+    const baseSal = activeArena?.general_settings?.hr_base?.salary || 2500;
     const currentSalary = parseFloat(decisions.hr?.salary) || baseSal;
     const socialChargesRate = (currentMacro?.social_charges !== undefined ? currentMacro.social_charges : 35) / 100;
 
@@ -451,7 +451,7 @@ export const HRStep: React.FC<HRStepProps> = ({
                 </div>
               ) : (
                 <span className="text-2.5xl font-mono font-black text-emerald-400 block pb-1">
-                  {formatCurrency(sectorAvgSalary || (activeArena?.market_indicators?.hr_base?.salary || 2500), currency)}
+                  {formatCurrency(sectorAvgSalary || (activeArena?.general_settings?.hr_base?.salary || 2500), currency)}
                 </span>
               )}
             </div>
@@ -470,7 +470,7 @@ export const HRStep: React.FC<HRStepProps> = ({
                 </span>
               </div>
               <p className="text-xs text-slate-400 mb-4">
-                Salário base original ({formatCurrency(activeArena?.market_indicators?.hr_base?.salary || 2500, currency)}) corrigido pela inflação acumulada do torneio (+{currentMacro?.inflation_rate || 0}% neste round).
+                Salário base original ({formatCurrency(activeArena?.general_settings?.hr_base?.salary || 2500, currency)}) corrigido pela inflação acumulada do torneio (+{currentMacro?.inflation_rate || 0}% neste round).
               </p>
             </div>
             <div className="my-2 select-none">
@@ -615,7 +615,7 @@ export const HRStep: React.FC<HRStepProps> = ({
             />
 
             <p className="text-xs text-rose-300 italic font-sans">
-              Custo estimado de rescisão: ~{formatCurrency((decisions.hr.fired || 0) * (decisions.hr.salary || (activeArena?.market_indicators?.hr_base?.salary || 2500)) * 1.5, currency)}
+              Custo estimado de rescisão: ~{formatCurrency((decisions.hr.fired || 0) * (decisions.hr.salary || (activeArena?.general_settings?.hr_base?.salary || 2500)) * 1.5, currency)}
             </p>
           </div>
         </div>

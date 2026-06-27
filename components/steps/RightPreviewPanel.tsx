@@ -281,7 +281,7 @@ export const RightPreviewPanel: React.FC<RightPreviewPanelProps> = ({
     }
 
     // Alerta de Salário Abaixo do Mínimo Regional
-    const minSal = activeArena?.market_indicators?.min_salary || 2000;
+    const minSal = activeArena?.general_settings?.min_salary || 2000;
     if (decisions.hr.salary < minSal) {
       list.push({
         type: 'critical',
@@ -645,7 +645,7 @@ export const RightPreviewPanel: React.FC<RightPreviewPanelProps> = ({
               
               <div className="space-y-3 bg-slate-900 p-4 rounded-2xl border border-white/5 shadow-xl">
                 {(() => {
-                  const currentMacro = activeArena?.round_rules?.[round] || activeArena?.market_indicators || null;
+                  const currentMacro = activeArena?.round_rules?.[round] || activeArena?.general_settings || null;
                   const priceA = currentMacro?.prices?.mp_a || 15;
                   const priceB = currentMacro?.prices?.mp_b || 25;
                   const mpaQty = decisions.production.purchaseMPA || 0;

@@ -39,7 +39,7 @@ const getInitialBaseSalaryForRound = (arena: any, targetRound: number) => {
   if (!arena) return 2500;
   const chronogram = arena.round_rules || DEFAULT_INDUSTRIAL_CHRONOGRAM;
   const inflationMult = getCumulativeAdjust(chronogram, targetRound, 'inflation_rate');
-  const baseSal = arena.market_indicators?.hr_base?.salary || 2500;
+  const baseSal = arena.general_settings?.hr_base?.salary || 2500;
   return Math.round(baseSal * inflationMult);
 };
 
@@ -144,7 +144,7 @@ const DecisionForm: React.FC<{
   const currentMacro = useMemo(() => {
     if (!activeArena) return DEFAULT_MACRO;
     const rules = activeArena.round_rules?.[round] || DEFAULT_INDUSTRIAL_CHRONOGRAM[round] || {};
-    return { ...DEFAULT_MACRO, ...activeArena.market_indicators, ...rules } as MacroIndicators;
+    return { ...DEFAULT_MACRO, ...activeArena.general_settings, ...rules } as MacroIndicators;
   }, [activeArena, round]);
 
   const projections = useMemo(() => {
@@ -152,7 +152,7 @@ const DecisionForm: React.FC<{
     const currentRound = round;
     const indicators = {
       ...DEFAULT_MACRO,
-      ...(activeArena.market_indicators || {}),
+      ...(activeArena.general_settings || {}),
       ...(activeArena.config?.round_rules?.[currentRound] || 
           activeArena.config?.DEFAULT_INDUSTRIAL_CHRONOGRAM?.[currentRound] || 
           DEFAULT_INDUSTRIAL_CHRONOGRAM[currentRound] || {}),
@@ -283,7 +283,7 @@ const DecisionForm: React.FC<{
                                      found?.config?.round_rules?.[round] || 
                                      found?.config?.DEFAULT_INDUSTRIAL_CHRONOGRAM?.[round] || 
                                      DEFAULT_INDUSTRIAL_CHRONOGRAM[round] || 
-                                     found?.market_indicators || {};
+                                     found?.general_settings || {};
         const isAllowedToBuyMachines = currentRulesForRound.allow_machine_sale;
         const isRoundZeroAndZeroMode = (found?.config?.starting_mode === 'start_from_zero' || found?.starting_mode === 'start_from_zero') && round === 0;
 
@@ -375,7 +375,7 @@ const DecisionForm: React.FC<{
               // Preserva as propriedades relacionais locais que não vêm no payload bruto
               teams: prev.teams,
               round_rules: (payload.new as any).round_rules || prev.round_rules,
-              market_indicators: (payload.new as any).market_indicators || prev.market_indicators
+              general_settings: (payload.new as any).general_settings || prev.general_settings
             });
           });
         }

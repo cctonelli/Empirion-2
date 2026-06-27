@@ -71,8 +71,8 @@ const TutorDecisionMonitor: React.FC<MonitorProps> = ({ championshipId, round, i
             currency: synthArena?.currency 
           } as EcosystemConfig;
           
-          const currentRules = synthArena?.round_rules?.[targetNode] || DEFAULT_INDUSTRIAL_CHRONOGRAM[targetNode] || synthArena?.market_indicators;
-          const indicatorsForNode = { ...synthArena?.market_indicators, ...currentRules };
+          const currentRules = synthArena?.round_rules?.[targetNode] || DEFAULT_INDUSTRIAL_CHRONOGRAM[targetNode] || synthArena?.general_settings;
+          const indicatorsForNode = { ...synthArena?.general_settings, ...currentRules };
           
           const proj = decision ? calculateProjections(
             decision.data, 
@@ -169,8 +169,8 @@ const TutorDecisionMonitor: React.FC<MonitorProps> = ({ championshipId, round, i
 
   const currentIndicators = useMemo(() => {
     if (!arena) return null;
-    const rules = arena.round_rules?.[activeTimelineNode] || DEFAULT_INDUSTRIAL_CHRONOGRAM[activeTimelineNode] || arena.market_indicators;
-    return { ...arena.market_indicators, ...rules } as MacroIndicators;
+    const rules = arena.round_rules?.[activeTimelineNode] || DEFAULT_INDUSTRIAL_CHRONOGRAM[activeTimelineNode] || arena.general_settings;
+    return { ...arena.general_settings, ...rules } as MacroIndicators;
   }, [arena, activeTimelineNode]);
 
   if (loading && teams.length === 0) return (
@@ -295,7 +295,7 @@ const TutorDecisionMonitor: React.FC<MonitorProps> = ({ championshipId, round, i
          <div className="max-w-7xl w-full flex items-center justify-between relative">
             <div className="absolute top-1/2 left-0 right-0 h-1 bg-slate-800 -translate-y-1/2 z-0" />
             {Array.from({ length: (arena?.total_rounds || 12) + 1 }).map((_, i) => {
-               const rules = arena?.round_rules?.[i] || DEFAULT_INDUSTRIAL_CHRONOGRAM[i] || arena?.market_indicators;
+               const rules = arena?.round_rules?.[i] || DEFAULT_INDUSTRIAL_CHRONOGRAM[i] || arena?.general_settings;
                const hasBP = rules?.require_business_plan;
                const canBuy = rules?.allow_machine_sale;
                
