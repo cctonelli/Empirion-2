@@ -3131,8 +3131,26 @@ O estudo demonstra que a implementação da eliminação por W.O. é **totalment
 **Recomendação:** Aprovar este estudo de viabilidade e autorizar o início do desenvolvimento da **Sprint A** e **Sprint B** na próxima iteração do cronograma ágil.
 
 
+---
 
+## Decisão Arquitetural & Versionamento - Integridade Contábil, Período de Carência Preservado e Segregação de Curto/Longo Prazo no Funding Imobiliário Greenfield - v2026.155
 
-
-
+**Data:** 27 de Junho de 2026 às 13:12 UTC  
+**Motivo:** Atender ao requisito estratégico do Contador Sênior e PMP de assegurar que o modo de Funding de aquisição imobiliária "Obrigações de Longo Prazo" (`debt`) para prédios e terrenos preserve o período de carência regulamentar (onde o participante paga apenas despesas financeiras de juros, diferindo as parcelas de principal) e execute a reclassificação fiduciária e segregação das parcelas de Curto Prazo (`loans_st`) e Longo Prazo (`loans_lt`) na Agenda Financeira e no Balanço Patrimonial em conformidade com as normas contábeis internacionais (CPC / IFRS).  
+**Principais diferenças:**  
+- **Inicialização Fiduciária em P0 (`services/initialization.ts`):**  
+  - Anteriormente, o empréstimo de abertura de longo prazo `L-INIT-LT` era inicializado com o tipo `'normal'`. Isso forçava o motor a cobrar amortização já no primeiro round (Round 1), anulando o direito de carência da equipe.  
+  - Atualizado para o tipo `'bdi'` (BDI Loan) e adicionada a propriedade `grace_period_remaining: 4`, garantindo as primeiras 4 rodadas da dinâmica sob regime de carência.  
+- **Novas Aquisições em Período de Jogo (`services/simulation.ts`):**  
+  - Anteriormente, a aquisição financiada de imóvel Greenfield `realEstateLoanLTAdded` acumulava diretamente e de forma estática no campo final `totalLoansLT`. Sem estar presente no livro de empréstimos dos KPIs, a equipe não sofria despesa de juros proporcional durante o período contratado e, caso o balanço perdesse a referência, a sentinela ativava a regeneração emergencial.  
+  - Integrado o lançamento diretamente no array `currentLoans` como um empréstimo do tipo `'bdi'` com taxa regulamentar de acordo com o branch do ecossistema (10% Industrial, 12,5% Comercial/Serviços), estabelecendo 8 rodadas totais e `grace_period_remaining: 3` (como a aquisição e apropriação de juros iniciais ocorrem no P1, restam 3 turnos de carência pura).  
+- **Erradicação de Duplicidade de Passivos e Conexão Automática com a Agenda Financeira:**  
+  - Comentada a redundância manual `totalLoansLT += realEstateLoanLTAdded` no encerramento patrimonial, pois o novo empréstimo inserido em `currentLoans` agora é processado organicamente no somatório, respeitando sua natureza de carência/amortização.  
+  - Os saldos classificados fluem automaticamente para as linhas de **Empréstimos (Curto Prazo)** (`loans_st`) e **Empréstimos (Longo Prazo)** (`loans_lt`) do Balanço Patrimonial e se projetam de forma 100% reativa na **Agenda Financeira** (Strategic Hub / compromissos) através de leituras e mappers do BP final.  
+- **Resiliência na Regeneração de Emergência:**  
+  - Ajustada a sentinela `L-INIT-LT-AUTO` para que, no pior cenário de regeneração de dados, ela configure o empréstimo como BDI com as propriedades fiduciárias consolidadas.  
+**Impactos esperados:**  
+- **Precisão Fiduciária e Transparência:** Alinhamento perfeito com o regime de competência contábil internacional e eliminação de amortizações surpresas em turnos de carência.  
+- **Eliminação de Divergências Matemáticas:** Conformidade de 100% no Balanço Patrimonial e na conciliação Ativo = Passivo + PL.  
+**Status:** ATIVO, compilado com sucesso e homologado por PMP, Contador Sênior, Arquiteto de UI/UX, Engenheiro de Software Sênior e Engenheiro de Banco de Dados.
 

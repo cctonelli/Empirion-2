@@ -827,11 +827,12 @@ export function generatePureP0(config: TutorP0Config): {
   if (loans_lt > 0) {
     initialLoansList.push({
       id: 'L-INIT-LT',
-      type: 'normal',
+      type: 'bdi',
       amount: loans_lt,
       interest_rate: isBaseMode ? 12.5 : 10.0,
       term: 8,
-      remaining_rounds: 8
+      remaining_rounds: 8,
+      grace_period_remaining: 4
     });
   }
 

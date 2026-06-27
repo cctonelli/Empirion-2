@@ -990,7 +990,7 @@ export const calculateProjections = (
         interest_rate: branch === 'industrial' ? 10.0 : 12.5,
         term: 8,
         remaining_rounds: 8,
-        grace_period_remaining: 0
+        grace_period_remaining: 4
       });
     }
   }
@@ -1046,6 +1046,24 @@ export const calculateProjections = (
       type: 'bdi',
       amount: newBdiLoanAmount,
       interest_rate: sanitize(indicators.interest_rate_tr, 2),
+      term: 8,
+      remaining_rounds: 7, // Como já cobrou a 1ª rodada de juros no P1, restam 7 rodadas no total
+      grace_period_remaining: 3 // Como já cobrou o 1º período de carência (juros) no P1, restam 3 períodos de carência
+    });
+  }
+
+  // Adicionar Novo Empréstimo Imobiliário BDI se houve compra de prédio/terreno financiada e cobrar juros dele de imediato
+  let newRealEstateInterest = 0;
+  if (realEstateLoanLTAdded > 0) {
+    const reRate = branch === 'industrial' ? 10.0 : 12.5;
+    newRealEstateInterest = realEstateLoanLTAdded * (reRate / 100) * rjInterestAgio;
+    totalInterestExp += newRealEstateInterest;
+
+    currentLoans.push({
+      id: `L-INIT-LT`, // ID padrão do imobiliário de longo prazo
+      type: 'bdi',
+      amount: realEstateLoanLTAdded,
+      interest_rate: reRate,
       term: 8,
       remaining_rounds: 7, // Como já cobrou a 1ª rodada de juros no P1, restam 7 rodadas no total
       grace_period_remaining: 3 // Como já cobrou o 1º período de carência (juros) no P1, restam 3 períodos de carência
@@ -1234,7 +1252,7 @@ export const calculateProjections = (
   });
 
   // Somar o funding via empréstimo longo prazo para aquisição do imóvel ou terreno no Greenfield
-  totalLoansLT += realEstateLoanLTAdded;
+  // totalLoansLT += realEstateLoanLTAdded; // Comentado para evitar duplicidade contábil, já que agora está integrado em currentLoans!
 
   const closingMpaQty = (team.kpis?.stock_quantities?.mp_a || 0) + purchaseMPA + emergencyMPA - (unitsProduced * 3);
   const closingMpbQty = (team.kpis?.stock_quantities?.mp_b || 0) + purchaseMPB + emergencyMPB - (unitsProduced * 2);
