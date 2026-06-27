@@ -159,7 +159,7 @@ const DecisionForm: React.FC<{
     return calculateProjections(
       decisions,
       activeArena.branch || 'industrial',
-      { ...(activeArena.config || (activeArena as any).ecosystem_config || {}), currency: activeArena.currency } as any,
+      { starting_mode: activeArena.starting_mode, ...(activeArena.config || (activeArena as any).ecosystem_config || {}), currency: activeArena.currency } as any,
       indicators,
       activeTeam,
       [],

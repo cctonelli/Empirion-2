@@ -733,9 +733,27 @@ export function processRoundWithValidation(
     return 1 + (fallback / 100);
   };
 
-  const inflationMult = getAdjust('inflation_rate', sanitize(indicators.inflation_rate, 0));
-  const mpaPrice = indicators.prices.mp_a * getAdjust('raw_material_a_adjust', sanitize(indicators.raw_material_a_adjust, 0));
-  const mpbPrice = indicators.prices.mp_b * getAdjust('raw_material_b_adjust', sanitize(indicators.raw_material_b_adjust, 0));
+  const rawInflationRate = (ecosystem as any).inflation_rate !== undefined 
+    ? (ecosystem as any).inflation_rate 
+    : ((ecosystem as any).config?.inflation_rate !== undefined 
+       ? (ecosystem as any).config.inflation_rate 
+       : indicators.inflation_rate);
+  const inflationMult = getAdjust('inflation_rate', sanitize(rawInflationRate, 0));
+
+  const baseMpaPrice = (ecosystem as any).mpa_unit_val !== undefined 
+    ? Number((ecosystem as any).mpa_unit_val) 
+    : ((ecosystem as any).config?.mpa_unit_val !== undefined 
+       ? Number((ecosystem as any).config.mpa_unit_val) 
+       : (indicators.prices?.mp_a || 40));
+  
+  const baseMpbPrice = (ecosystem as any).mpb_unit_val !== undefined 
+    ? Number((ecosystem as any).mpb_unit_val) 
+    : ((ecosystem as any).config?.mpb_unit_val !== undefined 
+       ? Number((ecosystem as any).config.mpb_unit_val) 
+       : (indicators.prices?.mp_b || 60));
+
+  const mpaPrice = baseMpaPrice * getAdjust('raw_material_a_adjust', sanitize(indicators.raw_material_a_adjust, 0));
+  const mpbPrice = baseMpbPrice * getAdjust('raw_material_b_adjust', sanitize(indicators.raw_material_b_adjust, 0));
   const vatPurchasesRate = sanitize(indicators.vat_purchases_rate, 0) / 100;
   const netMpaPrice = mpaPrice * (1 - vatPurchasesRate);
   const netMpbPrice = mpbPrice * (1 - vatPurchasesRate);
@@ -752,7 +770,12 @@ export function processRoundWithValidation(
   const netPlannedMpbPrice = netMpbPrice * supplierInterestFactor;
 
   // Calculando capacidade e operadores
-  const isZeroMode = (ecosystem as any).starting_mode === 'start_from_zero' || (ecosystem as any).config?.starting_mode === 'start_from_zero';
+  const isZeroMode = 
+    (ecosystem as any).starting_mode === 'start_from_zero' || 
+    (ecosystem as any).config?.starting_mode === 'start_from_zero' ||
+    (team as any).starting_mode === 'start_from_zero' || 
+    (team as any).config?.starting_mode === 'start_from_zero' ||
+    (team as any).kpis?.starting_mode === 'start_from_zero';
   const defaultStaff = isZeroMode ? 0 : 470;
 
   let currentMachines: MachineInstance[] = [...(calculatedResult?.machines || team.kpis?.machines || [])];

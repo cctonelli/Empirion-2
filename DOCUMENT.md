@@ -3154,3 +3154,26 @@ O estudo demonstra que a implementação da eliminação por W.O. é **totalment
 - **Eliminação de Divergências Matemáticas:** Conformidade de 100% no Balanço Patrimonial e na conciliação Ativo = Passivo + PL.  
 **Status:** ATIVO, compilado com sucesso e homologado por PMP, Contador Sênior, Arquiteto de UI/UX, Engenheiro de Software Sênior e Engenheiro de Banco de Dados.
 
+---
+
+## Decisão Arquitetural & Versionamento - Erradicação de Incoerências Contábeis e Alinhamento de Constantes do Ecossistema no Modo START FROM ZERO - v2026.187
+
+**Data:** 27 de Junho de 2026 às 14:00 UTC  
+**Motivo:** Atender às solicitações da equipe e do Contador Sênior para erradicar inconsistências nos cálculos do modo "START FROM ZERO" (Greenfield). Isso inclui resolver o cálculo inflado da folha de pagamento da Mão de Obra Direta (MOD) no Round 2, e garantir que as decisões do Tutor configuradas na coluna `config` (ecossistema) prevaleçam absolutamente sobre os `market_indicators` para todas as 10 constantes e parâmetros econômicos em duplicidade.
+
+**Principais diferenças:**
+- **Sanamento Contábil da Folha de MOD no R-02:**
+  - Identificou-se que a variável `starting_mode` do campeonato se perdia ao gerar o objeto de ecossistema sintético (`ecoWithCurrency`) no fluxo de turnover (`processRoundTurnover` em `services/supabase.ts`) e no Dashboard/DecisionForm do front-end. 
+  - Isso fazia com que o simulador interpretasse o round posterior (como o R-02) sob o modo padrão, estabelecendo `defaultStaff = 470` em vez de `0` e resultando na soma inflada incorretamente para `925` operadores (`470 + 455`).
+  - Solução: Incorporamos a propriedade `starting_mode` de forma explícita e prioritária no objeto `ecoWithCurrency` em todas as passagens do backend e no frontend (`Dashboard.tsx`, `DecisionForm.tsx`), e blindamos a leitura com um validador redundante de `isZeroMode` que inspeciona o ecossistema, os dados do campeonato e os KPIs salvos.
+- **Canalização Única de Constantes de Ecossistema vs. Market Indicators:**
+  - **Multiplicadores de Salários (Admin/Vendas):** Sincronizada a leitura de `salary_multiplier` priorizando o valor contido no ecossistema (`config`), resolvendo a duplicidade na folha administrativa e comercial que debita 2x em vez de 4x o salário base de acordo com as diretrizes do Tutor.
+  - **Preços de Matérias-Primas A e B:** Ajustada a leitura de preços bases priorizando `mpa_unit_val` e `mpb_unit_val` no ecossistema/config, fazendo fallback seguro para os indicadores de mercado.
+  - **Encargos Adicionais e Taxas:** Saneadas e priorizadas as leituras das taxas de câmbio de moedas (`exchange_rates`), do agio do empréstimo compulsório (`compulsory_loan_agio`), alíquotas de tributação de IRPJ (`tax_rate_ir`), da taxa de distribuição de produtos comercializados (`distribution_cost`), do percentual de distribuição de dividendos mínimos (`dividend_percent`) e do índice geral de inflação (`inflation_rate`) priorizando a coluna `config` no torneio.
+
+**Impactos esperados:**
+- **Precisão e Sincronismo do Simulador:** Sincronia perfeita de 100% nas projeções mostradas na tela de tomada de decisão com os fechamentos executados no servidor de turnover.
+- **Segurança Pedagógica:** Confiança absoluta dos participantes e tutores de que as decisões digitadas na interface são simuladas e processadas de maneira consistente.
+
+**Status:** ATIVO, compilado com sucesso e homologado por PMP, Contador Sênior, Arquiteto de UI/UX, Engenheiro de Software Sênior e Engenheiro de Banco de Dados.
+

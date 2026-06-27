@@ -871,7 +871,7 @@ export const processRoundTurnover = async (id: string, round: number, isTrial?: 
         for (const team of (teams || [])) {
             const finalDecision = marketDecisions[team.id];
             if (finalDecision) {
-                const ecoWithCurrency = { ...(champ.config || {}), currency: champ.currency } as EcosystemConfig;
+                const ecoWithCurrency = { starting_mode: champ.starting_mode, ...(champ.config || {}), currency: champ.currency } as EcosystemConfig;
                 const res = calculateProjections(finalDecision, champ.branch, ecoWithCurrency, indicatorsForRound, team, [], nextRound, champ.round_rules);
                 if (res && res.kpis) {
                     res.kpis.is_wo = team.kpis?.is_wo || false;
@@ -989,7 +989,7 @@ export const processRoundTurnover = async (id: string, round: number, isTrial?: 
             if (finalDecision) {
                 const teamCompDemands = { ...(competitiveDemandsPerTeamReg[team.id] || {}) };
                 const competitiveIndicators = { ...indicatorsForRound, avg_selling_price: avgPrice };
-                const ecoWithCurrency = { ...(champ.config || {}), currency: champ.currency } as EcosystemConfig;
+                const ecoWithCurrency = { starting_mode: champ.starting_mode, ...(champ.config || {}), currency: champ.currency } as EcosystemConfig;
                 
                 const prelimRes = calculateProjections(
                     finalDecision, 
@@ -1081,7 +1081,7 @@ export const processRoundTurnover = async (id: string, round: number, isTrial?: 
             if (finalDecision) {
                 const teamCompDemands = finalDemandsWithSpillover[team.id] || {};
                 const competitiveIndicators = { ...indicatorsForRound, avg_selling_price: avgPrice };
-                const ecoWithCurrency = { ...(champ.config || {}), currency: champ.currency } as EcosystemConfig;
+                const ecoWithCurrency = { starting_mode: champ.starting_mode, ...(champ.config || {}), currency: champ.currency } as EcosystemConfig;
                 const res = calculateProjections(
                     finalDecision, 
                     champ.branch, 

@@ -150,6 +150,14 @@ export const calculateProjections = (
         return sanitize(round_rules[currentRound].exchange_rates[normCurrency], 1.0);
       }
     }
+
+    // 1b. Tentar buscar no config/ecosystem do campeonato
+    const ecoExchangeRates = (ecosystem as any).exchange_rates || (ecosystem as any).config?.exchange_rates;
+    if (ecoExchangeRates) {
+      if (ecoExchangeRates[normCurrency] !== undefined) {
+        return sanitize(ecoExchangeRates[normCurrency], 1.0);
+      }
+    }
     
     // 2. Tentar buscar nos indicadores de mercado do round atual
     if (indicators && (indicators as any).exchange_rates && (indicators as any).exchange_rates[normCurrency] !== undefined) {
@@ -206,6 +214,14 @@ export const calculateProjections = (
         return sanitize(round_rules[prevRound].exchange_rates[normCurrency], 1.0);
       }
     }
+
+    // 1b. Tentar buscar no config/ecosystem do campeonato
+    const ecoExchangeRates = (ecosystem as any).exchange_rates || (ecosystem as any).config?.exchange_rates;
+    if (ecoExchangeRates) {
+      if (ecoExchangeRates[normCurrency] !== undefined) {
+        return sanitize(ecoExchangeRates[normCurrency], 1.0);
+      }
+    }
     
     // 2. Tentar buscar no Cronograma Industrial Padrão historizado
     const DEFAULT_CHRONO = DEFAULT_INDUSTRIAL_CHRONOGRAM as any;
@@ -222,14 +238,37 @@ export const calculateProjections = (
   };
 
   // Inflação geral afeta Manutenção e Despesas Fixas
-  const inflationMult = getAdjust('inflation_rate', sanitize(indicators.inflation_rate, 0));
+  const rawInflationRate = (ecosystem as any).inflation_rate !== undefined 
+    ? (ecosystem as any).inflation_rate 
+    : ((ecosystem as any).config?.inflation_rate !== undefined 
+       ? (ecosystem as any).config.inflation_rate 
+       : indicators.inflation_rate);
+  const inflationMult = getAdjust('inflation_rate', sanitize(rawInflationRate, 0));
   
   // Reajuste de MP é independente da inflação geral (conforme diretriz v18.8)
-  const mpaPrice = indicators.prices.mp_a * getAdjust('raw_material_a_adjust', sanitize(indicators.raw_material_a_adjust, 0));
-  const mpbPrice = indicators.prices.mp_b * getAdjust('raw_material_b_adjust', sanitize(indicators.raw_material_b_adjust, 0));
+  const baseMpaPrice = (ecosystem as any).mpa_unit_val !== undefined 
+    ? Number((ecosystem as any).mpa_unit_val) 
+    : ((ecosystem as any).config?.mpa_unit_val !== undefined 
+       ? Number((ecosystem as any).config.mpa_unit_val) 
+       : (indicators.prices?.mp_a || 40));
+  
+  const baseMpbPrice = (ecosystem as any).mpb_unit_val !== undefined 
+    ? Number((ecosystem as any).mpb_unit_val) 
+    : ((ecosystem as any).config?.mpb_unit_val !== undefined 
+       ? Number((ecosystem as any).config.mpb_unit_val) 
+       : (indicators.prices?.mp_b || 60));
+
+  const mpaPrice = baseMpaPrice * getAdjust('raw_material_a_adjust', sanitize(indicators.raw_material_a_adjust, 0));
+  const mpbPrice = baseMpbPrice * getAdjust('raw_material_b_adjust', sanitize(indicators.raw_material_b_adjust, 0));
   
   const vatPurchasesRate = sanitize(indicators.vat_purchases_rate, 0) / 100;
   const vatSalesRate = sanitize(indicators.vat_sales_rate, 0) / 100;
+
+  const compulsoryAgio = (ecosystem as any).compulsory_loan_agio !== undefined 
+    ? Number((ecosystem as any).compulsory_loan_agio) 
+    : ((ecosystem as any).config?.compulsory_loan_agio !== undefined 
+       ? Number((ecosystem as any).config.compulsory_loan_agio) 
+       : sanitize(indicators.compulsory_loan_agio, 3));
   
   // Preços LÍQUIDOS para estoque (conforme recomendação IVA: Estoque MP ← valor sem IVA)
   const netMpaPrice = mpaPrice * (1 - vatPurchasesRate);
@@ -352,7 +391,12 @@ export const calculateProjections = (
   // Regra do CPC 27 Fiduciária de Real Estate (Patrimonial) - Ajuste Recorrente de Depreciação:
   // - Prédio Próprio: Edifício deprecia a taxa parametrizável (property_depreciation_rate, padrão 4% ao ano). Terreno não deprecia.
   // - Instalações Industriais / Benfeitorias: Amortização/Depreciação de taxa parametrizável (buildingsDepRateAnnual, padrão 10% ao ano).
-  const isZeroModeLocal = (ecosystem as any).starting_mode === 'start_from_zero' || (ecosystem as any).config?.starting_mode === 'start_from_zero';
+  const isZeroModeLocal = 
+    (ecosystem as any).starting_mode === 'start_from_zero' || 
+    (ecosystem as any).config?.starting_mode === 'start_from_zero' ||
+    (team as any).starting_mode === 'start_from_zero' || 
+    (team as any).config?.starting_mode === 'start_from_zero' ||
+    (team as any).kpis?.starting_mode === 'start_from_zero';
   const defaultStaff = isZeroModeLocal ? 0 : 470;
   const buildMode = ecoConfig.building_mode ?? 'owned';
   
@@ -478,11 +522,17 @@ export const calculateProjections = (
   const staffAdmin = indicators.staffing?.admin?.count || 20;
   const staffSales = indicators.staffing?.sales?.count || 10;
   
-  const payrollAdm = staffAdmin * currentSalary * (indicators.staffing?.admin?.salaries || 4);
+  const salaryMult = (ecosystem as any).salary_multiplier !== undefined 
+    ? Number((ecosystem as any).salary_multiplier) 
+    : ((ecosystem as any).config?.salary_multiplier !== undefined 
+       ? Number((ecosystem as any).config.salary_multiplier) 
+       : (indicators.staffing?.admin?.salaries || 4));
+
+  const payrollAdm = staffAdmin * currentSalary * salaryMult;
   const socialChargesAdm = payrollAdm * (socialChargesAttr - 1);
   const totalPayrollAdm = payrollAdm + socialChargesAdm;
 
-  const payrollSales = staffSales * currentSalary * (indicators.staffing?.sales?.salaries || 4);
+  const payrollSales = staffSales * currentSalary * salaryMult;
   const socialChargesSales = payrollSales * (socialChargesAttr - 1);
   const totalPayrollSales = payrollSales + socialChargesSales;
 
@@ -850,7 +900,15 @@ export const calculateProjections = (
       (ecosystem as any)?.region_configs?.find((r: any) => r.id === regId) ||
       (ecosystem as any)?.regions?.[regId - 1] ||
       (ecosystem as any)?.region_configs?.[regId - 1];
-    const baseDistributionUnitCost = regConfig?.distribution_cost !== undefined ? Number(regConfig.distribution_cost) : (indicators.prices.distribution_unit || 50);
+    const globalDistributionCost = (ecosystem as any).distribution_cost !== undefined 
+      ? Number((ecosystem as any).distribution_cost) 
+      : ((ecosystem as any).config?.distribution_cost !== undefined 
+         ? Number((ecosystem as any).config.distribution_cost) 
+         : (indicators.prices?.distribution_unit || 50));
+
+    const baseDistributionUnitCost = regConfig?.distribution_cost !== undefined 
+      ? Number(regConfig.distribution_cost) 
+      : globalDistributionCost;
     const currencyCode = regConfig?.currency || 'BRL';
     const rate = getExchangeRate(currencyCode);
 
@@ -1018,7 +1076,7 @@ export const calculateProjections = (
       amort = loan.amount / loan.remaining_rounds;
     } else if (loan.type === 'compulsory') {
       amort = loan.amount; // Compulsório paga tudo no round seguinte
-      interest = loan.amount * (sanitize(indicators.interest_rate_tr, 2) / 100) + (loan.amount * (sanitize(indicators.compulsory_loan_agio, 3) / 100));
+      interest = loan.amount * (sanitize(indicators.interest_rate_tr, 2) / 100) + (loan.amount * (compulsoryAgio / 100));
     }
 
     totalInterestExp += interest;
@@ -1137,11 +1195,21 @@ export const calculateProjections = (
   const ppr = lair > 0 ? lair * pprRate : 0;
   const lairAfterPpr = lair - ppr;
 
-  const taxRate = (sanitize(indicators.tax_rate_ir, 25) / 100);
+  const rawTaxRate = (ecosystem as any).tax_rate_ir !== undefined 
+    ? (ecosystem as any).tax_rate_ir 
+    : ((ecosystem as any).config?.tax_rate_ir !== undefined 
+       ? (ecosystem as any).config.tax_rate_ir 
+       : indicators.tax_rate_ir);
+  const taxRate = (sanitize(rawTaxRate, 25) / 100);
   const taxProv = lairAfterPpr > 0 ? lairAfterPpr * taxRate : 0;
   const netProfit = lairAfterPpr - taxProv;
   
-  const dividendPercent = (sanitize(indicators.dividend_percent, 25) / 100);
+  const rawDividendPercent = (ecosystem as any).dividend_percent !== undefined
+    ? (ecosystem as any).dividend_percent
+    : ((ecosystem as any).config?.dividend_percent !== undefined
+       ? (ecosystem as any).config.dividend_percent
+       : indicators.dividend_percent);
+  const dividendPercent = (sanitize(rawDividendPercent, 25) / 100);
   const dividends = netProfit > 0 ? netProfit * dividendPercent : 0;
   
   // --- 4.6 MOTIVAÇÃO E CLIMA ORGANIZACIONAL (v19.5 SAPPHIRE) ---
@@ -1214,7 +1282,6 @@ export const calculateProjections = (
 
     // NOTA SÊNIOR: Adiciona o compulsório à nossa carteira corrente de empréstimos (currentLoans)
     // para que ele seja projetado, amortizado e auditado adequadamente nas telas e no próximo round do motor.
-    const compulsoryAgio = sanitize(indicators.compulsory_loan_agio, 3);
     const riskSpread = getSpreadByRating(team.kpis?.rating || 'B');
     const punitiveRate = sanitize(indicators.interest_rate_tr, 2) + compulsoryAgio + riskSpread + 5.0; // TR + agio + spread + 5% default penalty
 
