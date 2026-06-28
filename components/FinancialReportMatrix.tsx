@@ -561,7 +561,7 @@ const FinancialReportMatrix: React.FC<MatrixProps> = ({
       { id: "dividends", label: "Dividendos a Pagar" },
       { id: "ppr", label: "PPR a Pagar" },
       { id: "vat_payable", label: "IVA a Recolher" },
-      { id: "interests", label: "JUROS/SPREAD BANCÁRIO" },
+      { id: "interests", label: "Juros/Spread BANCÁRIO" },
     ];
 
     return (
@@ -656,7 +656,7 @@ const FinancialReportMatrix: React.FC<MatrixProps> = ({
         <tr className="bg-amber-500/10 font-black border-t border-white/10">
           <td
             colSpan={periods.length + 1}
-            className="p-2 text-amber-400 text-[9px] uppercase tracking-widest font-sans"
+            className="p-2 text-amber-400 text-[10px] uppercase tracking-widest font-sans"
           >
             Cronograma de Amortização de Financiamentos & Empréstimos
             (Amortization Schedule)
@@ -667,7 +667,7 @@ const FinancialReportMatrix: React.FC<MatrixProps> = ({
           <tr className="border-b border-white/5">
             <td
               colSpan={periods.length + 1}
-              className="p-3 text-center text-slate-500 text-[8px] uppercase tracking-wider font-sans"
+              className="p-3 text-center text-slate-500 text-[10px] uppercase tracking-wider font-sans"
             >
               Nenhuma dívida ou financiamento estruturado ativo no período
               atual.
@@ -678,7 +678,7 @@ const FinancialReportMatrix: React.FC<MatrixProps> = ({
             (loan: any, lIdx: number) => {
               const loanName =
                 loan.type === "bdi"
-                  ? "Financiamento Máquinas (BDI)"
+                  ? "Financiamentos via BDI"
                   : loan.type === "normal"
                     ? "Empréstimo Normal"
                     : "Empréstimo Compulsório";
@@ -692,7 +692,7 @@ const FinancialReportMatrix: React.FC<MatrixProps> = ({
                   <tr className="bg-slate-950/20 font-bold border-b border-white/5 hover:bg-white/[0.02] transition-colors">
                     <td className="p-1.5 pl-3 sticky left-0 bg-slate-900 border-r border-white/10 text-slate-200 text-[9px] uppercase tracking-wider font-sans">
                       {loanName}{" "}
-                      <span className="text-slate-500 text-[9px] font-mono">
+                      <span className="text-slate-500 text-[10px] font-mono">
                         [{loan.id?.slice(2, 7) || "REQ"}]
                       </span>
                     </td>
@@ -704,7 +704,7 @@ const FinancialReportMatrix: React.FC<MatrixProps> = ({
                       return (
                         <td
                           key={idx}
-                          className={`p-1.5 text-center font-mono text-[9px] ${p.isProjection ? "text-orange-400 font-bold bg-orange-500/5" : "text-slate-400"}`}
+                          className={`p-1.5 text-center font-mono text-[10px] ${p.isProjection ? "text-orange-400 font-bold bg-orange-500/5" : "text-slate-400"}`}
                         >
                           {bal > 0 ? formatCurrency(bal, currency) : "-"}
                         </td>
@@ -718,9 +718,9 @@ const FinancialReportMatrix: React.FC<MatrixProps> = ({
                         className="p-2 py-2.5 pl-5"
                       >
                         <div className="space-y-1 w-full">
-                          <span className="text-[7px] font-black tracking-widest text-slate-500 uppercase block font-sans">
-                            Próximos Fluxos Projetados (Amortização + Juros ao
-                            Período):
+                          <span className="text-[9px] font-black tracking-widest text-slate-500 uppercase block font-sans">
+                            Próximos Fluxos Projetados (Amortização + Juros por
+                            Round):
                           </span>
                           <div className="flex flex-wrap gap-2">
                             {sch.installments.map((inst: any, idx: number) => (
@@ -728,7 +728,7 @@ const FinancialReportMatrix: React.FC<MatrixProps> = ({
                                 key={idx}
                                 className="bg-slate-900/60 border border-white/5 p-2 rounded-lg text-left font-sans min-w-[145px]"
                               >
-                                <div className="text-slate-500 text-[9px] font-mono uppercase tracking-wider">
+                                <div className="text-slate-500 text-[10px] font-mono uppercase tracking-wider">
                                   Vencimento R-
                                   {String(
                                     (periods[periods.length - 1]?.round || 0) +
@@ -739,7 +739,7 @@ const FinancialReportMatrix: React.FC<MatrixProps> = ({
                                 <div className="text-orange-400 font-mono font-bold text-xs mt-0.5">
                                   {formatCurrency(inst.total, currency)}
                                 </div>
-                                <div className="text-[9px] text-slate-400 leading-normal mt-1 font-mono space-y-0.5">
+                                <div className="text-[10px] text-slate-400 leading-normal mt-1 font-mono space-y-0.5">
                                   <div>
                                     Amort:{" "}
                                     <span className="text-slate-300 font-semibold">
@@ -767,7 +767,7 @@ const FinancialReportMatrix: React.FC<MatrixProps> = ({
         )}
         <tr className="bg-rose-500/5 border-b border-white/5">
           <td colSpan={periods.length + 1} className="p-2.5 pl-3">
-            <span className="text-[8px] text-rose-300 italic flex items-center gap-1.5 font-sans leading-normal">
+            <span className="text-[10px] text-rose-300 italic flex items-center gap-1.5 font-sans leading-normal">
               <span className="w-1.5 h-1.5 rounded-full bg-rose-500 shrink-0" />
               <strong>Sinal de Governança E-SDS:</strong> Toda captação reduz o
               pilar de Alavancagem Operacional do E-SDS. A manutenção de níveis

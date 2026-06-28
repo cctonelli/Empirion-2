@@ -843,6 +843,12 @@ export const MarketingStep: React.FC<MarketingStepProps> = ({
                   </span>
                 </div>
                 <div className="flex justify-between text-[10px] text-slate-500 uppercase tracking-wide font-mono leading-none">
+                  <span>Sales Volume:</span>
+                  <span className="text-slate-300 font-bold">
+                    {stats.activeTeamUnitsSold.toLocaleString("pt-BR")} un
+                  </span>
+                </div>
+                <div className="flex justify-between text-[10px] text-slate-500 uppercase tracking-wide font-mono leading-none">
                   <span>Market Demand:</span>
                   <span className="text-slate-300 font-semibold">
                     {demandWeight.toLocaleString("pt-BR", {
@@ -850,12 +856,6 @@ export const MarketingStep: React.FC<MarketingStepProps> = ({
                       maximumFractionDigits: 1,
                     })}
                     %
-                  </span>
-                </div>
-                <div className="flex justify-between text-[10px] text-slate-500 uppercase tracking-wide font-mono leading-none">
-                  <span>Sales Volume:</span>
-                  <span className="text-slate-300 font-bold">
-                    {stats.activeTeamUnitsSold.toLocaleString("pt-BR")} un
                   </span>
                 </div>
                 <div className="flex justify-between text-[10px] text-slate-500 uppercase tracking-wide font-mono leading-none">

@@ -2,10 +2,44 @@
  
 ## 📋 Controle de Governança
 - **Produto:** EMPIRION ORACLE
-- **Versão Ativa:** v2026.186 Erradicação de Duplicidades e Otimização de Carga Útil no Config
+- **Versão Ativa:** v2026.187 Harmonização e Saneamento Estrutural de Parâmetros de Simulação (Config vs. General Settings)
 - **Tipo de Documento:** Master Index & Diretrizes de Engenharia Contínua
 - **Status da Documentação:** Sincronizado com o PRD.md, BUSINESS_RULES.md & ROADMAP.md
  
+---
+
+## Decisão Arquitetural: Harmonização e Saneamento Estrutural de Parâmetros de Simulação (Config vs. General Settings) - v2026.187
+
+**Data:** 28 de Junho de 2026 às 16:50 UTC  
+**Motivo:** Erradicação definitiva de duplicidades, ambiguidades e dispersão de constantes entre os campos `config` (JSONB) e `general_settings` (JSONB, antigo `market_indicators`) nas tabelas `trial_championships` e `championships` no Supabase, com foco estrito no modo de partida "START FROM ZERO" (Greenfield). Essa consolidação resolve discrepâncias fiduciárias, unifica nomes de propriedades e define fronteiras rígidas entre o que é um parâmetro inicial estático e o que é uma variável conjuntural de rodada (cronograma).
+
+**Detalhamento Técnico de Planejamento e Modificações:**
+- **Consolidação de Constantes Estáticas / Imutáveis (Destino: `general_settings`)**:
+  - Parâmetros físicos e contábeis de fundação e infraestrutura industrial foram centralizados estritamente em `general_settings`, removendo fallbacks ou duplicidades em `config`:
+    - `land_value` (Terrenos), `building_value` (Prédios), `building_age` (Idade do Edifício), `building_mode` (owned/rented), `starting_mode` (Modo de Partida).
+    - `dividend_percent` (Percentual de Distribuição de Lucros - fixado em 20%).
+    - `buildings_depreciation_rate`, `machines_depreciation_rate` e `property_depreciation_rate` (Taxas Contábeis fixadas em 5% a.a.).
+    - `installations_value` (Instalações Admin/Vendas) e `monthly_rent_value` (Locação do Imóvel).
+    - `rent_allocation_productive` (70%), `rent_allocation_administrative` (20%) e `rent_allocation_sales` (10%) (Centro de Custos de Aluguel).
+    - `real_estate_acquisition_funding` (Método de Funding Imobiliário).
+- **Canalização de Variáveis Dinâmicas de Rodada (Destino Exclusivo: `config.round_rules`)**:
+  - Indicadores regulatórios, fiscais e conjunturais que variam de round a round conforme definições do Tutor foram expurgados de `general_settings` e movidos exclusivamente para o cronograma (`config.round_rules`):
+    - `ice` (Clima Empresarial), `tax_rate_ir` (Imposto de Renda), `exchange_rates` (Câmbio), `inflation_rate` (Inflação), `social_charges` (Encargos Sociais), `vat_sales_rate` / `vat_purchases_rate` (Alíquota do IVA).
+    - `demand_variation` (TAM), `interest_rate_tr` (Taxa TR), `allow_machine_sale` (Venda de Ativos), `avg_selling_price` (Preço de Venda Geral).
+    - `compulsory_loan_agio` (Compulsórios), `customer_default_rate` (Inadimplência), `distribution_cost_adjust` (Logística), `import_tariff_...` (Tarifas Alfandegárias).
+    - `late_penalty_rate` (Multas), `machine_..._price_adjust` (Ajuste de Máquinas), `machine_sale_discount` (Desconto de Vendas).
+    - `marketing_campaign_adjust` (Ajuste de Marketing), `raw_material_a_adjust` / `raw_material_b_adjust` (Reajuste de Insumos), `require_business_plan` (Plano Obrigatório).
+    - `special_purchase_premium` (Ágio de Emergência), `storage_cost_adjust` (Ajuste de Estocagem), `supplier_interest` (Juros de Fornecedores).
+- **Saneamento e Padronização de Colisões de Chaves**:
+  - **Insumos / Matérias-Primas:** Removem-se as chaves duplicadas `mp_a` e `mp_b` do nó `prices`. Padronizam-se as constantes iniciais de insumos como `mpa_unit_val` e `mpb_unit_val` em `general_settings`, servindo como baseline limpo para o Round 0.
+  - **Marketing Comercial:** O campo `marketing_campaign` (10000.0) de fallbacks genéricos foi removido do nó `prices`. Toda a inteligência comercial de campanhas de publicidade passa a herdar estritamente o `marketing_cost` parametrizado por região (dentro de `general_settings.regions`), viabilizando multimoedas regionais coerentes com o cenário do Tutor.
+  - **Headcount e Salários (Workforce):** O objeto duplicado `staffing` e as referências ao multiplicador de salários sob a chave `"salaries": 4` foram eliminados de `general_settings`. Unificou-se toda a parametrização fiduciária de RH sob o nó plano `general_settings.workforce` com as chaves: `"baseSalary": 3000`, `"salary_multiplier": 2`, `"admin_count": 5`, `"sales_count": 15`, `"max_shifts": 3` e `"production_hours_period": 160`, eliminando ambiguidades e conflitos de dados.
+  - **Frota Industrial (Máquinas):** Eliminou-se o dicionário duplicado `machinery_values`. As cotações de imobilizados de máquinas e suas especificações técnicas passam a constar exclusivamente sob o nó unificado `general_settings.machine_specs`.
+  - **Taxas de Depreciação e Vida Útil (CPC 27):** Resolveu-se o descompasso onde `"depreciation_rate": 0.1` de `machine_specs` assumia 10 anos de vida útil. Ajustaram-se as especificações para `"depreciation_rate": 0.05` e `"useful_life_years": 20`, correspondendo com fidelidade de 100% à taxa contábil canônica `"machines_depreciation_rate": 5` (5% ao ano) e expurgando as diferenças patrimoniais na simulação.
+  - **Remoção de Cálculos Voláteis:** O campo `"investment_return_rate": 1` foi totalmente removido dos registros estáticos de configuração por se tratar de uma apuração em tempo de simulação.
+
+**Status atual:** v2026.187 - Documentação Ativa de Decisão de Governança. Planejamento Concluído e Sincronizado para Implementação de Refatoração no Wizard e no Engine.
+
 ---
 
 ## Decisão Arquitetural: Erradicação de Duplicidades e Otimização de Carga Útil no Config - v2026.186

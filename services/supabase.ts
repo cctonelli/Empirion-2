@@ -665,6 +665,17 @@ export const processRoundTurnover = async (id: string, round: number, isTrial?: 
                              champ.config?.DEFAULT_INDUSTRIAL_CHRONOGRAM?.[nextRound] || 
                              DEFAULT_INDUSTRIAL_CHRONOGRAM[nextRound] || 
                              champ.general_settings || {};
+
+        // Unificação Polimórfica e Higienização de Parâmetros de general_settings conforme orientações do PO
+        const rawGen = champ.general_settings || {};
+        
+        // 1. Unificação de preços MP_A e MP_B
+        const ecoMpaVal = rawGen.mpa_unit_val ?? rawGen.prices?.mpa_unit_val ?? rawGen.prices?.mp_a;
+        const ecoMpbVal = rawGen.mpb_unit_val ?? rawGen.prices?.mpb_unit_val ?? rawGen.prices?.mp_b;
+        
+        // 2. Unificação de salário base
+        const ecoBaseSalary = rawGen.workforce?.base_salary ?? rawGen.workforce?.baseSalary ?? rawGen.hr_base?.salary;
+
         const indicatorsForRound = {
             ...DEFAULT_MACRO,
             ...(champ.general_settings || {}),
@@ -672,7 +683,15 @@ export const processRoundTurnover = async (id: string, round: number, isTrial?: 
             prices: {
                 ...DEFAULT_MACRO.prices,
                 ...(champ.general_settings?.prices || {}),
+                ...(ecoMpaVal !== undefined ? { mp_a: Number(ecoMpaVal) } : {}),
+                ...(ecoMpbVal !== undefined ? { mp_b: Number(ecoMpbVal) } : {}),
                 ...(currentRules.prices || {})
+            },
+            hr_base: {
+                ...DEFAULT_MACRO.hr_base,
+                ...(champ.general_settings?.hr_base || {}),
+                ...(ecoBaseSalary !== undefined ? { salary: Number(ecoBaseSalary) } : {}),
+                ...(currentRules.hr_base || {})
             },
             exchange_rates: {
                 ...DEFAULT_MACRO.exchange_rates,
