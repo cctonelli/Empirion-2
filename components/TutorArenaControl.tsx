@@ -126,12 +126,12 @@ const TutorArenaControl: React.FC<{ championship: Championship; onUpdate: (confi
     setMacro(inheritedRules);
     setObserversList(currentChampionship.observers || []);
 
-    const list = currentChampionship.round_rules?.[nextRoundIdx]?.regions || 
+    const list = currentChampionship.config?.regions || 
+                 currentChampionship.config?.region_configs || 
+                 currentChampionship.round_rules?.[nextRoundIdx]?.regions || 
                  currentChampionship.round_rules?.[nextRoundIdx]?.region_configs ||
                  currentChampionship.config?.round_rules?.[nextRoundIdx]?.regions ||
                  currentChampionship.config?.round_rules?.[nextRoundIdx]?.region_configs ||
-                 currentChampionship.config?.regions || 
-                 currentChampionship.config?.region_configs || 
                  currentChampionship.region_configs || [];
     if (list.length > 0) {
        setRegionsList(list);
@@ -145,9 +145,9 @@ const TutorArenaControl: React.FC<{ championship: Championship; onUpdate: (confi
     }
 
     const checkDecisions = async () => {
-        const table = currentChampionship.is_trial ? 'trial_decisions' : 'current_decisions';
-        const { count } = await supabase.from(table).select('*', { count: 'exact', head: true }).eq('championship_id', currentChampionship.id).eq('round', nextRoundIdx);
-        setHasDecisions((count || 0) > 0);
+         const table = currentChampionship.is_trial ? 'trial_decisions' : 'current_decisions';
+         const { count } = await supabase.from(table).select('*', { count: 'exact', head: true }).eq('championship_id', currentChampionship.id).eq('round', nextRoundIdx);
+         setHasDecisions((count || 0) > 0);
     };
     checkDecisions();
   }, [inheritedRules, currentChampionship.id, nextRoundIdx, currentChampionship.observers]);
@@ -166,7 +166,7 @@ const TutorArenaControl: React.FC<{ championship: Championship; onUpdate: (confi
       suggested_price: newRegionSuggestedPrice,
       distribution_cost: newRegionDistributionCost,
       marketing_cost: newRegionMarketingCost,
-      start_round: nextRoundIdx
+      start_round: nextRoundIdx + 1 // Vigorará na próxima rodada após TURNOVER do round atual sob intervenção
     };
     setRegionsList([...regionsList, newReg]);
     setNewRegionName('');
@@ -178,7 +178,7 @@ const TutorArenaControl: React.FC<{ championship: Championship; onUpdate: (confi
 
   const handleDeleteRegion = (id: number) => {
     if (regionsList.length <= 1) {
-      alert("A arena de torneio precisa reter no mínimo 1 região comercial ativa.");
+      alert("A arena de torneio precisa reter no mínimo 1 região comercial activa.");
       return;
     }
     const targetReg = regionsList.find(r => r.id === id);
@@ -207,27 +207,30 @@ const TutorArenaControl: React.FC<{ championship: Championship; onUpdate: (confi
       }
     };
 
+    const finalRegionsMapped = regionsList.map(r => ({
+      id: r.id,
+      name: r.name,
+      currency: r.currency,
+      demand_weight: r.demand_weight,
+      suggested_price: r.suggested_price,
+      distribution_cost: r.distribution_cost,
+      marketing_cost: r.marketing_cost,
+      start_round: r.start_round || 1
+    }));
+
     const payload = { 
       observers: observersList,
       config: {
         ...(currentChampionship.config || {}),
-        // Removida a sobreposição imediata de regions e region_configs na raiz do config global
-        // para impedir vazamento (leak) de pesos e novas regiões para o round em andamento (R-1) das equipes.
+        regions: regionsList,
+        region_configs: finalRegionsMapped
       },
       round_rules: {
         ...(currentChampionship.round_rules || {}),
         [nextRoundIdx]: {
            ...finalMacro,
            regions: regionsList,
-           region_configs: regionsList.map(r => ({
-              id: r.id,
-              name: r.name,
-              currency: r.currency,
-              demand_weight: r.demand_weight,
-              suggested_price: r.suggested_price,
-              distribution_cost: r.distribution_cost,
-              marketing_cost: r.marketing_cost
-           }))
+           region_configs: finalRegionsMapped
         }
       }
     };
@@ -242,7 +245,7 @@ const TutorArenaControl: React.FC<{ championship: Championship; onUpdate: (confi
         ...payload
       }));
       
-      alert(`CONEXÃO ESTABELECIDA: Alterações no mercado e regiões do R-${nextRoundIdx} propagadas com sucesso.`);
+      alert(`CONEXÃO ESTABELECIDA: Alterações no mercado e regiões do R-${nextRoundIdx} propagadas com sucesso. Novas regiões criadas ficarão disponíveis para as equipes no R-${nextRoundIdx + 1}.`);
     } catch (err: any) {
       alert(`Falha no salvamento: ${err.message}`);
     } finally {
@@ -279,34 +282,12 @@ const TutorArenaControl: React.FC<{ championship: Championship; onUpdate: (confi
              </div>
              <h2 className="text-3xl font-black text-white italic tracking-tight">{currentChampionship.name}</h2>
              <p className="text-xs text-slate-400 font-medium">Configure os indexadores macroeconômicos e simulações para o <strong className="text-orange-500 font-black">Round {nextRoundIdx}</strong>.</p>
-             <div className="flex flex-wrap items-center gap-4 mt-2">
-                <span className="text-xs text-slate-400 font-medium">Selecione a rodada para intervenção:</span>
-                <select 
-                   value={nextRoundIdx} 
-                   onChange={e => setNextRoundIdx(Number(e.target.value))} 
-                   className="bg-slate-950 border border-white/10 rounded-xl px-3 py-1.5 text-xs text-white font-black focus:border-orange-500 outline-none cursor-pointer"
-                >
-                   {Array.from({ length: (currentChampionship.total_rounds || 6) }).map((_, idx) => {
-                      const rNum = idx + 1;
-                      return (
-                         <option key={rNum} value={rNum}>
-                            Round {rNum} {rNum === (currentChampionship.current_round || 0) + 1 ? '(Ativo/Em Decisão)' : rNum <= (currentChampionship.current_round || 0) ? '(Concluído)' : '(Futuro)'}
-                         </option>
-                      );
-                   })}
-                </select>
+             <div className="flex items-center gap-2 mt-2">
+                <span className="text-xs text-slate-400 font-medium">Rodada sob Intervenção Ativa:</span>
+                <span className="bg-orange-500/10 border border-orange-500/30 px-3 py-1.5 rounded-xl text-xs text-orange-400 font-black">
+                   Round {nextRoundIdx} (Ativo/Em Decisão)
+                </span>
              </div>
-          </div>
-          <div className="flex items-center gap-4">
-             <ChampionshipTimer 
-                roundStartedAt={currentChampionship.round_started_at}
-                deadlineValue={currentChampionship.deadline_value}
-                deadlineUnit={currentChampionship.deadline_unit}
-                createdAt={currentChampionship.created_at}
-                isPaused={currentChampionship.config?.is_paused}
-                remainingMsAtPause={currentChampionship.config?.remaining_ms_at_pause}
-                isTournamentFinished={(currentChampionship as any).status === 'finished'}
-             />
           </div>
        </div>
 
@@ -435,6 +416,15 @@ const TutorArenaControl: React.FC<{ championship: Championship; onUpdate: (confi
                                      <div>
                                         <span className="text-[9px] font-bold text-slate-500 block">ID: {r.id}</span>
                                         <span className="text-sm font-black text-white">{r.name}</span>
+                                        {r.start_round && r.start_round > nextRoundIdx ? (
+                                           <span className="mt-1 px-1.5 py-0.5 bg-amber-500/15 border border-amber-500/35 text-[8px] font-black uppercase rounded-lg text-amber-400 block w-max tracking-wide">
+                                              Agenda: R-{r.start_round}
+                                           </span>
+                                        ) : (
+                                           <span className="mt-1 px-1.5 py-0.5 bg-emerald-500/15 border border-emerald-500/35 text-[8px] font-black uppercase rounded-lg text-emerald-400 block w-max tracking-wide">
+                                              Ativa no R-{nextRoundIdx}
+                                           </span>
+                                        )}
                                      </div>
                                   </div>
                                   <div className="flex items-center gap-2">

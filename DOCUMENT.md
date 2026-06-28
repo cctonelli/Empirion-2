@@ -2,10 +2,35 @@
  
 ## 📋 Controle de Governança
 - **Produto:** EMPIRION ORACLE
-- **Versão Ativa:** v2026.187 Harmonização e Saneamento Estrutural de Parâmetros de Simulação (Config vs. General Settings)
+- **Versão Ativa:** v2026.188 Saneamento do Painel de Intervenção e Persistência de Regiões Comerciais (TutorArenaControl)
 - **Tipo de Documento:** Master Index & Diretrizes de Engenharia Contínua
 - **Status da Documentação:** Sincronizado com o PRD.md, BUSINESS_RULES.md & ROADMAP.md
  
+---
+
+## Decisão Arquitetural: Saneamento do Painel de Intervenção e Persistência de Regiões Comerciais - v2026.188
+
+**Data:** 28 de Junho de 2026 às 17:15 UTC  
+**Motivo:** Erradicação de duplicidades visuais, simplificação do canal de Intervenção do Tutor e correção fiduciária no fluxo de gravação e propagação de novas regiões comerciais criadas em tempo de torneio.
+
+**Detalhamento Técnico de Planejamento e Modificações:**
+- **Remoção do Dropdown de Seleção de Rodadas:**
+  - O seletor de rodadas foi eliminado do cabeçalho de intervenção. Agora, a rodada sob intervenção é travada dinamicamente na rodada ativa e em decisão das equipes, prevenindo intervenções inválidas sobre rodadas passadas ou futuras distantes.
+- **Remoção de Timer Duplicado:**
+  - Eliminado o componente `<ChampionshipTimer>` da tela de intervenção do Tutor para manter a interface limpa e focada.
+- **Sincronização e Gravação de Regiões Comerciais:**
+  - As novas regiões comerciais adicionadas pelo Tutor ganham o campo `start_round: nextRoundIdx + 1` (rodada seguinte à sob intervenção).
+  - O mapeamento de persistência de `handleSave` no `TutorArenaControl` foi corrigido para incluir explicitamente o campo `start_round` no payload das regiões, tanto na raiz de `config` (`regions` e `region_configs`) quanto no nó cronológico `round_rules?.[nextRoundIdx]`.
+  - Isso garante que a região seja gravada de forma permanente no banco de dados e as equipes a enxerguem de forma automática e reativa somente a partir da rodada designada, graças à filtragem existente no Cockpit das Equipes (`!r.start_round || r.start_round <= round`).
+- **Filtragem Fiduciária no Processamento de Turnover:**
+  - O motor de turnover (`processRoundTurnover` em `/services/supabase.ts`) foi atualizado para carregar de forma unificada as regiões ativas no round (`activeRegionConfigs`), filtrando stritamente por `start_round <= nextRound`.
+  - Esta lista limpa e filtrada de regiões é usada para:
+    1. Inicializar as decisões de equipes humanas que não enviaram decisões no prazo (garantindo que decisões automáticas contenham exclusivamente as regiões ativas no round).
+    2. Dimensionar o número exato de regiões repassadas ao modelo de Inteligência Artificial (`generateBotDecision`) para a tomada de decisão dos bots.
+    3. Travar e calcular o Market Share e demanda no modelo concorrencial multirregional de forma totalmente sintonizada.
+- **Sinalização Visual no Painel do Tutor:**
+  - Incluído um indicador visual (badge colorido) nas regiões exibidas para o Tutor. Regiões agendadas exibem "Agenda: R-X" em cor amarela, enquanto regiões vigentes exibem "Ativa no R-Y" em cor esmeralda, fornecendo máxima segurança visual ao Tutor.
+
 ---
 
 ## Decisão Arquitetural: Harmonização e Saneamento Estrutural de Parâmetros de Simulação (Config vs. General Settings) - v2026.187

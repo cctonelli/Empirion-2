@@ -705,6 +705,27 @@ export const processRoundTurnover = async (id: string, round: number, isTrial?: 
             }
         };
 
+        // v2026.188: Definição fiduciária unificada de regiões ativas na rodada sob Turnover
+        let activeRegionConfigs: any[] = champ.round_rules?.[nextRound]?.regions || 
+                                         champ.round_rules?.[nextRound]?.region_configs || 
+                                         champ.config?.regions || 
+                                         champ.config?.region_configs || 
+                                         champ.region_configs || [];
+        if (!activeRegionConfigs || activeRegionConfigs.length === 0) {
+            const regCount = champ.regions_count || 1;
+            activeRegionConfigs = Array.from({ length: regCount }, (_, i) => ({
+                id: i + 1,
+                name: `Região ${i + 1}`,
+                currency: 'BRL',
+                demand_weight: 100 / regCount,
+                suggested_price: indicatorsForRound.avg_selling_price || 425,
+                distribution_cost: 50,
+                marketing_cost: 10000
+            }));
+        }
+        // Filtrar apenas as regiões vigentes na rodada correspondente (nextRound)
+        activeRegionConfigs = activeRegionConfigs.filter((r: any) => !r.start_round || r.start_round <= nextRound);
+
         const teamResults: any[] = [];
         const marketDecisions: Record<string, any> = {};
 
@@ -795,14 +816,11 @@ export const processRoundTurnover = async (id: string, round: number, isTrial?: 
 
                   if (!baseDecisions) {
                     const initialRegions: any = {};
-                    const regionsCount = champ.regions_count || 1;
-                    const regionConfigsList = champ.config?.regions || champ.config?.region_configs || champ.region_configs || [];
-                    
-                    for (let i = 1; i <= regionsCount; i++) {
-                      const regionConf = regionConfigsList.find((r: any) => r.id === i) || regionConfigsList[i - 1];
+                    activeRegionConfigs.forEach((regionConf: any) => {
+                      const rId = regionConf.id;
                       const defaultSugPrice = regionConf?.suggested_price !== undefined ? Number(regionConf.suggested_price) : 425;
-                      initialRegions[i] = { price: defaultSugPrice, term: 0, marketing: 0 };
-                    }
+                      initialRegions[rId] = { price: defaultSugPrice, term: 0, marketing: 0 };
+                    });
 
                     baseDecisions = {
                       judicial_recovery: false,
@@ -857,7 +875,7 @@ export const processRoundTurnover = async (id: string, round: number, isTrial?: 
               finalDecision = await generateBotDecision(
                 champ.branch, 
                 nextRound, 
-                champ.regions_count, 
+                activeRegionConfigs.length, 
                 indicatorsForRound, 
                 team.name, 
                 team.strategic_profile,
@@ -887,24 +905,8 @@ export const processRoundTurnover = async (id: string, round: number, isTrial?: 
         const avgMarketing = validDecisions.length > 0 ? totalMarketing / validDecisions.length : 0;
 
         // --- MODELO CONCORRENCIAL MULTIRREGIONAL DE MARKET SHARE (v19.5 Sapphire) ---
-        // 2.1 Configuração de Regiões do Campeonato
-        let regionConfigs: RegionConfig[] = champ.round_rules?.[nextRound]?.regions || 
-                                            champ.round_rules?.[nextRound]?.region_configs || 
-                                            champ.config?.regions || 
-                                            champ.config?.region_configs || 
-                                            champ.region_configs || [];
-        if (!regionConfigs || regionConfigs.length === 0) {
-            const regCount = champ.regions_count || 1;
-            regionConfigs = Array.from({ length: regCount }, (_, i) => ({
-                id: i + 1,
-                name: `Região ${i + 1}`,
-                currency: 'BRL' as CurrencyType,
-                demand_weight: 100 / regCount,
-                suggested_price: indicatorsForRound.avg_selling_price || 425,
-                distribution_cost: 50,
-                marketing_cost: 10000
-            }));
-        }
+        // 2.1 Configuração de Regiões do Campeonato (Alinhado com as regiões ativas na rodada)
+        const regionConfigs: RegionConfig[] = activeRegionConfigs;
 
         // 2.2 Passo Inicial (Standalone): Coletar Capacidades e Scores Competitivos Regionais de cada Equipe
         const teamCapacities: Record<string, number> = {};
