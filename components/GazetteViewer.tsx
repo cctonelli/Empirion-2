@@ -84,7 +84,17 @@ const GazetteViewer: React.FC<GazetteViewerProps> = ({ arena, aiNews, round, act
   // Captura dos parâmetros macroeconômicos dinâmicos do round
   const currentMacro = useMemo((): MacroIndicators => {
     const rules = arena.round_rules?.[round] || DEFAULT_INDUSTRIAL_CHRONOGRAM[round] || {};
-    return { ...DEFAULT_MACRO, ...arena.general_settings, ...rules } as MacroIndicators;
+    const baseSettings = arena.general_settings || {};
+    const maxShifts = rules.max_shifts ?? rules.workforce?.max_shifts ?? baseSettings.max_shifts ?? baseSettings.workforce?.max_shifts ?? DEFAULT_MACRO.max_shifts;
+    const prodHours = rules.production_hours_period ?? rules.workforce?.production_hours_period ?? baseSettings.production_hours_period ?? baseSettings.workforce?.production_hours_period ?? DEFAULT_MACRO.production_hours_period;
+    
+    return { 
+      ...DEFAULT_MACRO, 
+      ...baseSettings, 
+      ...rules,
+      max_shifts: Number(maxShifts),
+      production_hours_period: Number(prodHours)
+    } as MacroIndicators;
   }, [arena, round]);
 
   const chronogramHistory = useMemo(() => {
@@ -92,7 +102,17 @@ const GazetteViewer: React.FC<GazetteViewerProps> = ({ arena, aiNews, round, act
     const totalMax = 12;
     for (let r = 0; r <= totalMax; r++) {
       const rules = arena.round_rules?.[r] || DEFAULT_INDUSTRIAL_CHRONOGRAM[r] || {};
-      const activeMacro = { ...DEFAULT_MACRO, ...arena.general_settings, ...rules };
+      const baseSettings = arena.general_settings || {};
+      const maxShifts = rules.max_shifts ?? rules.workforce?.max_shifts ?? baseSettings.max_shifts ?? baseSettings.workforce?.max_shifts ?? DEFAULT_MACRO.max_shifts;
+      const prodHours = rules.production_hours_period ?? rules.workforce?.production_hours_period ?? baseSettings.production_hours_period ?? baseSettings.workforce?.production_hours_period ?? DEFAULT_MACRO.production_hours_period;
+      
+      const activeMacro = { 
+        ...DEFAULT_MACRO, 
+        ...baseSettings, 
+        ...rules,
+        max_shifts: Number(maxShifts),
+        production_hours_period: Number(prodHours)
+      };
       list.push({
         round: r,
         BRL: activeMacro.BRL ?? 1.0,

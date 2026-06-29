@@ -530,9 +530,13 @@ export const calculateProjections = (
   
   const salaryMult = (ecosystem as any).salary_multiplier !== undefined 
     ? Number((ecosystem as any).salary_multiplier) 
-    : ((ecosystem as any).config?.salary_multiplier !== undefined 
-       ? Number((ecosystem as any).config.salary_multiplier) 
-       : (indicators.staffing?.admin?.salaries || 4));
+    : ((ecosystem as any).workforce?.salary_multiplier !== undefined
+       ? Number((ecosystem as any).workforce.salary_multiplier)
+       : ((ecosystem as any).config?.salary_multiplier !== undefined 
+          ? Number((ecosystem as any).config.salary_multiplier) 
+          : ((ecosystem as any).config?.workforce?.salary_multiplier !== undefined
+             ? Number((ecosystem as any).config.workforce.salary_multiplier)
+             : (indicators.staffing?.admin?.salaries || 4))));
 
   const payrollAdm = staffAdmin * currentSalary * salaryMult;
   const socialChargesAdm = payrollAdm * (socialChargesAttr - 1);

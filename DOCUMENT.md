@@ -2,10 +2,55 @@
  
 ## 📋 Controle de Governança
 -- **Produto:** EMPIRION ORACLE
-- **Versão Ativa:** v2026.197 Higienização e Unificação Fiduciária de Colunas Redundantes
+- **Versão Ativa:** v2026.200 Unificação e Centralização Soberana de general_settings (Eliminação Absoluta de Concorrência de Dados)
 - **Tipo de Documento:** Master Index & Diretrizes de Engenharia Contínua
 - **Status da Documentação:** Sincronizado com o PRD.md, BUSINESS_RULES.md & ROADMAP.md
  
+---
+
+## Decisão Arquitetural: Unificação e Centralização Soberana de general_settings (Eliminação Absoluta de Concorrência de Dados) - v2026.200
+
+**Data:** 29 de Junho de 2026 às 18:50 UTC  
+**Motivo:** Extinguir a concorrência de dados entre os campos `config` e `general_settings` nas tabelas de campeonatos do simulador (`trial_championships` e `championships`). Parâmetros estruturais definidos pelo Tutor no cadastro (como limites de máquinas, regiões, dados do Round Zero e de RH) residiam duplicados em formatos concorrentes (ex: `config.machines` vs `general_settings.machine_specs` ou `config.workforce` vs `general_settings.workforce`), fazendo com que fallbacks estáticos legacy interferissem nos cálculos econômicos.
+
+**Detalhamento Técnico de Planejamento e Modificações:**
+- **Centralização Fiduciária no Mapeador Sintético (`services/supabase.ts`)**:
+  - Reestruturamos profundamente o método `mapChampionshipSynthetically` para fundir polimorficamente todas as chaves de dados do Round Zero de `config` diretamente para dentro de `general_settings`. Isso garante que `general_settings` seja o contêiner 100% soberano e canônico de parâmetros macroeconômicos e operacionais do torneio.
+- **Unificação Resiliente de Máquinas e RH (`machine_specs` e `workforce`)**:
+  - **Sincronização de Máquinas**: Desenvolvemos um processador inteligente no mapeador que converte o array `config.machines` do Tutor para o objeto estruturado `general_settings.machine_specs`, injetando de forma fidedigna as variáveis de preços, capacidades, custos de instalação e eficiência, e associando-as aos operadores necessários correspondentes (`operatorsPerAlpha`, `operatorsPerBeta`, `operatorsPerGamma`).
+  - **Sincronização de RH**: Realizamos a mescla profunda e bidirecional de chaves como `trainingLevel`/`training_level`, `baseSalary`/`base_salary`, `max_shifts`, `admin_count`, `sales_count` e `salary_multiplier` no subobjeto `general_settings.workforce`, extinguindo qualquer margem para fallbacks incorretos.
+
+---
+
+## Decisão Arquitetural: Sincronização Polimórfica e Resiliência Adaptativa dos Multiplicadores e Headcounts de Staffing (salary_multiplier) - v2026.199
+
+**Data:** 29 de Junho de 2026 às 16:30 UTC  
+**Motivo:** Corrigir a leitura, propagação e exibição de headcounts (`admin_count`, `sales_count`) e do multiplicador fiduciário de salário-base (`salary_multiplier`) parametrizados pelo Tutor. Anteriormente, embora o Tutor especificasse `salary_multiplier = 2` e headcounts específicos em seu contêiner `config.workforce`, os componentes de projeção de Recursos Humanos (`HRStep.tsx`) e do processamento de turnover no back-end herdavam fallbacks estáticos de `4x` para salários e contagens genéricas (20 admins e 10 vendedores), provocando divergências graves entre as decisões das equipes e o painel fiduciário de custos.
+
+**Detalhamento Técnico de Planejamento e Modificações:**
+- **Mapeador Sintético no Supabase (`services/supabase.ts` -> `mapChampionshipSynthetically`)**:
+  - Implementamos a extração resiliente de `admin_count`, `sales_count` e `salary_multiplier` das configurações do Tutor para reconstruir e mapear em tempo de execução o nó fiduciário estruturado `staffing` (admin e sales) na raiz do campeonato de forma automática.
+- **Integração no Processamento de Turnover de Rodadas (`processRoundTurnover`)**:
+  - Unificamos no indicador de fechamento da simulação (`indicatorsForRound`) os valores dinâmicos de staffing da rodada a partir do `workforce` do campeonato ou das regras da rodada corrente, garantindo que o back-end processe as folhas de pagamento de Administração e Vendas com os coeficientes corretos em vez de usar os fallbacks de default.
+- **Blindagem do Motor de Simulação (`services/simulation.ts`)**:
+  - Refatoramos a determinação de `salaryMult` no arquivo central do simulador para varrer polimorficamente e com tolerância a falhas as propriedades `workforce?.salary_multiplier` e `config?.workforce?.salary_multiplier`, mitigando de vez qualquer comportamento legado que forçasse o débito de `4x` em campeonatos de modo indevido.
+
+---
+
+## Decisão Arquitetural: Sincronização Polimórfica e Resiliência Adaptativa de Turnos Operacionais (max_shifts) - v2026.198
+
+**Data:** 29 de Junho de 2026 às 16:24 UTC  
+**Motivo:** Corrigir a leitura e propagação dos limites de turnos operacionais (`max_shifts`) e de carga horária periódica (`production_hours_period`) definidos pelo Tutor. Embora as configurações fossem corretamente inseridas no contêiner `config.workforce` na tabela de campeonatos, os componentes de interface (`FactoryStep.tsx`, `Dashboard.tsx`, `DecisionForm.tsx`, `GazetteViewer.tsx`) e o processador de rodadas (`processRoundTurnover` em `supabase.ts`) dependiam da presença plana de `max_shifts` e `production_hours_period` na raiz das configurações econômicas, herdando o fallback fixo de `1 turno` do `DEFAULT_MACRO`.
+
+**Detalhamento Técnico de Planejamento e Modificações:**
+- **Mapeamento Unificado de Força de Trabalho (`services/supabase.ts`)**:
+  - Ajustamos o mapeador polimórfico `mapChampionshipSynthetically` para buscar e unificar `max_shifts` e `production_hours_period` de forma resiliente a partir de `config.workforce`, injetando-os tanto na raiz de `general_settings` quanto no subobjeto `workforce` e nas propriedades de primeiro nível do campeonato mapeado.
+- **Resiliência Adaptativa no Fechamento de Rodadas (`processRoundTurnover`)**:
+  - Enriquecemos o gerador de indicadores macro da rodada (`indicatorsForRound`) para herdar e forçar a tipagem numérica de `max_shifts` e `production_hours_period` extraídos polimorficamente de `currentRules` ou `general_settings`, garantindo que os novos cálculos da rodada usem perfeitamente o limite de multiturnos configurado.
+- **Sincronização Avançada na Interface de Usuário**:
+  - **DecisionForm.tsx**: Refatoramos os seletores `currentMacro` e `projections.indicators` para extrair de forma polimórfica os parâmetros `max_shifts` e `production_hours_period` para a raiz do objeto, garantindo que o limite configurado (ex: 3) libere reativamente os botões de turno no cockpit operacional do chão de fábrica (`FactoryStep.tsx`).
+  - **Dashboard.tsx & GazetteViewer.tsx**: Ajustamos o cálculo de projeções e o visualizador de gazeta para adotar a mesma resiliência, garantindo consistência fiduciária e visual impecável de 100% no applet.
+
 ---
 
 ## Decisão Arquitetural: Higienização e Unificação Fiduciária de Colunas Redundantes - v2026.197

@@ -144,19 +144,40 @@ const DecisionForm: React.FC<{
   const currentMacro = useMemo(() => {
     if (!activeArena) return DEFAULT_MACRO;
     const rules = activeArena.round_rules?.[round] || DEFAULT_INDUSTRIAL_CHRONOGRAM[round] || {};
-    return { ...DEFAULT_MACRO, ...activeArena.general_settings, ...rules } as MacroIndicators;
+    const baseSettings = activeArena.general_settings || {};
+    
+    // Extração resiliente de max_shifts e production_hours_period para a raiz
+    const maxShifts = rules.max_shifts ?? rules.workforce?.max_shifts ?? baseSettings.max_shifts ?? baseSettings.workforce?.max_shifts ?? DEFAULT_MACRO.max_shifts;
+    const prodHours = rules.production_hours_period ?? rules.workforce?.production_hours_period ?? baseSettings.production_hours_period ?? baseSettings.workforce?.production_hours_period ?? DEFAULT_MACRO.production_hours_period;
+    
+    return { 
+      ...DEFAULT_MACRO, 
+      ...baseSettings, 
+      ...rules,
+      max_shifts: Number(maxShifts),
+      production_hours_period: Number(prodHours)
+    } as MacroIndicators;
   }, [activeArena, round]);
 
   const projections = useMemo(() => {
     if (!activeArena || !activeTeam) return null;
     const currentRound = round;
+    const rules = activeArena.round_rules?.[currentRound] || 
+                  activeArena.config?.round_rules?.[currentRound] || 
+                  activeArena.config?.DEFAULT_INDUSTRIAL_CHRONOGRAM?.[currentRound] || 
+                  DEFAULT_INDUSTRIAL_CHRONOGRAM[currentRound] || {};
+    const baseSettings = activeArena.general_settings || {};
+    
+    // Extração resiliente de max_shifts e production_hours_period para a raiz
+    const maxShifts = rules.max_shifts ?? rules.workforce?.max_shifts ?? baseSettings.max_shifts ?? baseSettings.workforce?.max_shifts ?? DEFAULT_MACRO.max_shifts;
+    const prodHours = rules.production_hours_period ?? rules.workforce?.production_hours_period ?? baseSettings.production_hours_period ?? baseSettings.workforce?.production_hours_period ?? DEFAULT_MACRO.production_hours_period;
+
     const indicators = {
       ...DEFAULT_MACRO,
-      ...(activeArena.general_settings || {}),
-      ...(activeArena.config?.round_rules?.[currentRound] || 
-          activeArena.config?.DEFAULT_INDUSTRIAL_CHRONOGRAM?.[currentRound] || 
-          DEFAULT_INDUSTRIAL_CHRONOGRAM[currentRound] || {}),
-      ...(activeArena.round_rules?.[currentRound] || {})
+      ...baseSettings,
+      ...rules,
+      max_shifts: Number(maxShifts),
+      production_hours_period: Number(prodHours)
     };
     
     const mergedRoundRules = {

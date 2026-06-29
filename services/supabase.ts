@@ -291,6 +291,28 @@ export const mapChampionshipSynthetically = (c: any) => {
     genSettings = { ...genSettings };
   }
 
+  // Centralização Soberana: Unificação e Fusão de todos os dados imutáveis do Round 0 de 'config' para 'general_settings'
+  const keysToSync = [
+    'caixa_inicial', 'capital_social', 'land_value', 'building_value', 'building_age', 
+    'building_mode', 'taxes_initial', 'clients_initial', 'suppliers_initial', 
+    'dividends_initial', 'financial_investments', 'wip_stock_value', 'custom_pecld_val', 
+    'storage_mp', 'storage_finished', 'monthly_rent_value', 'rent_allocation_productive', 
+    'rent_allocation_administrative', 'rent_allocation_sales', 'machines_depreciation_rate', 
+    'buildings_depreciation_rate', 'property_depreciation_rate', 'profit_incorporation_frequency', 
+    'dividend_frequency', 'dividend_percent', 'share_price_initial', 'installations_value', 
+    'admin_sales_installations', 'real_estate_acquisition_funding', 'segmentName', 
+    'tournamentName', 'tutorName', 'institutionName', 'inventories', 'gazeta_mode', 
+    'transparency_level', 'round_duration', 'activity_type', 'botsCount', 'teamNames', 
+    'humanTeamsCount', 'total_rounds', 'regions', 'region_configs', 'region_names', 'currency', 'sales_mode',
+    'scenario_type', 'social_charges', 'compulsory_loan_agio'
+  ];
+
+  keysToSync.forEach(key => {
+    if (config[key] !== undefined && config[key] !== null) {
+      genSettings[key] = config[key];
+    }
+  });
+
   // 1. Sincronização do starting_mode
   if (genSettings.starting_mode === undefined && c.starting_mode !== undefined) {
     genSettings.starting_mode = c.starting_mode;
@@ -299,67 +321,99 @@ export const mapChampionshipSynthetically = (c: any) => {
     genSettings.starting_mode = config.starting_mode;
   }
 
-  // 2. Unificação de machine_specs
-  if (!genSettings.machine_specs) {
-    genSettings.machine_specs = config.machine_specs || {};
-  }
-  if (genSettings.machine_specs) {
-    const specs = { ...genSettings.machine_specs };
-    
-    // Alinhamento estrutural de nomes alternativos de modelos
-    if (!specs.alpha && specs.alfa) specs.alpha = specs.alfa;
-    if (!specs.gamma && specs.gama) specs.gamma = specs.gama;
-    
-    // Fallback dinâmico para as especificações caso configurado em formato de lista (config.machines)
-    const configMachines = config.machines || genSettings.machines || [];
-    if (Array.isArray(configMachines) && configMachines.length > 0) {
-      configMachines.forEach((m: any) => {
-        const model = m.model?.toLowerCase();
-        if (model && !specs[model]) {
-          specs[model] = {
-            model: model,
-            initial_value: m.price || m.acquisition_value || 500000.00,
-            production_capacity: m.capacity_at_100 || m.production_capacity || 2000,
-            operators_required: m.operators_required || 94,
-            depreciation_rate: m.depreciation_rate || 0.05,
-            useful_life_years: m.useful_life_years || 20,
-            overload_coef: m.overload_coef || 1.4,
-            aging_coef: m.aging_coef || 0.8,
-            overload_extra_rate: m.overload_extra_rate || 0.001
-          };
+  // 2. Unificação absoluta de machine_specs a partir do array 'machines' ou especificações legadas
+  const specs = genSettings.machine_specs ? { ...genSettings.machine_specs } : {};
+  
+  // Alinhamento estrutural de nomes alternativos de modelos
+  if (!specs.alpha && specs.alfa) specs.alpha = specs.alfa;
+  if (!specs.gamma && specs.gama) specs.gamma = specs.gama;
+  
+  const configMachines = config.machines || genSettings.machines || [];
+  const configWorkforce = config.workforce || genSettings.workforce || {};
+
+  if (Array.isArray(configMachines) && configMachines.length > 0) {
+    configMachines.forEach((m: any) => {
+      const model = m.model?.toLowerCase();
+      if (model) {
+        // Obter de forma resiliente os operadores padrão parametrizados pelo tutor para o modelo de máquina
+        let opsRequired = m.operators_required;
+        if (!opsRequired) {
+          if (model === 'alpha') opsRequired = configWorkforce.operatorsPerAlpha ?? 100;
+          else if (model === 'beta') opsRequired = configWorkforce.operatorsPerBeta ?? 250;
+          else if (model === 'gamma') opsRequired = configWorkforce.operatorsPerGamma ?? 500;
         }
-      });
-    }
-
-    // Garante que todos os 3 modelos possuem suas especificações fiduciárias preenchidas
-    if (!specs.alpha) {
-      specs.alpha = { model: 'alpha', initial_value: 500000.00, production_capacity: 2000, operators_required: 94, depreciation_rate: 0.10, overload_coef: 1.4, aging_coef: 0.8, useful_life_years: 10, overload_extra_rate: 0.001 };
-    }
-    if (!specs.beta) {
-      specs.beta = { model: 'beta', initial_value: 1500000.00, production_capacity: 6000, operators_required: 235, depreciation_rate: 0.10, overload_coef: 1.2, aging_coef: 0.6, useful_life_years: 10, overload_extra_rate: 0.0007 };
-    }
-    if (!specs.gamma) {
-      specs.gamma = { model: 'gamma', initial_value: 3000000.00, production_capacity: 12000, operators_required: 445, depreciation_rate: 0.10, overload_coef: 1.0, aging_coef: 0.5, useful_life_years: 10, overload_extra_rate: 0.0005 };
-    }
-
-    genSettings.machine_specs = specs;
+        
+        specs[model] = {
+          model: model,
+          initial_value: Number(m.price ?? m.initial_value ?? m.acquisition_value ?? (model === 'alpha' ? 1100000 : model === 'beta' ? 2200000 : 3300000)),
+          production_capacity: Number(m.capacity_at_100 ?? m.production_capacity ?? (model === 'alpha' ? 2500 : model === 'beta' ? 6000 : 12000)),
+          operators_required: Number(opsRequired ?? (model === 'alpha' ? 100 : model === 'beta' ? 250 : 500)),
+          depreciation_rate: Number(m.depreciation_rate ?? config.machines_depreciation_rate ?? genSettings.machines_depreciation_rate ?? 0.05),
+          useful_life_years: Number(m.useful_life_years ?? 20),
+          overload_coef: Number(m.overload_coef ?? (model === 'alpha' ? 1.4 : model === 'beta' ? 1.2 : 1.0)),
+          aging_coef: Number(m.aging_coef ?? (model === 'alpha' ? 0.8 : model === 'beta' ? 0.6 : 0.5)),
+          overload_extra_rate: Number(m.overload_extra_rate ?? (model === 'alpha' ? 0.001 : model === 'beta' ? 0.0007 : 0.0005)),
+          installation_cost: Number(m.installation_cost ?? m.installation_value ?? (model === 'alpha' ? 100000 : model === 'beta' ? 200000 : 300000)),
+          efficiency: Number(m.efficiency ?? 1)
+        };
+      }
+    });
   }
+
+  // Garante que todos os 3 modelos possuem suas especificações fiduciárias preenchidas com os fallbacks do tutor
+  if (!specs.alpha) {
+    specs.alpha = { model: 'alpha', initial_value: 1100000.00, production_capacity: 2500, operators_required: configWorkforce.operatorsPerAlpha ?? 100, depreciation_rate: 0.05, overload_coef: 1.4, aging_coef: 0.8, useful_life_years: 20, overload_extra_rate: 0.001, installation_cost: 100000, efficiency: 1 };
+  }
+  if (!specs.beta) {
+    specs.beta = { model: 'beta', initial_value: 2200000.00, production_capacity: 6000, operators_required: configWorkforce.operatorsPerBeta ?? 250, depreciation_rate: 0.05, overload_coef: 1.2, aging_coef: 0.6, useful_life_years: 20, overload_extra_rate: 0.0007, installation_cost: 200000, efficiency: 1 };
+  }
+  if (!specs.gamma) {
+    specs.gamma = { model: 'gamma', initial_value: 3300000.00, production_capacity: 12000, operators_required: configWorkforce.operatorsPerGamma ?? 500, depreciation_rate: 0.05, overload_coef: 1.0, aging_coef: 0.5, useful_life_years: 20, overload_extra_rate: 0.0005, installation_cost: 300000, efficiency: 1 };
+  }
+
+  genSettings.machine_specs = specs;
 
   // 3. Unificação absoluta de machinery_values com machine_specs para eliminar duplicidades/ambiguidades
   if (!genSettings.machinery_values) {
     genSettings.machinery_values = {};
   }
   genSettings.machinery_values = {
-    alpha: genSettings.machine_specs?.alpha?.initial_value ?? config.machinery_values?.alpha ?? config.machinery_values?.alfa ?? 500000.00,
-    beta: genSettings.machine_specs?.beta?.initial_value ?? config.machinery_values?.beta ?? 1500000.00,
-    gamma: genSettings.machine_specs?.gamma?.initial_value ?? config.machinery_values?.gamma ?? config.machinery_values?.gama ?? 3000000.00,
+    alpha: genSettings.machine_specs?.alpha?.initial_value ?? config.machinery_values?.alpha ?? config.machinery_values?.alfa ?? 1100000.00,
+    beta: genSettings.machine_specs?.beta?.initial_value ?? config.machinery_values?.beta ?? 2200000.00,
+    gamma: genSettings.machine_specs?.gamma?.initial_value ?? config.machinery_values?.gamma ?? config.machinery_values?.gama ?? 3300000.00,
   };
   mapped.machinery_values = genSettings.machinery_values;
 
-  // 4. Unificação de workforce
+  // 4. Unificação de workforce profundamente
   if (!genSettings.workforce) {
-    genSettings.workforce = config.workforce || {};
+    genSettings.workforce = {};
   }
+  
+  // Mescla profunda das propriedades do workforce
+  const workforceKeys = [
+    'baseSalary', 'base_salary', 'max_shifts', 'admin_count', 'sales_count', 
+    'trainingLevel', 'training_level', 'operatorsPerAlpha', 'operatorsPerBeta', 
+    'operatorsPerGamma', 'salary_multiplier', 'production_hours_period'
+  ];
+
+  workforceKeys.forEach(wk => {
+    if (configWorkforce[wk] !== undefined && configWorkforce[wk] !== null) {
+      genSettings.workforce[wk] = configWorkforce[wk];
+    }
+  });
+
+  // Unificação fiduciária de max_shifts e production_hours_period
+  const maxShiftsVal = genSettings.workforce?.max_shifts ?? genSettings.max_shifts ?? config.workforce?.max_shifts ?? config.max_shifts ?? 1;
+  const prodHoursVal = genSettings.workforce?.production_hours_period ?? genSettings.production_hours_period ?? config.workforce?.production_hours_period ?? config.production_hours_period ?? 176;
+
+  genSettings.max_shifts = Number(maxShiftsVal);
+  genSettings.production_hours_period = Number(prodHoursVal);
+
+  genSettings.workforce.max_shifts = Number(maxShiftsVal);
+  genSettings.workforce.production_hours_period = Number(prodHoursVal);
+
+  mapped.max_shifts = Number(maxShiftsVal);
+  mapped.production_hours_period = Number(prodHoursVal);
 
   // 5. Unificação de salários (base_salary, baseSalary, hr_base.salary)
   const baseSalaryVal = genSettings.workforce?.base_salary ?? genSettings.workforce?.baseSalary ?? genSettings.hr_base?.salary ?? config.workforce?.base_salary ?? config.workforce?.baseSalary ?? 2500;
@@ -368,10 +422,31 @@ export const mapChampionshipSynthetically = (c: any) => {
   } else {
     genSettings.hr_base.salary = baseSalaryVal;
   }
-  if (genSettings.workforce) {
-    genSettings.workforce.base_salary = baseSalaryVal;
-    genSettings.workforce.baseSalary = baseSalaryVal;
+  genSettings.workforce.base_salary = baseSalaryVal;
+  genSettings.workforce.baseSalary = baseSalaryVal;
+
+  // Unificação fiduciária e robusta de staffing (admin_count, sales_count, salary_multiplier)
+  const adminCountVal = genSettings.workforce?.admin_count ?? genSettings.staffing?.admin?.count ?? config.workforce?.admin_count ?? config.staffing?.admin?.count ?? 20;
+  const salesCountVal = genSettings.workforce?.sales_count ?? genSettings.staffing?.sales?.count ?? config.workforce?.sales_count ?? config.staffing?.sales?.count ?? 10;
+  const salaryMultVal = genSettings.workforce?.salary_multiplier ?? genSettings.staffing?.admin?.salaries ?? config.workforce?.salary_multiplier ?? config.staffing?.admin?.salaries ?? 4;
+
+  if (!genSettings.staffing) {
+    genSettings.staffing = {
+      ...DEFAULT_MACRO.staffing
+    };
   }
+  genSettings.staffing = {
+    ...genSettings.staffing,
+    admin: {
+      count: Number(adminCountVal),
+      salaries: Number(salaryMultVal)
+    },
+    sales: {
+      count: Number(salesCountVal),
+      salaries: Number(salaryMultVal)
+    }
+  };
+  mapped.staffing = genSettings.staffing;
 
   // 6. Unificação de preços MP_A e MP_B e custos de estocagem
   if (!genSettings.prices) {
@@ -830,10 +905,27 @@ export const processRoundTurnover = async (id: string, round: number, isTrial?: 
         // 2. Unificação de salário base
         const ecoBaseSalary = rawGen.workforce?.base_salary ?? rawGen.workforce?.baseSalary ?? rawGen.hr_base?.salary;
 
+        // 3. Unificação de turnos e carga horária
+        const ecoMaxShifts = currentRules.max_shifts ?? currentRules.workforce?.max_shifts ?? rawGen.max_shifts ?? rawGen.workforce?.max_shifts ?? DEFAULT_MACRO.max_shifts;
+        const ecoProdHours = currentRules.production_hours_period ?? currentRules.workforce?.production_hours_period ?? rawGen.production_hours_period ?? rawGen.workforce?.production_hours_period ?? DEFAULT_MACRO.production_hours_period;
+
+        // 4. Unificação de staffing para a rodada
+        const ecoAdminCount = currentRules.workforce?.admin_count ?? currentRules.staffing?.admin?.count ?? rawGen.workforce?.admin_count ?? rawGen.staffing?.admin?.count ?? DEFAULT_MACRO.staffing.admin.count;
+        const ecoSalesCount = currentRules.workforce?.sales_count ?? currentRules.staffing?.sales?.count ?? rawGen.workforce?.sales_count ?? rawGen.staffing?.sales?.count ?? DEFAULT_MACRO.staffing.sales.count;
+        const ecoSalaryMult = currentRules.workforce?.salary_multiplier ?? currentRules.staffing?.admin?.salaries ?? rawGen.workforce?.salary_multiplier ?? rawGen.staffing?.admin?.salaries ?? DEFAULT_MACRO.staffing.admin.salaries;
+
         const indicatorsForRound = {
             ...DEFAULT_MACRO,
             ...(champ.general_settings || {}),
             ...currentRules,
+            max_shifts: Number(ecoMaxShifts),
+            production_hours_period: Number(ecoProdHours),
+            workforce: {
+                ...(champ.general_settings?.workforce || {}),
+                ...(currentRules.workforce || {}),
+                max_shifts: Number(ecoMaxShifts),
+                production_hours_period: Number(ecoProdHours)
+            },
             prices: {
                 ...DEFAULT_MACRO.prices,
                 ...(champ.general_settings?.prices || {}),
@@ -881,7 +973,15 @@ export const processRoundTurnover = async (id: string, round: number, isTrial?: 
             staffing: {
                 ...DEFAULT_MACRO.staffing,
                 ...(champ.general_settings?.staffing || {}),
-                ...(currentRules.staffing || {})
+                ...(currentRules.staffing || {}),
+                admin: {
+                    count: Number(ecoAdminCount),
+                    salaries: Number(ecoSalaryMult)
+                },
+                sales: {
+                    count: Number(ecoSalesCount),
+                    salaries: Number(ecoSalaryMult)
+                }
             }
         };
 
