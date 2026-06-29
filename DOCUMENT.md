@@ -2,10 +2,24 @@
  
 ## 📋 Controle de Governança
 - **Produto:** EMPIRION ORACLE
-- **Versão Ativa:** v2026.194 Desativação de Auto-Salvar Templates e Correção de Duplicação
+- **Versão Ativa:** v2026.195 Sincronização de Cronogramas Customizados e Tratamento Resiliente de Perfis
 - **Tipo de Documento:** Master Index & Diretrizes de Engenharia Contínua
 - **Status da Documentação:** Sincronizado com o PRD.md, BUSINESS_RULES.md & ROADMAP.md
  
+---
+
+## Decisão Arquitetural: Sincronização de Cronogramas Customizados e Tratamento Resiliente de Perfis - v2026.195
+
+**Data:** 29 de Junho de 2026 às 15:10 UTC  
+**Motivo:** Corrigir a perda de configurações de cronogramas customizados de rodadas (`round_rules` / `DEFAULT_INDUSTRIAL_CHRONOGRAM`) ao iniciar campeonatos ou carregar templates, devido ao comportamento de mapeamento de banco de dados onde objetos vazios `{}` nativos da coluna barravam a aplicação dos dados aninhados presentes no campo `config`. Além disso, o sistema passou a suprimir alertas desnecessários de Profile Fetch Fault no console durante sessões locais anônimas.
+
+**Detalhamento Técnico de Planejamento e Modificações:**
+- **Mapeamento Sintético de Cronogramas (`services/supabase.ts` -> `mapChampionshipSynthetically`)**:
+  - Implementamos uma verificação rigorosa de objetos vazios (`isFieldEmptyObj`). Se o banco de dados retornar `round_rules` ou qualquer outro campo como objeto vazio `{}`, o sistema detecta esse comportamento e aplica de forma transparente o valor customizado correspondente contido na coluna `config` (ex: `config.round_rules`).
+  - Adicionamos suporte síncrono para o caso de a coluna `config` vir armazenada como uma string serializada em JSON, realizando o parse protetor de forma segura.
+- **Suplementação e Supressão de Trace de Perfis Anônimos (`services/supabase.ts` -> `getUserProfile`)**:
+  - Alteramos os registros de erro excessivos (`console.error("Profile Fetch Fault")`) para mensagens informativas e controladas de log do sistema (`console.log`) ao lidar com fallbacks em sessões anônimas, limpando o console de depuração dos desenvolvedores.
+
 ---
 
 ## Decisão Arquitetural: Desativação de Auto-Salvar Templates e Correção de Duplicação - v2026.194
