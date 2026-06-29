@@ -527,12 +527,12 @@ const FinancialReportMatrix: React.FC<MatrixProps> = ({
                   typeof prevVal === "number" &&
                   prevVal !== 0 && (
                     <div
-                      className={`flex items-center gap-0.5 text-[8px] font-black uppercase ${val > prevVal ? "text-emerald-500" : "text-rose-500"}`}
+                      className={`flex items-center gap-0.5 text-[10px] font-black uppercase ${val > prevVal ? "text-emerald-500" : "text-rose-500"}`}
                     >
                       {val > prevVal ? (
-                        <TrendingUp size={6} />
+                        <TrendingUp size={8} />
                       ) : (
-                        <Activity size={6} />
+                        <Activity size={8} />
                       )}
                       {Math.abs((val / prevVal - 1) * 100).toFixed(1)}%
                     </div>
