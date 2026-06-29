@@ -2,10 +2,27 @@
  
 ## 📋 Controle de Governança
 - **Produto:** EMPIRION ORACLE
-- **Versão Ativa:** v2026.195 Sincronização de Cronogramas Customizados e Tratamento Resiliente de Perfis
+- **Versão Ativa:** v2026.196 Harmonização Polimórfica de Máquinas, Salários e Preços
 - **Tipo de Documento:** Master Index & Diretrizes de Engenharia Contínua
 - **Status da Documentação:** Sincronizado com o PRD.md, BUSINESS_RULES.md & ROADMAP.md
  
+---
+
+## Decisão Arquitetural: Harmonização Polimórfica de Máquinas, Salários e Preços - v2026.196
+
+**Data:** 29 de Junho de 2026 às 15:15 UTC  
+**Motivo:** Sanar a ambiguidade e descompasso na leitura de especificações de máquinas (`machines` vs. `machine_specs` / `machinery_values`), salários (`base_salary` vs. `hr_base.salary` / `baseSalary`) e parâmetros de estocagem/preços do campeonato criados pelo Tutor no banco de dados. Devido a múltiplos formatos e à falta de um mapeamento polimórfico, o sistema recorria a fallbacks estáticos, ignorando as configurações do Tutor na inicialização 'START FROM ZERO' ou a partir de templates customizados.
+
+**Detalhamento Técnico de Planejamento e Modificações:**
+- **Mapeamento Polimórfico Centralizado (`services/supabase.ts` -> `mapChampionshipSynthetically`)**:
+  - Implementamos um enriquecedor de dados que atua na raiz do mapeamento de campeonatos. Se `general_settings` estiver ausente ou inconsistente, o sistema herda de forma resiliente os parâmetros contidos em `config` (JSON) ou no template.
+  - **Especificações de Máquinas (CapEx)**: Unificamos `machine_specs` de forma que os campos `alpha`, `beta` e `gamma` herdem diretamente as configurações definidas na lista de máquinas (`config.machines`), aplicando fallbacks estruturados apenas na ausência absoluta de dados.
+  - **Preço de Compra Imutável (`machinery_values`)**: Eliminamos a ambiguidade sincronizando dinamicamente a cotação em `machinery_values` de cada modelo com os valores iniciais (`initial_value`) definidos pelo Tutor em `machine_specs`, garantindo sincronia perfeita de 100% nas telas de CapEx e na simulação.
+  - **Salários e Mão de Obra (`workforce`)**: Unificamos os campos `workforce.base_salary`, `workforce.baseSalary` e `hr_base.salary` na raiz de `general_settings`, garantindo que o valor customizado pelo Tutor (ex: $3.000) seja refletido fidedignamente no painel de RH e na folha de pagamento da simulação.
+  - **Preços e Custos de Insumos (`prices`)**: Sincronizamos polimorficamente `mpa_unit_val` e `mpb_unit_val` com a árvore de preços internos (`prices.mp_a`, `prices.mp_b`) e taxas de estocagem, preservando a coerência contábil com o CPC 16 / IAS 2.
+- **Resiliência de Turnover (`services/supabase.ts` -> `processRoundTurnover`)**:
+  - Enriquecemos o indicador `indicatorsForRound` gerado a cada processamento de rodada para herdar as exatas especificações customizadas de `machinery_values` e `machine_specs` da arena, impedindo que o motor de cálculo recorresse a fallbacks globais durante a virada dos rounds.
+
 ---
 
 ## Decisão Arquitetural: Sincronização de Cronogramas Customizados e Tratamento Resiliente de Perfis - v2026.195

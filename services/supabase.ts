@@ -279,6 +279,118 @@ export const mapChampionshipSynthetically = (c: any) => {
     mapped.currency = config.currency;
   }
 
+  // Harmonização Polimórfica e Sincronização Sênior de general_settings
+  let genSettings = c.general_settings || config.general_settings || {};
+  if (typeof genSettings === 'string') {
+    try {
+      genSettings = JSON.parse(genSettings);
+    } catch (e) {
+      genSettings = {};
+    }
+  } else {
+    genSettings = { ...genSettings };
+  }
+
+  // 1. Sincronização do starting_mode
+  if (genSettings.starting_mode === undefined && c.starting_mode !== undefined) {
+    genSettings.starting_mode = c.starting_mode;
+  }
+  if (genSettings.starting_mode === undefined && config.starting_mode !== undefined) {
+    genSettings.starting_mode = config.starting_mode;
+  }
+
+  // 2. Unificação de machine_specs
+  if (!genSettings.machine_specs) {
+    genSettings.machine_specs = config.machine_specs || {};
+  }
+  if (genSettings.machine_specs) {
+    const specs = { ...genSettings.machine_specs };
+    
+    // Alinhamento estrutural de nomes alternativos de modelos
+    if (!specs.alpha && specs.alfa) specs.alpha = specs.alfa;
+    if (!specs.gamma && specs.gama) specs.gamma = specs.gama;
+    
+    // Fallback dinâmico para as especificações caso configurado em formato de lista (config.machines)
+    const configMachines = config.machines || genSettings.machines || [];
+    if (Array.isArray(configMachines) && configMachines.length > 0) {
+      configMachines.forEach((m: any) => {
+        const model = m.model?.toLowerCase();
+        if (model && !specs[model]) {
+          specs[model] = {
+            model: model,
+            initial_value: m.price || m.acquisition_value || 500000.00,
+            production_capacity: m.capacity_at_100 || m.production_capacity || 2000,
+            operators_required: m.operators_required || 94,
+            depreciation_rate: m.depreciation_rate || 0.05,
+            useful_life_years: m.useful_life_years || 20,
+            overload_coef: m.overload_coef || 1.4,
+            aging_coef: m.aging_coef || 0.8,
+            overload_extra_rate: m.overload_extra_rate || 0.001
+          };
+        }
+      });
+    }
+
+    // Garante que todos os 3 modelos possuem suas especificações fiduciárias preenchidas
+    if (!specs.alpha) {
+      specs.alpha = { model: 'alpha', initial_value: 500000.00, production_capacity: 2000, operators_required: 94, depreciation_rate: 0.10, overload_coef: 1.4, aging_coef: 0.8, useful_life_years: 10, overload_extra_rate: 0.001 };
+    }
+    if (!specs.beta) {
+      specs.beta = { model: 'beta', initial_value: 1500000.00, production_capacity: 6000, operators_required: 235, depreciation_rate: 0.10, overload_coef: 1.2, aging_coef: 0.6, useful_life_years: 10, overload_extra_rate: 0.0007 };
+    }
+    if (!specs.gamma) {
+      specs.gamma = { model: 'gamma', initial_value: 3000000.00, production_capacity: 12000, operators_required: 445, depreciation_rate: 0.10, overload_coef: 1.0, aging_coef: 0.5, useful_life_years: 10, overload_extra_rate: 0.0005 };
+    }
+
+    genSettings.machine_specs = specs;
+  }
+
+  // 3. Unificação absoluta de machinery_values com machine_specs para eliminar duplicidades/ambiguidades
+  if (!genSettings.machinery_values) {
+    genSettings.machinery_values = {};
+  }
+  genSettings.machinery_values = {
+    alpha: genSettings.machine_specs?.alpha?.initial_value ?? config.machinery_values?.alpha ?? config.machinery_values?.alfa ?? 500000.00,
+    beta: genSettings.machine_specs?.beta?.initial_value ?? config.machinery_values?.beta ?? 1500000.00,
+    gamma: genSettings.machine_specs?.gamma?.initial_value ?? config.machinery_values?.gamma ?? config.machinery_values?.gama ?? 3000000.00,
+  };
+  mapped.machinery_values = genSettings.machinery_values;
+
+  // 4. Unificação de workforce
+  if (!genSettings.workforce) {
+    genSettings.workforce = config.workforce || {};
+  }
+
+  // 5. Unificação de salários (base_salary, baseSalary, hr_base.salary)
+  const baseSalaryVal = genSettings.workforce?.base_salary ?? genSettings.workforce?.baseSalary ?? genSettings.hr_base?.salary ?? config.workforce?.base_salary ?? config.workforce?.baseSalary ?? 2500;
+  if (!genSettings.hr_base) {
+    genSettings.hr_base = { salary: baseSalaryVal };
+  } else {
+    genSettings.hr_base.salary = baseSalaryVal;
+  }
+  if (genSettings.workforce) {
+    genSettings.workforce.base_salary = baseSalaryVal;
+    genSettings.workforce.baseSalary = baseSalaryVal;
+  }
+
+  // 6. Unificação de preços MP_A e MP_B e custos de estocagem
+  if (!genSettings.prices) {
+    genSettings.prices = config.prices || {};
+  }
+  const mpaVal = genSettings.mpa_unit_val ?? genSettings.prices?.mpa_unit_val ?? genSettings.prices?.mp_a ?? config.prices?.mp_a ?? 20;
+  const mpbVal = genSettings.mpb_unit_val ?? genSettings.prices?.mpb_unit_val ?? genSettings.prices?.mp_b ?? config.prices?.mp_b ?? 40;
+  genSettings.prices = {
+    ...genSettings.prices,
+    mp_a: Number(mpaVal),
+    mp_b: Number(mpbVal),
+    storage_mp: genSettings.prices?.storage_mp ?? genSettings.storage_mp ?? config.prices?.storage_mp ?? 1.40,
+    storage_finished: genSettings.prices?.storage_finished ?? genSettings.storage_finished ?? config.prices?.storage_finished ?? 20.00,
+    distribution_unit: genSettings.prices?.distribution_unit ?? config.prices?.distribution_unit ?? 50.00
+  };
+  mapped.prices = genSettings.prices;
+
+  mapped.general_settings = genSettings;
+
   return mapped;
 };
 
@@ -734,6 +846,28 @@ export const processRoundTurnover = async (id: string, round: number, isTrial?: 
                 ...(champ.general_settings?.hr_base || {}),
                 ...(ecoBaseSalary !== undefined ? { salary: Number(ecoBaseSalary) } : {}),
                 ...(currentRules.hr_base || {})
+            },
+            machinery_values: {
+                ...DEFAULT_MACRO.machinery_values,
+                ...(champ.general_settings?.machinery_values || {}),
+                ...(currentRules.machinery_values || {})
+            },
+            machine_specs: {
+                alpha: {
+                    ...DEFAULT_MACRO.machine_specs.alpha,
+                    ...(champ.general_settings?.machine_specs?.alpha || {}),
+                    ...(currentRules.machine_specs?.alpha || {})
+                },
+                beta: {
+                    ...DEFAULT_MACRO.machine_specs.beta,
+                    ...(champ.general_settings?.machine_specs?.beta || {}),
+                    ...(currentRules.machine_specs?.beta || {})
+                },
+                gamma: {
+                    ...DEFAULT_MACRO.machine_specs.gamma,
+                    ...(champ.general_settings?.machine_specs?.gamma || {}),
+                    ...(currentRules.machine_specs?.gamma || {})
+                }
             },
             exchange_rates: {
                 BRL: currentRules.BRL !== undefined ? Number(currentRules.BRL) : (champ.general_settings?.exchange_rates?.BRL ?? champ.general_settings?.BRL ?? 1.0),
