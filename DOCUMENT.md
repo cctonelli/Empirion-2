@@ -2,10 +2,25 @@
  
 ## 📋 Controle de Governança
 - **Produto:** EMPIRION ORACLE
-- **Versão Ativa:** v2026.188 Saneamento do Painel de Intervenção e Persistência de Regiões Comerciais (TutorArenaControl)
+- **Versão Ativa:** v2026.189 Alinhamento de Rodada no Modal de Expiração e Turnover (RoundSummaryModal)
 - **Tipo de Documento:** Master Index & Diretrizes de Engenharia Contínua
 - **Status da Documentação:** Sincronizado com o PRD.md, BUSINESS_RULES.md & ROADMAP.md
  
+---
+
+## Decisão Arquitetural: Alinhamento de Rodada no Modal de Expiração e Turnover - v2026.189
+
+**Data:** 29 de Junho de 2026 às 12:15 UTC  
+**Motivo:** Correção de desalinhamento (offset) do número da rodada exibido no modal de tempo esgotado e de transição de rounds para as equipes (Dashboard e RoundSummaryModal).
+
+**Detalhamento Técnico de Planejamento e Modificações:**
+- **Correção no Fluxo de Turnover Realtime:**
+  - No componente `Dashboard.tsx`, ao receber o evento de transição de rodadas (avançando por exemplo de `current_round = 0` para `current_round = 1`), a variável de estado `summaryRoundNumber` que alimenta o modal foi corrigida para usar o valor recém-atualizado do round (`currentRoundVal` que vale 1) em vez de `prevRoundRef.current` (que valia 0).
+  - Isso garante que os dados comparativos (Round 1 contra Round 0) sejam renderizados corretamente no modal de celebração gerencial em vez de comparar de forma inválida a rodada 0 contra si mesma.
+- **Correção no Fluxo de Expiração de Tempo (Lock/Congelamento):**
+  - No método `handleExpire` que bloqueia o cockpit quando o cronômetro chega a zero, a rodada sob decisão era exibida com atraso devido ao offset de armazenamento do banco (o banco guarda `current_round`, enquanto as decisões ativas referem-se a `current_round + 1`).
+  - O cálculo de atribuição foi ajustado para `(activeArena?.current_round || 0) + 1` no callback de expiração, garantindo que se o tempo para a tomada de decisão da rodada 1 esgotar, o modal exiba o aviso de bloqueio citando explicitamente **R-01** (em vez de R-00).
+
 ---
 
 ## Decisão Arquitetural: Saneamento do Painel de Intervenção e Persistência de Regiões Comerciais - v2026.188

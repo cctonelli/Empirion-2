@@ -468,7 +468,7 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
               const newRound = isFinished ? currentRoundVal : currentRoundVal + 1;
               setSelectedRound(newRound);
               setIsExpiredWaiting(false);
-              setSummaryRoundNumber(prevRoundRef.current ?? 0);
+              setSummaryRoundNumber(currentRoundVal);
               setShowRoundSummaryModal(true);
 
               const table = activeArena.is_trial ? 'trial_decisions' : 'current_decisions';
@@ -502,7 +502,7 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
   const handleExpire = useCallback(() => {
     if (hasAcknowledgedRef.current) return;
     setIsExpiredWaiting(true);
-    setSummaryRoundNumber(activeArena?.current_round || 0);
+    setSummaryRoundNumber((activeArena?.current_round || 0) + 1);
     setShowRoundSummaryModal(true);
   }, [activeArena?.current_round]);
 
