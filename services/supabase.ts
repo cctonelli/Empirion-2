@@ -97,7 +97,7 @@ export const getUserProfile = async (uid: string): Promise<UserProfile | null> =
       .maybeSingle();
       
     if (error) {
-      console.error("Profile Fetch Fault:", error);
+      console.log("Profile Fetch (using local fallback for anon/trial session):", error.message || error);
       return {
         id: uid,
         supabase_user_id: uid,
@@ -126,8 +126,8 @@ export const getUserProfile = async (uid: string): Promise<UserProfile | null> =
     }
     
     return data;
-  } catch (catchErr) {
-    console.error("Profile Fetch Exception:", catchErr);
+  } catch (catchErr: any) {
+    console.log("Profile Fetch Exception (using local fallback):", catchErr?.message || catchErr);
     return {
       id: uid,
       supabase_user_id: uid,
@@ -237,8 +237,17 @@ export const mapHistoryItemSynthetically = (item: any) => {
 
 export const mapChampionshipSynthetically = (c: any) => {
   if (!c) return c;
-  const config = c.config || {};
-  const mapped = { ...c };
+  
+  let config = c.config || {};
+  if (typeof config === 'string') {
+    try {
+      config = JSON.parse(config);
+    } catch (e) {
+      config = {};
+    }
+  }
+  
+  const mapped = { ...c, config };
   
   const compactFields = [
     'regions_count', 'regions', 'region_names', 'region_configs', 'currency', 'sales_mode', 
@@ -249,7 +258,8 @@ export const mapChampionshipSynthetically = (c: any) => {
   ];
 
   compactFields.forEach(field => {
-    if (mapped[field] === undefined || mapped[field] === null) {
+    const isFieldEmptyObj = mapped[field] && typeof mapped[field] === 'object' && Object.keys(mapped[field]).length === 0;
+    if (mapped[field] === undefined || mapped[field] === null || isFieldEmptyObj) {
       if (config[field] !== undefined && config[field] !== null) {
         mapped[field] = config[field];
       }
