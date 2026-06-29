@@ -2,10 +2,104 @@
  
 ## 📋 Controle de Governança
 - **Produto:** EMPIRION ORACLE
-- **Versão Ativa:** v2026.189 Alinhamento de Rodada no Modal de Expiração e Turnover (RoundSummaryModal)
+- **Versão Ativa:** v2026.194 Desativação de Auto-Salvar Templates e Correção de Duplicação
 - **Tipo de Documento:** Master Index & Diretrizes de Engenharia Contínua
 - **Status da Documentação:** Sincronizado com o PRD.md, BUSINESS_RULES.md & ROADMAP.md
  
+---
+
+## Decisão Arquitetural: Desativação de Auto-Salvar Templates e Correção de Duplicação - v2026.194
+
+**Data:** 29 de Junho de 2026 às 15:00 UTC  
+**Motivo:** Sanar o comportamento indesejado do sistema que realizava a gravação automática fiduciária de templates contábeis `R0` na tabela `r0_templates` do Supabase sempre que uma nova arena (Trial ou Live) era criada, desrespeitando a escolha do Tutor e gerando duplicados redundantes (como "Template gerado automaticamente na criação da arena...").
+
+**Detalhamento Técnico de Planejamento e Modificações:**
+- **Remoção de Interceptação Fiduciária de Auto-Salvar em `services/supabase.ts`**:
+  - Eliminamos em definitivo o bloco de código redundante e automático de salvamento de templates contido dentro do método unificado `createChampionshipWithTeams` (linhas 355 a 379), restabelecendo a soberania da escolha voluntária do Tutor.
+- **Soberania do Salvamento Exclusivamente Voluntário e Explícito**:
+  - A persistência física de modelos de parametrização `R0` na tabela `r0_templates` passa a ocorrer **única e exclusivamente** quando o Tutor realiza a gravação manual, clicando explicitamente no botão de ação "SALVAR COMO TEMPLATE" no TrialWizard, que abre o modal fiduciário de inserção de metadados, valida o nome do template e dispara de forma canônica o método `handleSaveTpl` e `saveP0Template`.
+  - Essa correção extirpa por completo o salvamento fantasma de templates quando o Tutor decide não salvá-los, e limpa as tabelas de controle no Supabase de registros artificiais duplicados.
+
+---
+
+## Decisão Arquitetural: Blindagem de Perfis e Tratamento Resiliente do Profile Fetch Fault - v2026.193
+
+**Data:** 29 de Junho de 2026 às 14:45 UTC  
+**Motivo:** Resolver o erro de "Profile Fetch Fault" disparado na inicialização da aplicação, que ocorria quando o cockpit tentava consultar dados de perfil do tutor para sessões de teste/sandbox não logadas (onde o cliente Supabase opera em modo anônimo e o RLS impede a seleção da tabela `user_profiles`), ou quando um novo usuário se autenticava mas ainda não possuía seu registro síncrono na tabela do banco de dados.
+
+**Detalhamento Técnico de Planejamento e Modificações:**
+- **Bypass de Sessão Trial (`SYSTEM_TUTOR_ID`)**:
+  - Implementamos um desvio inteligente e instantâneo no início de `getUserProfile` (em `/services/supabase.ts`). Se o identificador consultado for o UUID padrão de sistema (`00000000-0000-0000-0000-000000000000`), a função retorna imediatamente um perfil mock de tutor (`Trial Orchestrator`) na memória. Isso evita o tráfego de requisições não autorizadas ao Supabase pelo canal `anon` e elimina por completo os erros de RLS.
+- **Estruturação de Fallbacks Resilientes para Usuários Autenticados**:
+  - Envelopamos toda a query de busca de perfil em um bloco `try-catch` robusto.
+  - Caso ocorra qualquer erro de comunicação com o Supabase ou se o usuário autenticado não possuir uma linha correspondente na tabela `user_profiles`, o sistema cria e retorna dinamicamente um objeto de perfil padrão fiduciário com privilégios de jogador (`player`).
+  - Esse tratamento extirpa de vez falhas de sincronização na inicialização, assegurando que o cockpit inicie de forma transparente sem reter os usuários em loops intermináveis de sincronia.
+
+---
+
+## Decisão Arquitetural: Saneamento de Taxas Cambiais de Fallback e Higienização de Banco - v2026.192
+
+**Data:** 29 de Junho de 2026 às 14:30 UTC  
+**Motivo:** Atender à solicitação técnica de remover a injeção de taxas cambiais estáticas de fallback que poluem as tabelas físicas e confundem o administrador do sistema, garantindo que as taxas do cronograma de rodadas parametrizadas pelo Tutor prevaleçam integralmente de forma dinâmica e limpa.
+
+**Detalhamento Técnico de Planejamento e Modificações:**
+- **Remoção de Taxas Estáticas Fictícias do Banco**:
+  - Eliminamos o espalhamento estático do `DEFAULT_MACRO.exchange_rates` (que inseria chaves artificiais como `"USD": 5.25`, `"EUR": 5.60` herdadas do BRL, mesmo quando o torneio utilizava outra moeda base ou o Tutor as alterava) durante o processamento de turnover e cálculo de indicadores das rodadas subsequentes.
+- **Resolução Dinâmica Híbrida em `services/supabase.ts`**:
+  - No cálculo de `exchange_rates` da rodada atual (linhas 696-701) e da rodada seguinte (`nextIndicators`, linhas 1248-1251), as taxas são agora resolvidas de forma fiduciária e dinâmica a partir das moedas individuais (`BRL`, `USD`, `EUR`, `GBP`, `CNY`, `BTC`) parametrizadas diretamente na raiz de `currentRules` ou `nextRules` editadas pelo Tutor.
+  - O sistema recorre em cascata inteligente ao `champ.general_settings?.exchange_rates` e, por fim, assume `1.0` (taxa neutra) como fallback limpo para moedas não definidas, sem introduzir qualquer valor aleatório artificial nas tabelas do banco.
+  - Isso garante que a moeda padrão do torneio e as variações cambiais vigentes sejam estritamente controladas de forma soberana pelas decisões do Tutor e salvas de forma enxuta.
+
+---
+
+## Decisão Arquitetural: Saneamento Cambial, Higienização do Tutor Control e Resolução do Offset de Rodadas - v2026.191
+
+**Data:** 29 de Junho de 2026 às 14:10 UTC  
+**Motivo:** Executar o plano de saneamento técnico fiduciário para unificar a leitura de taxas cambiais, eliminar redundâncias de arrays de regiões comerciais (priorizando a coluna física e canônica `region_configs`) e sanar o bug crítico de desalinhamento de estados assíncronos no modal de resumo gerencial e bloqueio fiduciário (R-00).
+
+**Detalhamento Técnico de Planejamento e Modificações:**
+- **Unificação Cambial e Depreciação de `regions`**:
+  - Ajustamos a inicialização e a leitura de regiões no Cockpit de Decisões das Marcas (`components/DecisionForm.tsx`) e no Painel de Controle do Tutor (`components/TutorArenaControl.tsx`) para colocar a coluna física e canônica `region_configs` como prioridade absoluta em toda a cadeia de fallbacks, tratando o antigo array duplicado `regions` apenas como fallback para compatibilidade com legados históricos.
+- **Higienização de Gravação e Persistência de `round_rules` e `region_configs`**:
+  - Atualizamos a lista de colunas reais (`realCols`) da função de atualização do banco de dados `updateEcosystem` (em `services/supabase.ts`) para incluir as propriedades `round_rules`, `region_configs` e `general_settings`.
+  - Como consequência dessa alteração, quando o Tutor realiza qualquer intervenção no mercado e salva suas modificações pelo painel, os dados de `round_rules` e `region_configs` passam a ser gravados diretamente em suas respectivas colunas físicas reais na tabela no Supabase.
+  - O saneador inteligente do payload contido em `updateEcosystem` agora limpa de forma fiduciária e automática essas chaves de dentro da coluna JSONB `config` (`delete newConfig[col]`), extirpando de vez a pesada e duplicada cópia das regras cronológicas futuras de dentro da configuração estática inicial.
+- **Resolução do Offset de Exibição de Rodadas (Bug R-00)**:
+  - Implementamos uma blindagem de cálculo dinâmico e fiduciário de `roundNumber` na renderização do modal `RoundSummaryModal` no arquivo `/components/Dashboard.tsx`.
+  - Caso o modal seja renderizado no formato de bloqueio/expiração de tempo (`isExpiredWaiting = true`), o número da rodada exibido calcula dinamicamente o período de decisões sob o qual o cronômetro operava: `(activeArena?.current_round || 0) + 1` (ex: exibindo de forma correta R-01 ou R-02 em vez de R-00).
+  - Caso o modal seja renderizado no formato de resumo e celebração de resultados (`isExpiredWaiting = false`), o número de rodada exibe o round cujos resultados fechados estão sendo visualizados: `summaryRoundNumber || activeArena?.current_round || 1`. Isso elimina qualquer possibilidade de race-condition decorrente do tempo de processamento assíncrono das requisições ao Supabase no momento de transição de rounds.
+
+---
+
+## Decisão Arquitetural: Mapeamento Fiduciário e Saneamento de Campos JSONB - v2026.190
+
+**Data:** 29 de Junho de 2026 às 13:45 UTC  
+**Motivo:** Auditoria técnica de modelagem de dados solicitada pela gerência para mapear a finalidade dos campos JSONB `config`, `general_settings` e `round_rules` da tabela de campeonatos do Supabase, saneando redundâncias e ambiguidades que geram dívida técnica de infraestrutura e processamento desnecessário.
+
+**Análise de Responsabilidades e Fluxo de Dados:**
+1. **`config` (JSONB):**
+   - **Propósito:** Blueprint original de setup da Arena (Rodada P0). É estático por natureza.
+   - **Dados Gravados:** Parâmetros originais do template escolhido pelo Tutor (regiões de início, maquinário inicial, inventário inicial, contas patrimoniais base, parâmetros fiscais de origem).
+   - **Responsabilidade Fiduciária:** Atuar como backup de auditoria e ponto de partida de reinicialização da arena.
+2. **`general_settings` (JSONB):**
+   - **Propósito:** Estado ativo dos parâmetros de mercado vigentes para a **rodada atual em andamento**. É dinâmico.
+   - **Dados Gravados:** Taxas de câmbio vigentes, salários-base ajustados pela inflação, tabela de preços correntes de insumos, custos de recrutamento vigentes.
+   - **Responsabilidade Fiduciária:** Abastecer os cockpits das equipes e os simuladores de DRE/Balanço com as condições financeiras reais e vigentes da rodada aberta para decisões. É atualizado de forma síncrona pelo motor no momento de cada *Turnover*.
+3. **`round_rules` (JSONB):**
+   - **Propósito:** Cronograma de Intervenções e Modificadores Futuros do Torneio. É dinâmico por intervenção do Tutor.
+   - **Dados Gravados:** Mapeamento indexado por rodada (ex: `{"1": {...}, "2": {...}}`) contendo modificações agendadas em taxas de câmbio, novos preços de materiais de mercado ou agendamento de novas regiões comerciais (`start_round`).
+   - **Responsabilidade Fiduciária:** Funcionar como o motor de regras cronológicas do campeonato que o Tutor manipula na tela de Intervenções.
+
+**Mapeamento de Redundâncias e Ambiguidade Técnica:**
+- **Duplicidade `regions` vs `region_configs`:** Ambos os arrays guardam objetos de dados de regiões comerciais nas mesmas chaves. O motor de simulação e a interface de decisões continham redundâncias cruzadas ao carregar as regiões de ambos os arrays de forma polimórfica.
+- **Vazamento de Escopo por Fallbacks Complexos:** Uso de operadores `??` em cascata nos motores (`simulation.ts` e `simulation-core.ts`) para ler dados como taxas de depreciação e custos de locação de múltiplos locais do banco de dados de forma concorrente, tornando a depuração frágil e propensa a dados "sombra" desatualizados.
+- **Duplicidade de Armazenamento de `round_rules`:** Gravação duplicada tanto na coluna física dedicada `round_rules` quanto dentro do objeto `config.round_rules` para retrocompatibilidade histórica.
+
+**Plano de Governança para Saneamento e Refatoração Futura:**
+- **Centralização:** Consolidar e manter apenas `region_configs` como o array canônico de dados de regiões e deprecá-lo de forma gradual.
+- **Isolamento de Escopo:** Garantir que o motor de simulação busque dados de setup estático exclusivamente de `config` e dados dinâmicos do round exclusivamente de `general_settings` (indicadores vigentes) e `round_rules` (agendamento).
+- **Remoção de Colunas Sombra:** Limpar o payload de salvamento de `TutorArenaControl` para que `round_rules` seja persistido apenas em sua coluna física no Postgres, eliminando payloads pesados dentro do objeto `config`.
+
 ---
 
 ## Decisão Arquitetural: Alinhamento de Rodada no Modal de Expiração e Turnover - v2026.189

@@ -294,14 +294,14 @@ const DecisionForm: React.FC<{
         }
 
         const initialRegions: any = {};
-        const allRegions = found?.round_rules?.[round]?.regions || 
-                           found?.round_rules?.[round]?.region_configs || 
-                           found?.config?.round_rules?.[round]?.regions ||
+        const allRegions = found?.round_rules?.[round]?.region_configs || 
+                           found?.round_rules?.[round]?.regions || 
                            found?.config?.round_rules?.[round]?.region_configs ||
-                           found?.config?.DEFAULT_INDUSTRIAL_CHRONOGRAM?.[round]?.regions ||
+                           found?.config?.round_rules?.[round]?.regions ||
                            found?.config?.DEFAULT_INDUSTRIAL_CHRONOGRAM?.[round]?.region_configs ||
-                           found?.config?.regions || 
+                           found?.config?.DEFAULT_INDUSTRIAL_CHRONOGRAM?.[round]?.regions ||
                            found?.config?.region_configs || 
+                           found?.config?.regions || 
                            found?.region_configs || [];
         const activeRegionsForRound = allRegions.filter((r: any) => !r.start_round || r.start_round <= round);
 

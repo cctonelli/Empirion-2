@@ -75,13 +75,71 @@ export const provisionDemoEnvironment = async () => {
 };
 
 export const getUserProfile = async (uid: string): Promise<UserProfile | null> => {
-  const { data, error } = await supabase
-    .from('user_profiles')
-    .select('*')
-    .eq('supabase_user_id', uid)
-    .maybeSingle();
-  if (error) console.error("Profile Fetch Fault:", error);
-  return data;
+  if (uid === '00000000-0000-0000-0000-000000000000') {
+    return {
+      id: uid,
+      supabase_user_id: uid,
+      name: "Trial Orchestrator",
+      nickname: "Trial Orchestrator",
+      email: "trial@empirion.com",
+      phone: "",
+      role: 'tutor',
+      is_opal_premium: true,
+      created_at: new Date().toISOString()
+    };
+  }
+
+  try {
+    const { data, error } = await supabase
+      .from('user_profiles')
+      .select('*')
+      .eq('supabase_user_id', uid)
+      .maybeSingle();
+      
+    if (error) {
+      console.error("Profile Fetch Fault:", error);
+      return {
+        id: uid,
+        supabase_user_id: uid,
+        name: "User " + uid.slice(0, 5),
+        nickname: "Player",
+        email: "player@empirion.com",
+        phone: "",
+        role: 'player',
+        is_opal_premium: false,
+        created_at: new Date().toISOString()
+      };
+    }
+    
+    if (!data) {
+      return {
+        id: uid,
+        supabase_user_id: uid,
+        name: "User " + uid.slice(0, 5),
+        nickname: "Player",
+        email: "player@empirion.com",
+        phone: "",
+        role: 'player',
+        is_opal_premium: false,
+        created_at: new Date().toISOString()
+      };
+    }
+    
+    return data;
+  } catch (catchErr) {
+    console.error("Profile Fetch Exception:", catchErr);
+    return {
+      id: uid,
+      supabase_user_id: uid,
+      name: "User " + uid.slice(0, 5),
+      nickname: "Player",
+      email: "player@empirion.com",
+      phone: "",
+      role: 'player',
+      is_opal_premium: false,
+      created_at: new Date().toISOString()
+    };
+  }
 };
 
 export const getUserEmpirePoints = async (userId: string): Promise<number> => {
@@ -293,32 +351,6 @@ export const createChampionshipWithTeams = async (config: any, teams: any[], isT
 
   const { data: champ, error: champError } = await supabase.from(champTable).insert(dbPayload).select().single();
   if (champError) throw champError;
-
-  // v2026.164: Gravação fiduciária automática de templates R0 na tabela r0_templates
-  // Todos os templates criados por Tutores em qualquer modo de jogos (Trial ou Pago) são persistidos.
-  try {
-    const { data: authData } = await supabase.auth.getUser();
-    const tutorId = authData?.user?.id || config.tutor_id || champ.tutor_id || null;
-    
-    const tplPayload = {
-      name: config.name || champ.name || `Template - ${new Date().toLocaleDateString('pt-BR')}`,
-      description: config.description || champ.description || `Template gerado automaticamente na criação da arena ${champ.name || ''}`,
-      category: config.branch || "industrial",
-      code: `TPL_${(config.name || 'AUTO').replace(/\s+/g, "_").toUpperCase()}_${Date.now()}`,
-      config: {
-        ...config,
-        humanTeamsCount: teams.length,
-        teamNames: teams.map(t => t.name),
-      },
-      is_public: config.is_public !== undefined ? config.is_public : true,
-      tutor_id: tutorId
-    };
-    
-    // Usamos diretamente saveP0Template para garantir consistência com a lógica de gravação e fallbacks
-    await saveP0Template(tplPayload);
-  } catch (tplErr) {
-    console.warn("Aviso: Falha ao registrar cópia em r0_templates graciosamente tratada:", tplErr);
-  }
   
   const financials = config.initial_financials || INITIAL_FINANCIAL_TREE;
   const balanceSheet = financials.balance_sheet;
@@ -507,7 +539,7 @@ export const updateEcosystem = async (id: string, data: any, isTrial?: boolean) 
     'initial_financials', 'initial_market_data', 'general_settings', 'tutor_id',
     'deadline_value', 'deadline_unit', 'description', 'gazeta_mode', 'transparency_level',
     'observers', 'round_started_at', 'is_public', 'dividend_percent', 'ecosystem_config',
-    'is_trial', 'initial_share_price', 'starting_mode',
+    'is_trial', 'initial_share_price', 'starting_mode', 'round_rules', 'region_configs',
     'products', 'resources', 'team_fee', 'start_date', 'end_date', 'sector', 'master_key_enabled', 'kpis'
   ];
 
@@ -694,8 +726,12 @@ export const processRoundTurnover = async (id: string, round: number, isTrial?: 
                 ...(currentRules.hr_base || {})
             },
             exchange_rates: {
-                ...DEFAULT_MACRO.exchange_rates,
-                ...(champ.general_settings?.exchange_rates || {}),
+                BRL: currentRules.BRL !== undefined ? Number(currentRules.BRL) : (champ.general_settings?.exchange_rates?.BRL ?? champ.general_settings?.BRL ?? 1.0),
+                USD: currentRules.USD !== undefined ? Number(currentRules.USD) : (champ.general_settings?.exchange_rates?.USD ?? champ.general_settings?.USD ?? 1.0),
+                EUR: currentRules.EUR !== undefined ? Number(currentRules.EUR) : (champ.general_settings?.exchange_rates?.EUR ?? champ.general_settings?.EUR ?? 1.0),
+                GBP: currentRules.GBP !== undefined ? Number(currentRules.GBP) : (champ.general_settings?.exchange_rates?.GBP ?? champ.general_settings?.GBP ?? 1.0),
+                CNY: currentRules.CNY !== undefined ? Number(currentRules.CNY) : (champ.general_settings?.exchange_rates?.CNY ?? champ.general_settings?.CNY ?? 1.0),
+                BTC: currentRules.BTC !== undefined ? Number(currentRules.BTC) : (champ.general_settings?.exchange_rates?.BTC ?? champ.general_settings?.BTC ?? 1.0),
                 ...(currentRules.exchange_rates || {})
             },
             staffing: {
@@ -1247,6 +1283,12 @@ export const processRoundTurnover = async (id: string, round: number, isTrial?: 
             },
             exchange_rates: {
                 ...(indicatorsForRound.exchange_rates || {}),
+                BRL: nextRules.BRL !== undefined ? Number(nextRules.BRL) : (indicatorsForRound.exchange_rates?.BRL ?? 1.0),
+                USD: nextRules.USD !== undefined ? Number(nextRules.USD) : (indicatorsForRound.exchange_rates?.USD ?? 1.0),
+                EUR: nextRules.EUR !== undefined ? Number(nextRules.EUR) : (indicatorsForRound.exchange_rates?.EUR ?? 1.0),
+                GBP: nextRules.GBP !== undefined ? Number(nextRules.GBP) : (indicatorsForRound.exchange_rates?.GBP ?? 1.0),
+                CNY: nextRules.CNY !== undefined ? Number(nextRules.CNY) : (indicatorsForRound.exchange_rates?.CNY ?? 1.0),
+                BTC: nextRules.BTC !== undefined ? Number(nextRules.BTC) : (indicatorsForRound.exchange_rates?.BTC ?? 1.0),
                 ...(nextRules.exchange_rates || {})
             },
             staffing: {

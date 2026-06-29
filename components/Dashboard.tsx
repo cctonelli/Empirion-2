@@ -1040,7 +1040,7 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
               setHasAcknowledgedExpiration(true);
               hasAcknowledgedRef.current = true;
             }}
-            roundNumber={summaryRoundNumber}
+            roundNumber={isExpiredWaiting ? ((activeArena?.current_round || 0) + 1) : (summaryRoundNumber || activeArena?.current_round || 1)}
             history={history}
             isLockedWaiting={isExpiredWaiting}
           />

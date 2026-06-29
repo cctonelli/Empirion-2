@@ -126,13 +126,13 @@ const TutorArenaControl: React.FC<{ championship: Championship; onUpdate: (confi
     setMacro(inheritedRules);
     setObserversList(currentChampionship.observers || []);
 
-    const list = currentChampionship.config?.regions || 
+    const list = currentChampionship.region_configs || 
                  currentChampionship.config?.region_configs || 
-                 currentChampionship.round_rules?.[nextRoundIdx]?.regions || 
-                 currentChampionship.round_rules?.[nextRoundIdx]?.region_configs ||
-                 currentChampionship.config?.round_rules?.[nextRoundIdx]?.regions ||
+                 currentChampionship.config?.regions || 
+                 currentChampionship.round_rules?.[nextRoundIdx]?.region_configs || 
+                 currentChampionship.round_rules?.[nextRoundIdx]?.regions ||
                  currentChampionship.config?.round_rules?.[nextRoundIdx]?.region_configs ||
-                 currentChampionship.region_configs || [];
+                 currentChampionship.config?.round_rules?.[nextRoundIdx]?.regions || [];
     if (list.length > 0) {
        setRegionsList(list);
     } else {
@@ -222,14 +222,12 @@ const TutorArenaControl: React.FC<{ championship: Championship; onUpdate: (confi
       observers: observersList,
       config: {
         ...(currentChampionship.config || {}),
-        regions: regionsList,
-        region_configs: finalRegionsMapped
       },
+      region_configs: finalRegionsMapped,
       round_rules: {
         ...(currentChampionship.round_rules || {}),
         [nextRoundIdx]: {
            ...finalMacro,
-           regions: regionsList,
            region_configs: finalRegionsMapped
         }
       }
