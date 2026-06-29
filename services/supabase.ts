@@ -254,7 +254,7 @@ export const mapChampionshipSynthetically = (c: any) => {
     'scenario_type', 'social_charges', 'compulsory_loan_agio', 
     'production_hours_period', 'award_values', 'exchange_rates', 
     'staffing', 'prices', 'machinery_values', 'round_rules', 
-    'brl_rate', 'gbp_rate'
+    'brl_rate', 'gbp_rate', 'dividend_percent', 'initial_share_price'
   ];
 
   compactFields.forEach(field => {
@@ -447,10 +447,10 @@ export const createChampionshipWithTeams = async (config: any, teams: any[], isT
   // em memória para serem usadas nos KPIs iniciais abaixo, mas não quebram a query INSERT do PostgREST.
   const validTrialCols = [
     'name', 'branch', 'status', 'current_round', 'total_rounds', 'config',
-    'initial_financials', 'initial_market_data', 'general_settings', 'tutor_id',
+    'initial_financials', 'general_settings', 'tutor_id',
     'deadline_value', 'deadline_unit', 'description', 'gazeta_mode', 'transparency_level',
-    'observers', 'round_started_at', 'is_public', 'dividend_percent', 'ecosystem_config',
-    'is_trial', 'initial_share_price', 'starting_mode'
+    'observers', 'round_started_at', 'is_public', 'ecosystem_config',
+    'is_trial', 'starting_mode'
   ];
   
   const validLiveCols = [...validTrialCols, 'products', 'resources', 'team_fee', 'start_date', 'end_date', 'sector', 'master_key_enabled', 'kpis'];
@@ -658,10 +658,10 @@ export const updateEcosystem = async (id: string, data: any, isTrial?: boolean) 
 
   const realCols = [
     'name', 'branch', 'status', 'current_round', 'total_rounds', 'config',
-    'initial_financials', 'initial_market_data', 'general_settings', 'tutor_id',
+    'initial_financials', 'general_settings', 'tutor_id',
     'deadline_value', 'deadline_unit', 'description', 'gazeta_mode', 'transparency_level',
-    'observers', 'round_started_at', 'is_public', 'dividend_percent', 'ecosystem_config',
-    'is_trial', 'initial_share_price', 'starting_mode', 'round_rules', 'region_configs',
+    'observers', 'round_started_at', 'is_public', 'ecosystem_config',
+    'is_trial', 'starting_mode',
     'products', 'resources', 'team_fee', 'start_date', 'end_date', 'sector', 'master_key_enabled', 'kpis'
   ];
 

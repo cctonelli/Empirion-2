@@ -1,11 +1,30 @@
 # Oracle Strategos - Bússola de Diretrizes do Projeto (DOCUMENT.md)
  
 ## 📋 Controle de Governança
-- **Produto:** EMPIRION ORACLE
-- **Versão Ativa:** v2026.196 Harmonização Polimórfica de Máquinas, Salários e Preços
+-- **Produto:** EMPIRION ORACLE
+- **Versão Ativa:** v2026.197 Higienização e Unificação Fiduciária de Colunas Redundantes
 - **Tipo de Documento:** Master Index & Diretrizes de Engenharia Contínua
 - **Status da Documentação:** Sincronizado com o PRD.md, BUSINESS_RULES.md & ROADMAP.md
  
+---
+
+## Decisão Arquitetural: Higienização e Unificação Fiduciária de Colunas Redundantes - v2026.197
+
+**Data:** 29 de Junho de 2026 às 15:40 UTC  
+**Motivo:** Expurgar e higienizar resíduos estruturais legados nas tabelas `championships` e `trial_championships` no Supabase para eliminar duplicidades e ambiguidades no tráfego de dados. Ao longo das evoluções do EMPIRION, parâmetros planos foram encapsulados no contêiner JSONB `config`. No entanto, colunas raiz físicas como `initial_market_data`, `dividend_percent`, `initial_share_price`, `round_rules` e `region_configs` permaneceram como resquícios físicos, gerando overhead, risco de dessincronização e quebra da terceira forma normal (3FN).
+
+**Detalhamento Técnico de Planejamento e Modificações:**
+- **Drenagem Fiduciária de Dados (Preservação Contábil)**:
+  - Desenvolvemos e criamos a migração oficial `/supabase/migrations/20260629154000_polymorphic_cleanup_legacy_fields.sql`.
+  - Antes do descarte físico, o script migra dados residuais de `dividend_percent` e `initial_share_price` de campeonatos antigos diretamente para dentro de seu contêiner estruturado `config` (JSONB) via comandos robustos de `jsonb_set` e `to_jsonb`, garantindo zero perda de dados de acordo com preceitos CPC e IFRS.
+- **Expurgação Física via Migração (`DROP COLUMN`)**:
+  - Aplicamos a remoção física definitiva das colunas legadas `initial_market_data`, `dividend_percent`, `initial_share_price`, `round_rules`, `region_configs`, `region_names`, `regions_count`, `sales_mode`, `currency` e taxas de câmbio nas duas tabelas (`championships` e `trial_championships`).
+- **Resiliência Adaptativa no Código (`services/supabase.ts`)**:
+  - **Mapeador Sintético (`mapChampionshipSynthetically`)**: Adicionamos `'dividend_percent'` e `'initial_share_price'` à lista de `compactFields` para que, na ausência de colunas planas na raiz, o mapeador sintético herde automaticamente e sem atritos esses valores a partir do nó `config`, assegurando total compatibilidade com o frontend.
+  - **Remoção de Restrições de Inserção e Gravação**: Retiramos os campos `initial_market_data`, `dividend_percent` e `initial_share_price` das listas `validTrialCols` e `realCols`. Agora, inserções e atualizações são totalmente integradas de forma transparente no contêiner de transporte JSONB `config`.
+- **Saneamento do Nascimento do Banco (`database_rls.sql`)**:
+  - Editamos o script master de infraestrutura como código (`database_rls.sql`) para expurgar a criação de tais colunas nos comandos de `ALTER TABLE`, assegurando que novas replicações e clones locais do projeto nasçam 100% higienizados e em conformidade técnica com a 3FN.
+
 ---
 
 ## Decisão Arquitetural: Harmonização Polimórfica de Máquinas, Salários e Preços - v2026.196
