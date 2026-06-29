@@ -466,6 +466,29 @@ export const mapChampionshipSynthetically = (c: any) => {
 
   mapped.general_settings = genSettings;
 
+  // Resiliência de Runtime de Alto Nível: Injeção retrógrada das chaves de general_settings de volta em config em memória
+  // para que qualquer leitura legado que acesse championship.config.caixa_inicial, etc. funcione perfeitamente
+  if (mapped.config) {
+    keysToSync.forEach(key => {
+      if (mapped.config[key] === undefined && genSettings[key] !== undefined) {
+        mapped.config[key] = genSettings[key];
+      }
+    });
+    // Fornecer atalhos fiduciários em mapped.config para sub-objetos para as telas legadas
+    if (!mapped.config.workforce && genSettings.workforce) {
+      mapped.config.workforce = genSettings.workforce;
+    }
+    if (!mapped.config.regions && genSettings.regions) {
+      mapped.config.regions = genSettings.regions;
+    }
+    if (!mapped.config.machine_specs && genSettings.machine_specs) {
+      mapped.config.machine_specs = genSettings.machine_specs;
+    }
+    if (!mapped.config.machines && configMachines.length > 0) {
+      mapped.config.machines = configMachines;
+    }
+  }
+
   return mapped;
 };
 
@@ -544,6 +567,49 @@ export const createChampionshipWithTeams = async (config: any, teams: any[], isT
     if (!dbPayload.config) dbPayload.config = {};
   } else {
     if (!dbPayload.config) dbPayload.config = {};
+  }
+
+  // --- CENTRALIZAÇÃO SOBERANA NO MOMENTO DE CRIAÇÃO NO BANCO ---
+  // Unificação de todas as chaves imutáveis do Round 0 de config para general_settings
+  // e remoção física definitiva das colunas redundantes do config para evitar qualquer duplicidade no banco.
+  if (!dbPayload.general_settings) {
+    dbPayload.general_settings = {};
+  } else if (typeof dbPayload.general_settings === 'string') {
+    try {
+      dbPayload.general_settings = JSON.parse(dbPayload.general_settings);
+    } catch {
+      dbPayload.general_settings = {};
+    }
+  }
+
+  if (dbPayload.config && typeof dbPayload.config === 'object') {
+    const cleanConfigObj = { ...dbPayload.config };
+
+    const keysToClean = [
+      'caixa_inicial', 'capital_social', 'land_value', 'building_value', 'building_age', 
+      'building_mode', 'taxes_initial', 'clients_initial', 'suppliers_initial', 
+      'dividends_initial', 'financial_investments', 'wip_stock_value', 'custom_pecld_val', 
+      'storage_mp', 'storage_finished', 'monthly_rent_value', 'rent_allocation_productive', 
+      'rent_allocation_administrative', 'rent_allocation_sales', 'machines_depreciation_rate', 
+      'buildings_depreciation_rate', 'property_depreciation_rate', 'profit_incorporation_frequency', 
+      'dividend_frequency', 'dividend_percent', 'share_price_initial', 'installations_value', 
+      'admin_sales_installations', 'real_estate_acquisition_funding', 'segmentName', 
+      'tournamentName', 'tutorName', 'institutionName', 'inventories', 'gazeta_mode', 
+      'transparency_level', 'round_duration', 'activity_type', 'botsCount', 'teamNames', 
+      'humanTeamsCount', 'total_rounds', 'regions', 'region_configs', 'region_names', 'currency', 'sales_mode',
+      'scenario_type', 'social_charges', 'compulsory_loan_agio', 'machines', 'workforce',
+      'remaining_ms_at_pause', 'accounting_template_id', 'initial_share_price', 
+      'initial_stock_quantities', 'initial_machines', 'initial_financials'
+    ];
+
+    keysToClean.forEach(key => {
+      if (cleanConfigObj[key] !== undefined && cleanConfigObj[key] !== null) {
+        dbPayload.general_settings[key] = cleanConfigObj[key];
+        delete cleanConfigObj[key];
+      }
+    });
+
+    dbPayload.config = cleanConfigObj;
   }
 
   const { data: champ, error: champError } = await supabase.from(champTable).insert(dbPayload).select().single();
@@ -743,7 +809,7 @@ export const updateEcosystem = async (id: string, data: any, isTrial?: boolean) 
   // Buscamos a configuração existente para fazer o merge correto
   const { data: currentChamp } = await supabase
     .from(table)
-    .select('config')
+    .select('config, general_settings')
     .eq('id', id)
     .maybeSingle();
 
@@ -756,13 +822,27 @@ export const updateEcosystem = async (id: string, data: any, isTrial?: boolean) 
     }
   }
 
+  let existingGenSettings = currentChamp?.general_settings || {};
+  if (typeof existingGenSettings === 'string') {
+    try {
+      existingGenSettings = JSON.parse(existingGenSettings);
+    } catch (e) {
+      existingGenSettings = {};
+    }
+  } else {
+    existingGenSettings = { ...existingGenSettings };
+  }
+
   const finalPayload: any = {};
   const newConfig = { ...existingConfig };
+  const newGenSettings = { ...existingGenSettings };
 
   Object.keys(data).forEach(key => {
     if (realCols.includes(key)) {
       if (key === 'config') {
         Object.assign(newConfig, data[key]);
+      } else if (key === 'general_settings') {
+        Object.assign(newGenSettings, data[key]);
       } else {
         finalPayload[key] = data[key];
       }
@@ -779,7 +859,33 @@ export const updateEcosystem = async (id: string, data: any, isTrial?: boolean) 
     }
   });
 
+  // Centralização Soberana: Migra e limpa chaves imutáveis do Round 0 de config para general_settings
+  const keysToClean = [
+    'caixa_inicial', 'capital_social', 'land_value', 'building_value', 'building_age', 
+    'building_mode', 'taxes_initial', 'clients_initial', 'suppliers_initial', 
+    'dividends_initial', 'financial_investments', 'wip_stock_value', 'custom_pecld_val', 
+    'storage_mp', 'storage_finished', 'monthly_rent_value', 'rent_allocation_productive', 
+    'rent_allocation_administrative', 'rent_allocation_sales', 'machines_depreciation_rate', 
+    'buildings_depreciation_rate', 'property_depreciation_rate', 'profit_incorporation_frequency', 
+    'dividend_frequency', 'dividend_percent', 'share_price_initial', 'installations_value', 
+    'admin_sales_installations', 'real_estate_acquisition_funding', 'segmentName', 
+    'tournamentName', 'tutorName', 'institutionName', 'inventories', 'gazeta_mode', 
+    'transparency_level', 'round_duration', 'activity_type', 'botsCount', 'teamNames', 
+    'humanTeamsCount', 'total_rounds', 'regions', 'region_configs', 'region_names', 'currency', 'sales_mode',
+    'scenario_type', 'social_charges', 'compulsory_loan_agio', 'machines', 'workforce',
+    'remaining_ms_at_pause', 'accounting_template_id', 'initial_share_price', 
+    'initial_stock_quantities', 'initial_machines', 'initial_financials'
+  ];
+
+  keysToClean.forEach(key => {
+    if (newConfig[key] !== undefined && newConfig[key] !== null) {
+      newGenSettings[key] = newConfig[key];
+      delete newConfig[key];
+    }
+  });
+
   finalPayload.config = newConfig;
+  finalPayload.general_settings = newGenSettings;
 
   return await supabase.from(table).update(finalPayload).eq('id', id);
 };

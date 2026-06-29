@@ -1,11 +1,27 @@
 # Oracle Strategos - Bússola de Diretrizes do Projeto (DOCUMENT.md)
  
 ## 📋 Controle de Governança
--- **Produto:** EMPIRION ORACLE
-- **Versão Ativa:** v2026.200 Unificação e Centralização Soberana de general_settings (Eliminação Absoluta de Concorrência de Dados)
+- **Produto:** EMPIRION ORACLE
+- **Versão Ativa:** v2026.210 Higienização Física e Expulsão Definitiva de Duplicidades no Banco de Dados (Soberania de general_settings)
 - **Tipo de Documento:** Master Index & Diretrizes de Engenharia Contínua
 - **Status da Documentação:** Sincronizado com o PRD.md, BUSINESS_RULES.md & ROADMAP.md
  
+---
+
+## Decisão Arquitetural: Higienização Física e Expulsão Definitiva de Duplicidades no Banco de Dados (Soberania de general_settings) - v2026.210
+
+**Data:** 29 de Junho de 2026 às 19:10 UTC  
+**Motivo:** Completar a arquitetura fiduciária de centralização soberana do contêiner `general_settings`. Embora na versão anterior (v2026.200) tivéssemos centralizado os dados de Round 0 no mapeador sintético em tempo de execução, os dados imutáveis legados (como `caixa_inicial`, `capital_social`, `machines`, `workforce` e afins) continuavam sendo persistidos concorrentemente dentro das colunas JSONB `config` no banco de dados, resultando em duplicidade física na persistência de novos campeonatos e ecossistemas.
+
+**Detalhamento Técnico de Planejamento e Modificações:**
+- **Higienização e Unificação no Nascimento (`createChampionshipWithTeams`)**:
+  - Refatoramos o construtor do payload de banco de dados (`dbPayload`) para clonar, varrer e extrair cirurgicamente todas as chaves imutáveis do Round 0 de dentro do objeto `config` configurado pelo tutor.
+  - Esses dados são unificados de forma permanente em `dbPayload.general_settings`, e posteriormente limpos e deletados fisicamente do objeto `dbPayload.config` antes do envio da query INSERT ao Supabase. Com isso, a coluna `config` armazena unicamente regras dinâmicas e o cronograma do torneio, zerando a duplicidade no banco de dados.
+- **Higienização Automática na Edição e Atualização do Ecossistema (`updateEcosystem`)**:
+  - Implementamos a mesma governança de limpeza no ponto de atualização de ecossistemas. O método agora lê simultaneamente as colunas `config` e `general_settings` correntes, realiza a translação soberana das propriedades do Round 0 para `general_settings` e as expulsa fisicamente de `config` no payload de UPDATE. Isso opera como uma rotina de migração sob demanda para ecossistemas legados.
+- **Injeção de Runtime Bidirecional para Compatibilidade de Telas legadas (`mapChampionshipSynthetically`)**:
+  - Para blindar as dezenas de referências na interface e no motor de simulação legado que realizam a leitura direta a partir do objeto `championship.config.caixa_inicial` ou similares, o mapeador sintético foi enriquecido para injetar reativamente em memória todas as chaves soberanas de `general_settings` de volta ao objeto `mapped.config`. Isso garante zero breaking changes em runtime e máxima resiliência adaptativa.
+
 ---
 
 ## Decisão Arquitetural: Unificação e Centralização Soberana de general_settings (Eliminação Absoluta de Concorrência de Dados) - v2026.200
