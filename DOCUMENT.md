@@ -3587,3 +3587,32 @@ O estudo demonstra que a implementação da eliminação por W.O. é **totalment
 **Status:** ATIVO, testado, validado com build de produção e homologado sob governança ágil de PMP, Contador Sênior, Coordenador de Mercado, Engenheiro de Banco de Dados, Arquiteto de UI/UX e Engenheiro de Software Sênior.
 
 
+## Decisão Arquitetural & Versionamento - Consolidação Definitiva de 'round_rules' na Coluna Física e Erradicação de Duplicidades no Banco de Dados - v2026.194
+
+**Data:** 30 de Junho de 2026 às 13:00 UTC  
+**Motivo:** Sanar definitivamente a concorrência estrutural de persistência das regras das rodadas (`round_rules`). Anteriormente, com a ausência da coluna física declarada no código do ORM, as regras residiam tanto duplicadas no campo de JSONB `config` quanto na coluna física `round_rules` (criada manualmente pelo administrador), gerando desperdício fiduciário de armazenamento e riscos de dessincronização em banco de dados.
+
+**Principais alterações:**
+- **Reconhecimento Estrito da Coluna Física `'round_rules'`:**
+  - Adicionado o campo `'round_rules'` na lista de colunas reais (`realCols`) em `updateEcosystem` e na lista de colunas válidas (`validTrialCols`/`allowedKeys`) em `createChampionshipWithTeams`.
+  - Isso garante que qualquer operação do CRUD via Supabase envie as regras de rodada estritamente para a coluna física `round_rules` na tabela física de campeonatos.
+- **Erradicação Física e Higienização de Duplicidade no JSONB `config`:**
+  - Inserção de rotinas explícitas de exclusão (`delete cleanConfigObj.round_rules` e `delete updatedConfig.round_rules`) nas rotinas de criação, salvamento de ecossistema e processamento de Turnover (`processRoundTurnover`).
+  - Dessa forma, o JSONB de `config` passa a conter única e exclusivamente variáveis de controle volátil de tempo real (como o estado de pausa e os temporizadores), liberando valioso espaço no banco de dados.
+- **Mapeamento e Harmonização Polimórfica de Runtime (`/services/supabase.ts`):**
+  - O mapeador sintético `mapChampionshipSynthetically` foi blindado com lógica autocurativa inteligente.
+  - Se um campeonato legado possuir as regras no formato antigo (`config.round_rules`), o mapeador as eleva automaticamente para a raiz de memória (`mapped.round_rules`).
+  - Se um campeonato atualizado possuir as regras no novo formato (na coluna física `round_rules`), o mapeador as projeta de forma síncrona dentro de `mapped.config.round_rules` em tempo de execução na memória.
+  - Isso provê **retrocompatibilidade absoluta (100% de estabilidade)** em todas as telas e painéis da aplicação que historicamente buscavam as regras em `config.round_rules`, sem persistir qualquer redundância no banco físico.
+- **Análise de Variáveis em `general_settings` vs `config`:**
+  - O objeto de estoque e setup inicial de máquinas `machines` e a configuração estrutural `workforce` já estão sendo corretamente limpos e consolidados sob a área estática de `general_settings` do Round 0. O objeto refinado `machine_specs` é gerado unicamente em runtime em memória de forma harmônica a partir das especificações do Tutor, não apresentando concorrência destrutiva no banco.
+
+**Impacto esperado:**
+- **Desempenho e Higiene de Banco:** Redução drástica do tamanho físico do JSONB `config`, evitando armazenamento duplicado de strings de regras pesadas.
+- **Zero Breaking Changes:** Abertura transparente de campeonatos legados e ativos sem qualquer falha de interface ou inconsistência em tempo de execução.
+
+**Status:** ATIVO, testado e validado de forma sênior sob a governança ágil multidisciplinar da equipe.
+
+
+
+

@@ -266,6 +266,13 @@ export const mapChampionshipSynthetically = (c: any) => {
     }
   });
 
+  // Harmonização polimórfica de round_rules para retrocompatibilidade perfeita na memória de runtime:
+  if (mapped.round_rules && (!mapped.config.round_rules || Object.keys(mapped.config.round_rules).length === 0)) {
+    mapped.config.round_rules = mapped.round_rules;
+  } else if (mapped.config.round_rules && (!mapped.round_rules || Object.keys(mapped.round_rules).length === 0)) {
+    mapped.round_rules = mapped.config.round_rules;
+  }
+
   if (mapped.regions_count === undefined || mapped.regions_count === null || mapped.regions_count === 0) {
     const list = config.regions || config.region_configs || c.region_configs || [];
     if (Array.isArray(list) && list.length > 0) {
@@ -559,7 +566,7 @@ export const createChampionshipWithTeams = async (config: any, teams: any[], isT
     'initial_financials', 'general_settings', 'tutor_id',
     'deadline_value', 'deadline_unit', 'description', 'gazeta_mode', 'transparency_level',
     'observers', 'round_started_at', 'is_public', 'ecosystem_config',
-    'is_trial', 'starting_mode'
+    'is_trial', 'starting_mode', 'round_rules'
   ];
   
   const validLiveCols = [...validTrialCols, 'products', 'resources', 'team_fee', 'start_date', 'end_date', 'sector', 'master_key_enabled', 'kpis'];
@@ -619,6 +626,9 @@ export const createChampionshipWithTeams = async (config: any, teams: any[], isT
         delete cleanConfigObj[key];
       }
     });
+
+    // Remoção estrita de round_rules do config na persistência para eliminar duplicidade física fiduciária
+    delete cleanConfigObj.round_rules;
 
     dbPayload.config = cleanConfigObj;
   }
@@ -813,7 +823,7 @@ export const updateEcosystem = async (id: string, data: any, isTrial?: boolean) 
     'initial_financials', 'general_settings', 'tutor_id',
     'deadline_value', 'deadline_unit', 'description', 'gazeta_mode', 'transparency_level',
     'observers', 'round_started_at', 'is_public', 'ecosystem_config',
-    'is_trial', 'starting_mode',
+    'is_trial', 'starting_mode', 'round_rules',
     'products', 'resources', 'team_fee', 'start_date', 'end_date', 'sector', 'master_key_enabled', 'kpis'
   ];
 
@@ -1687,7 +1697,6 @@ export const processRoundTurnover = async (id: string, round: number, isTrial?: 
             is_paused: false,
             paused_at: null,
             remaining_ms_at_pause: null,
-            round_rules: updatedRoundRules, // Salva também dentro de config para redundância perfeita
             ...(nextRoundRegions ? {
                 regions: nextRoundRegions,
                 region_configs: nextRoundRegions.map((r: any) => ({
@@ -1701,6 +1710,9 @@ export const processRoundTurnover = async (id: string, round: number, isTrial?: 
                 }))
             } : {})
         };
+
+        // Remoção definitiva de round_rules do config físico para evitar qualquer duplicidade no banco
+        delete updatedConfig.round_rules;
 
         // Gravação estrita na coluna física 'round_rules' e na coluna 'config'
         const { error: champUpdateErr } = await supabase.from(champTable).update({ 
