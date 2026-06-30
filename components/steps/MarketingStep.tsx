@@ -256,16 +256,51 @@ export const MarketingStep: React.FC<MarketingStepProps> = ({
             kpis: t.kpis || {},
           }));
 
-    // 1. Preço médio regiao anterior
+    // 1. Preço médio regiao anterior (com blindagem fiduciária estrita para evitar vazamentos industriais)
     const prevPrices = rows
       .map((c) => {
         const isCurrentActiveTeam = String(c.team_id) === String(storedTeamId);
-        const stateToUse =
-          isCurrentActiveTeam && !useHistoricalOnly ? decisions : c.state || {};
-        const regDec =
-          stateToUse?.regions?.[regionId] ||
-          stateToUse?.regions?.[String(regionId)];
-        return regDec ? Number(regDec.price) : null;
+        
+        // Localizar a configuração correta da rodada para obter o preço sugerido original do Tutor
+        const targetRoundIdx = useHistoricalOnly 
+          ? (activeArena?.current_round || 0) 
+          : (round !== undefined ? round : ((activeArena?.current_round || 0) + 1));
+        const rRules = activeArena?.round_rules?.[targetRoundIdx] || {};
+        const roundRegionConf =
+          rRules.regions?.find((r: any) => r.id === regionId) ||
+          rRules.region_configs?.find((r: any) => r.id === regionId) ||
+          regionConf;
+        const suggestedPriceForRound = roundRegionConf?.suggested_price !== undefined
+          ? Number(roundRegionConf.suggested_price)
+          : baseSuggestedPrice;
+
+        if (isCurrentActiveTeam) {
+          if (!useHistoricalOnly) {
+            // No cockpit ativo, usamos o preço que o usuário está alterando localmente
+            const activePrice = Number((decisions?.regions as any)?.[regionId]?.price || (decisions?.regions as any)?.[String(regionId)]?.price);
+            return activePrice > 0 ? activePrice : suggestedPriceForRound;
+          } else {
+            // Em relatórios históricos, usamos o preço real consolidado que a equipe de fato aplicou
+            const histPrice = Number((activeTeam?.kpis?.regional_prices as any)?.[regionId] || (activeTeam?.kpis?.regional_prices as any)?.[String(regionId)]);
+            return histPrice > 0 ? histPrice : suggestedPriceForRound;
+          }
+        } else {
+          // Para concorrentes: NUNCA lê decisões correntes/rascunhos ativas de outras equipes.
+          // Usamos unicamente o histórico consolidado do round anterior já encerrado e gravado em competitorsLog
+          if (competitorsLog.length > 0) {
+            const competitorRecord = competitorsLog.find(co => String(co.team_id) === String(c.team_id));
+            if (competitorRecord) {
+              const histPrice = Number((competitorRecord.kpis?.regional_prices as any)?.[regionId] || (competitorRecord.kpis?.regional_prices as any)?.[String(regionId)]);
+              if (histPrice > 0) return histPrice;
+              
+              const statePrice = Number((competitorRecord.state?.regions as any)?.[regionId]?.price || (competitorRecord.state?.regions as any)?.[String(regionId)]?.price);
+              if (statePrice > 0) return statePrice;
+            }
+          }
+          // Caso a região seja recém-criada (sem histórico de round anterior) ou o competitorsLog esteja vazio,
+          // a concorrência inicia com o preço sugerido estabelecido pelo Tutor, blindando dados.
+          return suggestedPriceForRound;
+        }
       })
       .filter((p): p is number => p !== null && p > 0);
     const avgPriceRegion =
@@ -380,7 +415,7 @@ export const MarketingStep: React.FC<MarketingStepProps> = ({
     // 4. Demanda de mercado da região (Market Size por Região)
     const regionalMarketSizes: Record<string, number> = {};
     regionConfigs.forEach((r: any, idx: number) => {
-      const rIdStr = String(idx + 1);
+      const rIdStr = r.id !== undefined ? String(r.id) : String(idx + 1);
       const rWeight = Number(
         r.demand_weight || r.weight || r.demand_percent || 0,
       );
@@ -399,7 +434,7 @@ export const MarketingStep: React.FC<MarketingStepProps> = ({
       teamRegionScores[tIdStr] = {};
 
       regionConfigs.forEach((r: any, idx: number) => {
-        const rIdStr = String(idx + 1);
+        const rIdStr = r.id !== undefined ? String(r.id) : String(idx + 1);
         const rDec =
           stateToUse?.regions?.[rIdStr] || stateToUse?.regions?.[r.id] || {};
 
@@ -444,7 +479,7 @@ export const MarketingStep: React.FC<MarketingStepProps> = ({
     });
 
     regionConfigs.forEach((r: any, idx: number) => {
-      const rIdStr = String(idx + 1);
+      const rIdStr = r.id !== undefined ? String(r.id) : String(idx + 1);
       const regDemand = regionalMarketSizes[rIdStr] || 0;
 
       const scoresWithTeams = rows.map((c: any) => ({
@@ -498,7 +533,7 @@ export const MarketingStep: React.FC<MarketingStepProps> = ({
 
       let runningUnitsSold = 0;
       regionConfigs.forEach((r: any, idx: number) => {
-        const rIdStr = String(idx + 1);
+        const rIdStr = r.id !== undefined ? String(r.id) : String(idx + 1);
         const regDemand = demands[rIdStr] || 0;
 
         let regUnitsSold = 0;
@@ -570,7 +605,7 @@ export const MarketingStep: React.FC<MarketingStepProps> = ({
         icon={<Megaphone size={32} strokeWidth={2.5} />}
         title="Estratégia Comercial"
         desc="Configure preço, prazo e marketing por região. Decisões afetam demanda, margem e fluxo de caixa."
-        help={`Use o botão replicar para aplicar as configurações de ${firstRegionName} em todas as demais.`}
+        help="Configure individualmente os preços, prazos e investimentos de marketing para cada região ativa para atender às especificidades locais."
       />
 
       {/* Bloco único de explicações */}
@@ -635,7 +670,7 @@ export const MarketingStep: React.FC<MarketingStepProps> = ({
         </div>
       </div>
 
-      {/* Configuração global: Juros + Replicar */}
+      {/* Configuração global: Juros */}
       <div className="flex flex-col lg:flex-row items-start lg:items-end justify-between gap-8 bg-slate-900/60 p-6 lg:p-8 rounded-3xl border border-white/10 shadow-xl">
         <div className="w-full lg:w-80 space-y-4">
           <label className="text-sm font-semibold text-slate-300 uppercase tracking-wide flex items-center gap-3">
@@ -667,22 +702,6 @@ export const MarketingStep: React.FC<MarketingStepProps> = ({
             </span>
           </div>
         </div>
-
-        <button
-          onClick={replicateInCluster}
-          disabled={isReadOnly || Object.keys(decisions.regions).length <= 1}
-          className={`
-            px-8 py-4 rounded-2xl font-black text-sm uppercase tracking-wider transition-all flex items-center gap-3 shadow-xl
-            ${
-              Object.keys(decisions.regions).length <= 1 || isReadOnly
-                ? "bg-slate-800 text-slate-600 cursor-not-allowed border border-slate-700"
-                : "bg-gradient-to-r from-orange-600 to-orange-500 hover:from-orange-500 hover:to-orange-400 text-white border border-orange-400/30 active:scale-95"
-            }
-          `}
-        >
-          <RefreshCw size={16} />
-          Replicar {firstRegionName}
-        </button>
       </div>
 
       {/* Cards de regiões */}

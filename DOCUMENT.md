@@ -2,10 +2,24 @@
  
 ## 📋 Controle de Governança
 - **Produto:** EMPIRION ORACLE
-- **Versão Ativa:** v2026.220 Dimensionamento de Operadores por Turnos de Trabalho e Alertas de Dimensionamento MOD
+- **Versão Ativa:** v2026.230 Alinhamento de Índices de IDs Regionais e Reconciliação do DRE Histórico Realizado das Novas Regiões
 - **Tipo de Documento:** Master Index & Diretrizes de Engenharia Contínua
 - **Status da Documentação:** Sincronizado com o PRD.md, BUSINESS_RULES.md & ROADMAP.md
  
+---
+
+## Decisão Arquitetural: Alinhamento de Índices de IDs Regionais e Reconciliação do DRE Histórico Realizado - v2026.230
+
+**Data:** 30 de Junho de 2026 às 08:42 UTC  
+**Motivo:** Corrigir a exibição do mini-DRE de regiões recém-criadas pelo Tutor via intervenção (ex: "DRE Histórico Realizado" zerado). Anteriormente, a rotina de mapeamento comercial interno `calculateRegionStats` no cockpit (`MarketingStep.tsx`) gerava as chaves de estatísticas utilizando de forma genérica o indexador sequencial baseado em array `idx + 1` (ex: `"1"`, `"2"`, `"3"`, `"4"`). Entretanto, o banco de dados e as simulações consolidam e recuperam dados comerciais indexados estritamente pelo ID físico real da região (que, para uma nova região criada por intervenção, costuma ser o ID `"5"` ou subsequentes). O descompasso entre a pesquisa externa por `r.id` e o cálculo em lote interno gerava estatísticas zeradas para a nova região.
+
+**Detalhamento Técnico de Planejamento e Modificações:**
+- **Correção Fiduciária de Mapeamento de IDs Regionais (`components/steps/MarketingStep.tsx`)**:
+  - Alteramos a declaração da chave `rIdStr` dentro do processador `calculateRegionStats` para verificar de forma polimórfica e tolerante a falhas se o objeto possui o ID físico (`r.id !== undefined ? String(r.id) : String(idx + 1)`), alinhando de forma definitiva com as rotinas de simulação e persistência de KPIs do back-end.
+  - Sincronizamos os loops de Market Size, pontuações competitivas, demandas capturadas e vendas regionais sob a nova governança de chave física, blindando e garantindo que todas as regiões, inclusive as de intervenção recém-criadas, apresentem o DRE completo.
+- **Conformidade de Métricas do Mini-DRE**:
+  - Asseguramos a integridade das 10 métricas contábeis divididas na respectiva moeda: *Receitas Brutas*, *Receitas Líquidas*, *CPV (WAC)*, *Lucro Bruto*, *Campanhas Marketing*, *Custo Distribuição*, *Margem Contribuição*, *Desp. Operacionais*, *Lucro/Prejuízo Líquido*, e *Margem Líquida*.
+
 ---
 
 ## Decisão Arquitetural: Dimensionamento de Operadores por Turnos de Trabalho e Alertas de Dimensionamento MOD - v2026.220
