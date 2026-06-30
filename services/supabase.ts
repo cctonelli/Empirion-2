@@ -487,6 +487,17 @@ export const mapChampionshipSynthetically = (c: any) => {
     if (!mapped.config.machines && configMachines.length > 0) {
       mapped.config.machines = configMachines;
     }
+    
+    // Injeção autocurativa fiduciária para recuperar campeonatos afetados pelo bug temporário do timer
+    if (mapped.config.remaining_ms_at_pause === undefined && genSettings.remaining_ms_at_pause !== undefined && genSettings.remaining_ms_at_pause !== null) {
+      mapped.config.remaining_ms_at_pause = genSettings.remaining_ms_at_pause;
+    }
+    if (mapped.config.is_paused === undefined && genSettings.is_paused !== undefined && genSettings.is_paused !== null) {
+      mapped.config.is_paused = genSettings.is_paused;
+    }
+    if (mapped.config.paused_at === undefined && genSettings.paused_at !== undefined && genSettings.paused_at !== null) {
+      mapped.config.paused_at = genSettings.paused_at;
+    }
   }
 
   return mapped;
@@ -598,7 +609,7 @@ export const createChampionshipWithTeams = async (config: any, teams: any[], isT
       'transparency_level', 'round_duration', 'activity_type', 'botsCount', 'teamNames', 
       'humanTeamsCount', 'total_rounds', 'regions', 'region_configs', 'region_names', 'currency', 'sales_mode',
       'scenario_type', 'social_charges', 'compulsory_loan_agio', 'machines', 'workforce',
-      'remaining_ms_at_pause', 'accounting_template_id', 'initial_share_price', 
+      'accounting_template_id', 'initial_share_price', 
       'initial_stock_quantities', 'initial_machines', 'initial_financials'
     ];
 
@@ -873,7 +884,7 @@ export const updateEcosystem = async (id: string, data: any, isTrial?: boolean) 
     'transparency_level', 'round_duration', 'activity_type', 'botsCount', 'teamNames', 
     'humanTeamsCount', 'total_rounds', 'regions', 'region_configs', 'region_names', 'currency', 'sales_mode',
     'scenario_type', 'social_charges', 'compulsory_loan_agio', 'machines', 'workforce',
-    'remaining_ms_at_pause', 'accounting_template_id', 'initial_share_price', 
+    'accounting_template_id', 'initial_share_price', 
     'initial_stock_quantities', 'initial_machines', 'initial_financials'
   ];
 

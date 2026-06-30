@@ -659,7 +659,7 @@ const DecisionForm: React.FC<{
                    ? 'Aguardando Turnover' 
                    : !!activeArena?.config?.is_paused 
                    ? 'Decisões Congeladas' 
-                   : 'Transmitir Decisão'
+                   : 'Transmitir Decisões'
                }
             </button>
          </div>

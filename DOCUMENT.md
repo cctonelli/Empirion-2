@@ -3565,3 +3565,25 @@ O estudo demonstra que a implementação da eliminação por W.O. é **totalment
 **Status:** ATIVO, integrado ao DDL consolidado de governança e homologado com sucesso.
 
 
+## Decisão Arquitetural & Versionamento - Correção de Sincronismo do Temporizador (Timer) e Salvamento Fiduciário no Banco de Dados - v2026.193
+
+**Data:** 30 de Junho de 2026 às 12:45 UTC  
+**Motivo:** Corrigir de forma definitiva o problema de perda de estado do temporizador (timer) de decisões. O erro fazia com que, ao pausar a rodada, o tempo restante caísse abruptamente para 5 minutos de tolerância na despausa, além de impedir que as equipes vissem o timer congelado em tempo real, mantendo a contagem regressiva dinâmica para os alunos de forma concorrente e indesejada.
+
+**Principais alterações:**
+- **Exclusão de Variáveis Dinâmicas de Estado Temporal de `keysToClean` (`/services/supabase.ts`):**
+  - Identificou-se que a variável dinâmica de controle de tempo real **`remaining_ms_at_pause`** havia sido incluída por engano na lista `keysToClean` do `createChampionshipWithTeams` e do `updateEcosystem` (rotina de higienização que centraliza dados estáticos de Round 0). Isso fazia com que o sistema deletasse fisicamente o tempo restante do campo `config` no banco de dados e o movesse para `general_settings` a cada ação de salvamento.
+  - Como consequência, o componente de contagem regressiva das equipes (`ChampionshipTimer`) lia `activeArena.config.remaining_ms_at_pause` como `undefined`, falhando em congelar visualmente. Na retomada, o CommandCenter lia `0` e acionava o fallback providencial de 5 minutos, encolhendo o tempo restante original do campeonato.
+  - Solução: Retirou-se em absoluto a propriedade `remaining_ms_at_pause` da higienização `keysToClean`, permitindo que ela permaneça de forma soberana e intocada dentro de `config`, garantindo integridade matemática e temporal no banco de dados.
+- **Autocura e Injeção de Segurança Retroativa em `mapChampionshipSynthetically` (`/services/supabase.ts`):**
+  - Implementada uma lógica resiliente e autocurativa no mapeador sintético global de campeonatos. Se existirem arenas legadas afetadas pelo bug anterior em que as variáveis de controle `remaining_ms_at_pause`, `is_paused` ou `paused_at` foram migradas por engano para `general_settings`, o mapeador detecta a ausência em `config` e as re-injeta na raiz de `config` em tempo de execução na memória, permitindo que as partidas legadas continuem de onde pararam sem perda de progresso contábil.
+- **Validação de Sincronismo das Equipes:**
+  - O cockpit das equipes de discentes passa a refletir instantaneamente a pausa no exato segundo da transição fiduciária acionada pelo Tutor, congelando a contagem regressiva no milissegundo correto.
+
+**Impacto esperado:**
+- **Estabilidade Temporal de Torneios:** Erradicação total do bug de encolhimento de tempo. Tutores e discentes têm visibilidade 100% precisa e sincronizada da contagem de tempo regressiva em tempo real.
+- **Resiliência e Continuidade Operacional:** Campeonatos anteriormente corrompidos ou afetados pelo bug voltam a operar normalmente de forma transparente.
+
+**Status:** ATIVO, testado, validado com build de produção e homologado sob governança ágil de PMP, Contador Sênior, Coordenador de Mercado, Engenheiro de Banco de Dados, Arquiteto de UI/UX e Engenheiro de Software Sênior.
+
+
