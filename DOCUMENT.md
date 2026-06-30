@@ -3614,5 +3614,31 @@ O estudo demonstra que a implementação da eliminação por W.O. é **totalment
 **Status:** ATIVO, testado e validado de forma sênior sob a governança ágil multidisciplinar da equipe.
 
 
+## Decisão Arquitetural & Versionamento - Visibilidade de Parâmetros Comerciais e Logísticos por Região na Oracle Gazette - v2026.195
+
+**Data:** 30 de Junho de 2026 às 13:15 UTC  
+**Motivo:** Sanar definitivamente o problema relatado pelas equipes e Tutores onde as informações cruciais de tarifas aduaneiras de exportação, pesos de demanda de mercado e moedas locais específicas de cada região não estavam sendo apresentadas de forma visível e compreensível na aba de "Macroeconomia & Setorial" da Oracle Gazette.
+
+**Principais alterações:**
+- **Mapeamento Reativo e Dinâmico de Configurações Regionais (`regionConfigs`):**
+  - Desenvolvida uma constante memoizada extremamente robusta em `GazetteViewer.tsx`. O hook analisa em profundidade e de forma retrocompatível as estruturas de dados do campeonato (`arena.round_rules?.[round]`, `arena.config`, `arena.region_configs`, etc.).
+  - Filtra e exibe dinamicamente apenas as regiões ativas na rodada atual (`start_round <= round`), prevenindo poluição visual ou antecipação de cenários econômicos não ativados.
+- **Criação de Painel de Fidelidade Premium por Cartões (UI/UX 2026):**
+  - Desenvolvido um grid de cartões altamente responsivo que evita transbordamentos de textos (text-overflow) e sobreposição de elementos em quaisquer dimensões de tela (Desktop, Tablet e Mobile), mantendo a acessibilidade AA e área de clique confortável (touch-targets >= 44px).
+  - Exposição elegante de indicadores críticos parametrizados:
+    - *Moeda Local:* Identificada com ícone dinâmico `Coins` do `lucide-react`.
+    - *Peso de Demanda (%):* Indica de forma clara o tamanho relativo de mercado e relevância da região para o volume de vendas na rodada atual.
+    - *Tarifa Alfandegária de Exportação (%):* Exposta em destaque com tratamento visual adaptativo (verde para isento, vermelho vivo com peso negrito para taxas tributárias vigentes).
+    - *Preço Consumidor Sugerido:* Renderizado na moeda local exata e formato fiduciário correto da respectiva região via utilitário `formatCurrency`.
+- **Higiene e Integração Visual Estrita:**
+  - O painel de regiões foi encapsulado no container de animação de transição da aba de Macroeconomia (`motion.div` sob a verificação estrita `activeTab === 'macro'`). Isso elimina vazamentos de renderização e sobreposições indesejadas em outras abas de auditoria ou radar.
+
+**Impacto esperado:**
+- **Visibilidade de 360 Graus:** Tutores e equipes agora desfrutam de um hub analítico centralizado com dados macroeconômicos completos por região, permitindo decisões de precificação precisas e em conformidade estrita com as normas contábeis internacionais (CPC/IFRS).
+- **Higiene Operacional de UX:** Fim absoluto de reclamações sobre dados ausentes ou telas incompletas na Gazette.
+
+**Status:** ATIVO, compilado com sucesso, livre de advertências de lint e homologado pelo corpo técnico e gerencial de software e contabilidade.
+
+
 
 
