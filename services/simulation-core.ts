@@ -801,10 +801,11 @@ export function processRoundWithValidation(
   }, 0) * capMult;
   const activityLevel = sanitize(decision.production?.activityLevel, 100) / 100;
   const operatorsAvailable = (team.kpis?.staffing?.production !== undefined ? team.kpis.staffing.production : defaultStaff) + sanitize(decision.hr?.hired, 0) - sanitize(decision.hr?.fired, 0);
-  const operatorsRequired = currentMachines.reduce((acc, m) => {
+  const baseOperatorsRequired = currentMachines.reduce((acc, m) => {
     const normModel = (m.model as string) === 'alfa' ? 'alpha' : (m.model as string) === 'gama' ? 'gamma' : m.model;
     return acc + (indicators.machine_specs[normModel as 'alpha' | 'beta' | 'gamma']?.operators_required || 0);
   }, 0);
+  const operatorsRequired = baseOperatorsRequired * selectedShifts;
   const operatorConstraint = operatorsRequired > 0 ? Math.min(1, operatorsAvailable / operatorsRequired) : 1;
   const effectiveCapacity = capacity * operatorConstraint;
   

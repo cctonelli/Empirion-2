@@ -32,11 +32,13 @@ export const ReviewStep: React.FC<ReviewStepProps> = ({ decisions, round, projec
 
   // Active workforce calculations to identify bottlenecks
   const machines = projections?.kpis?.machines || [];
-  const operatorsRequired = machines.reduce((acc: number, m: any) => {
+  const selectedShifts = parseInt(decisions.production?.shifts) || 1;
+  const baseOperatorsRequired = machines.reduce((acc: number, m: any) => {
     const normModel = (m.model as string) === 'alfa' ? 'alpha' : (m.model as string) === 'gama' ? 'gamma' : m.model;
     const sReq = currentMacro?.machine_specs?.[normModel]?.operators_required ?? (normModel === 'alpha' ? 94 : normModel === 'beta' ? 235 : 445);
     return acc + sReq;
   }, 0);
+  const operatorsRequired = baseOperatorsRequired * selectedShifts;
   const operatorsAvailable = projections?.kpis?.staffing?.production || 0;
   const showWorkforceAlert = operatorsRequired > 0 && operatorsAvailable < operatorsRequired;
 

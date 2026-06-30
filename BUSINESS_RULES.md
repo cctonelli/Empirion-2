@@ -7,7 +7,7 @@ Este documento centraliza as definições de negócios, fórmulas, restrições 
 ## 📅 Controle de Governança e Versionamento
 
 - **Projeto:** EMPIRION ORACLE
-- **Versão Ativa de Regras:** v2026.134
+- **Versão Ativa de Regras:** v2026.135
 - **Responsável pela Governança:** Project Management Professional (PMP)
 - **Time Multidisciplinar Responsável:**
   - **Contador Sênior:** CPC / IFRS e validação de relatórios contábeis/financeiros.
@@ -18,6 +18,7 @@ Este documento centraliza as definições de negócios, fórmulas, restrições 
 
 | Data | Versão | Autor | Alterações / Decisões Importantes |
 | :--- | :--- | :--- | :--- |
+| **30/06/2026** | `v2026.135` | *PMP & Equipe* | **Dimensionamento Coerente de Tripulação MOD por Turnos de Trabalho.** Acoplamento definitivo da quantidade de turnos de trabalho (`selectedShifts`) na necessidade operacional total de operários MOD (`operatorsRequired`). O sistema passa a alertar proativamente sobre deficiências decorrentes de acréscimo de turnos (prevenindo paralisia produtiva por gargalo de tripulação) e aponta também o excesso de operadores ociosos com impacto fiduciário de custos diretos na folha de pagamento. |
 | **25/06/2026** | `v2026.134` | *PMP & Equipe* | **Governança Fiduciária de Walkover (W.O.) e Insolvência Assistida.** Implementação do motor fiduciário de eliminação e salvaguarda por ausência de decisões consecutivas (`MAX_CONSECUTIVE_MISSES = 2`). Sob estado de W.O. ativo, a equipe humana é desqualificada, o cockpit é bloqueado para novas transmissões, as compras normais e produção física são forçadas a zero, o mercado órfão é inteiramente redistribuído aos competidores remanescentes sadios via algoritmo de Spillover de Estoque, e os demonstrativos contábeis mantêm conformidade com as normas fiduciárias de suspensão de continuidade (*going concern*). |
 | **24/06/2026** | `v2026.133` | *PMP & Equipe* | **Alerta Visual de Rebalanceamento e Controle Pedagógico de Demanda.** Homologação do sistema de alerta em tempo real para o Tutor na criação de torneios (`TrialWizard`) e intervenção de rodadas (`TutorArenaControl`). Sempre que o somatório dos pesos das regiões divergir de 100%, o sistema orientará o Tutor didaticamente sobre os efeitos de hiper-demanda (&gt; 100%) ou recessão fiduciária (&lt; 100%), preservando sua soberania de simulação para prosseguir sem bloqueios técnicos de integridade. |
 | **23/06/2026** | `v2026.132` | *PMP & Equipe* | **Adição da Estrutura de Funding Imobiliário Greenfield & Diferenças BDI.** Documentação estrita do funcionamento financeiro e contábil do empréstimo de abertura imobiliário (`L-INIT-LT`), especificando a taxa nominal (10% a 12,5%), o prazo de amortização de 8 períodos (sistema SAC linear) e a ausência de carência inicial (`grace_period_remaining: 0`) para início imediato dos desembolsos e despesa financeira, diferenciando-se do financiamento de equipamentos industriais. |

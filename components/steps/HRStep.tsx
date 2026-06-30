@@ -113,12 +113,16 @@ export const HRStep: React.FC<HRStepProps> = ({
     const defaultRequired = startingMode === 'start_from_zero' ? 0 : 376;
     const defaultPrevMOD = startingMode === 'start_from_zero' ? 0 : 470;
 
+    const selectedShifts = parseInt(decisions.production?.shifts) || 1;
+
     const currentMachines = kpis.machines || [];
-    const operatorsRequired = currentMachines.reduce((acc: number, m: any) => {
+    const baseRequired = currentMachines.reduce((acc: number, m: any) => {
       const normModel = (m.model as string) === 'alfa' ? 'alpha' : (m.model as string) === 'gama' ? 'gamma' : m.model;
       const sReq = currentMacro?.machine_specs?.[normModel]?.operators_required ?? (normModel === 'alpha' ? 94 : normModel === 'beta' ? 235 : 445);
       return acc + sReq;
     }, 0) || defaultRequired;
+
+    const operatorsRequired = baseRequired * selectedShifts;
 
     // Quadro real de pessoal MOD (contratações e demissões do round e base anterior)
     const prevMOD = kpis.staffing?.production !== undefined ? kpis.staffing.production : defaultPrevMOD;
@@ -127,7 +131,6 @@ export const HRStep: React.FC<HRStepProps> = ({
     const operatorsAvailable = Math.max(0, prevMOD + hired - fired);
 
     const activityLevel = (decisions.production?.activityLevel !== undefined ? decisions.production?.activityLevel : 100) / 100;
-    const selectedShifts = parseInt(decisions.production?.shifts) || 1;
     let modMult = 1.0;
     if (selectedShifts === 2) modMult = 1.5;
     else if (selectedShifts === 3) modMult = 2.0;
@@ -183,8 +186,8 @@ export const HRStep: React.FC<HRStepProps> = ({
 
   const hasModDeficit = payrollProjection.operatorsAvailable < payrollProjection.operatorsRequired;
 
-  // Problema ativo: comprou máquina + multiturnos + falta pessoal para botar as máquinas para rodar
-  const isProblemActive = hasBoughtMachines && isMultiShift && hasModDeficit;
+  // Problema ativo: se houver defasagem crítica de pessoal (tanto por compra de máquinas quanto por expansão de turnos)
+  const isProblemActive = hasModDeficit;
 
   // Se o problema for corrigido pela equipe, o descarte do modal é reiniciado
   useEffect(() => {
@@ -366,6 +369,8 @@ export const HRStep: React.FC<HRStepProps> = ({
         <div className={`p-6 lg:p-8 rounded-3xl border-2 transition-all duration-300 shadow-xl ${
           payrollProjection.operatorsAvailable < payrollProjection.operatorsRequired
             ? 'bg-rose-950/20 border-rose-500/30 hover:border-rose-500/50 shadow-rose-950/10'
+            : payrollProjection.operatorsAvailable > payrollProjection.operatorsRequired
+            ? 'bg-amber-950/20 border-amber-500/30 hover:border-amber-500/50 shadow-amber-950/10'
             : 'bg-emerald-950/20 border-emerald-500/30 hover:border-emerald-500/50 shadow-emerald-950/10'
         }`}>
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
@@ -373,10 +378,14 @@ export const HRStep: React.FC<HRStepProps> = ({
               <div className={`p-3.5 rounded-2xl shrink-0 ${
                 payrollProjection.operatorsAvailable < payrollProjection.operatorsRequired
                   ? 'bg-rose-500/10 text-rose-400'
+                  : payrollProjection.operatorsAvailable > payrollProjection.operatorsRequired
+                  ? 'bg-amber-500/10 text-amber-400'
                   : 'bg-emerald-500/10 text-emerald-400'
               }`}>
                 {payrollProjection.operatorsAvailable < payrollProjection.operatorsRequired ? (
                   <AlertTriangle size={28} className="text-rose-400 animate-pulse" />
+                ) : payrollProjection.operatorsAvailable > payrollProjection.operatorsRequired ? (
+                  <AlertCircle size={28} className="text-amber-400 animate-bounce" />
                 ) : (
                   <CheckCircle2 size={28} className="text-emerald-400" />
                 )}
@@ -385,16 +394,24 @@ export const HRStep: React.FC<HRStepProps> = ({
                 <h5 className={`text-base lg:text-lg font-black uppercase tracking-tight ${
                   payrollProjection.operatorsAvailable < payrollProjection.operatorsRequired
                     ? 'text-rose-400'
+                    : payrollProjection.operatorsAvailable > payrollProjection.operatorsRequired
+                    ? 'text-amber-400'
                     : 'text-emerald-400'
                 }`}>
                   {payrollProjection.operatorsAvailable < payrollProjection.operatorsRequired
                     ? 'AVISO: Alerta de Capacidade Paralisada (Defasagem de MOD)'
+                    : payrollProjection.operatorsAvailable > payrollProjection.operatorsRequired
+                    ? 'ALERTA: Excesso de Mão de Obra Ociosa (Inabilidade de Custos)'
                     : 'Excelência: Mão de Obra Plena & Eficiência Garantida'}
                 </h5>
                 <p className="text-sm text-slate-300 mt-1 max-w-2xl font-sans leading-relaxed">
-                  {payrollProjection.operatorsAvailable < payrollProjection.operatorsRequired
-                    ? `Seu parque fabril ativo exige ${payrollProjection.operatorsRequired} operários, mas seu planejamento conta com apenas ${payrollProjection.operatorsAvailable} disponíveis para esta rodada. Por falta de operadores, a produção real da empresa sofrerá um gargalo de tripulação e parte de suas máquinas ficará paralisada.`
-                    : `Sua tripulação de ${payrollProjection.operatorsAvailable} operários disponíveis cobre perfeitamente os ${payrollProjection.operatorsRequired} necessários exigidos pelas máquinas configuradas. Suas máquinas operarão totalmente integradas e livres de ociosidade forçada por pessoal.`}
+                  {payrollProjection.operatorsAvailable < payrollProjection.operatorsRequired ? (
+                    `Seu parque fabril ativo exige um total de ${payrollProjection.operatorsRequired} operários (considerando o regime de ${selectedShifts > 1 ? `${selectedShifts} turnos` : '1 turno'}), mas seu planejamento conta com apenas ${payrollProjection.operatorsAvailable} disponíveis para esta rodada. Por falta de operadores, a produção real sofrerá um gargalo de tripulação e suas máquinas ficarão parcialmente paralisadas.`
+                  ) : payrollProjection.operatorsAvailable > payrollProjection.operatorsRequired ? (
+                    `Sua tripulação de ${payrollProjection.operatorsAvailable} operários disponíveis cobre os ${payrollProjection.operatorsRequired} necessários exigidos (para o regime de ${selectedShifts > 1 ? `${selectedShifts} turnos` : '1 turno'}), contudo há um excesso de ${payrollProjection.operatorsAvailable - payrollProjection.operatorsRequired} operadores MOD ociosos. Eles receberão salários normalmente, inflando desnecessariamente seus custos de folha de pagamento.`
+                  ) : (
+                    `Sua tripulação de ${payrollProjection.operatorsAvailable} operários disponíveis cobre perfeitamente os ${payrollProjection.operatorsRequired} necessários exigidos pelas máquinas configuradas. Suas máquinas operarão totalmente integradas e livres de ociosidade forçada por pessoal.`
+                  )}
                 </p>
               </div>
             </div>
@@ -406,15 +423,25 @@ export const HRStep: React.FC<HRStepProps> = ({
               <span className={`text-3xl font-mono font-black ${
                 payrollProjection.operatorsAvailable < payrollProjection.operatorsRequired
                   ? 'text-rose-500'
+                  : payrollProjection.operatorsAvailable > payrollProjection.operatorsRequired
+                  ? 'text-amber-400'
                   : 'text-emerald-400'
               }`}>
                 {payrollProjection.operatorsRequired > 0
                   ? `${Math.min(100, Math.floor((payrollProjection.operatorsAvailable / payrollProjection.operatorsRequired) * 100))}%`
                   : '100%'}
               </span>
-              {payrollProjection.operatorsAvailable < payrollProjection.operatorsRequired && (
+              {payrollProjection.operatorsAvailable < payrollProjection.operatorsRequired ? (
                 <span className="text-[10px] text-rose-300 font-semibold block uppercase">
                   Paralisia Industrial Ativa
+                </span>
+              ) : payrollProjection.operatorsAvailable > payrollProjection.operatorsRequired ? (
+                <span className="text-[10px] text-amber-300 font-semibold block uppercase">
+                  Ociosidade de Folha Ativa
+                </span>
+              ) : (
+                <span className="text-[10px] text-emerald-300 font-semibold block uppercase">
+                  Quadro Plenamente Alocado
                 </span>
               )}
             </div>
@@ -792,11 +819,11 @@ export const HRStep: React.FC<HRStepProps> = ({
                   </div>
 
                   <p className="text-sm text-slate-300 leading-relaxed font-sans">
-                    Prezada Equipe, identificamos que a sua <span className="text-red-400 font-bold">aquisição planejada de novas máquinas</span> não possui a equipe de tripulação (MOD) correspondente contratada para suprir o aumento de capacidade produtiva.
+                    Prezada Equipe, identificamos que o seu planejamento de recursos humanos apresenta uma <span className="text-red-400 font-bold">defasagem crítica de tripulação (MOD)</span> para suprir a demanda operacional do parque fabril nesta rodada.
                   </p>
 
                   <p className="text-sm text-slate-300 leading-relaxed font-sans">
-                    Como a empresa optou por operar em <span className="text-orange-400 font-bold">regime de multiturnos ({selectedShifts} turnos)</span>, o sindicato e a engenharia industrial sinalizaram que <span className="text-red-400 font-bold">não há operários suficientes</span> no seu quadro atual para cobrir o turno expandido de trabalho nas novas máquinas. Isso resultará em ociosidade fabril forçada e paralisia industrial imediata no próximo período.
+                    Como a empresa optou por operar {selectedShifts > 1 ? `em regime de multiturnos (${selectedShifts} turnos)` : 'em turno único'} e {hasBoughtMachines ? 'adquiriu novos ativos de maquinário' : 'mantém sua frota de máquinas'}, a engenharia industrial e o sindicato sinalizaram que <span className="text-red-400 font-bold">não há operários disponíveis suficientes</span> no seu quadro planejado para cobrir o nível de atividade e turnos de trabalho configurados. Isso resultará em gargalo de tripulação, ociosidade forçada e redução severa de sua capacidade real de produção no próximo período.
                   </p>
 
                   <div className="bg-slate-950/60 border border-white/5 rounded-2xl p-4 space-y-2 font-mono text-xs text-slate-400">

@@ -134,11 +134,26 @@ const GazetteViewer: React.FC<GazetteViewerProps> = ({
     return initialActiveTeam;
   }, [selectedTeamId, competitors, initialActiveTeam]);
 
-  // Captura dos parâmetros macroeconômicos dinâmicos do round
+  // Cronograma de rodadas resolvido e unificado para o simulador e exibição de preços com fidedignidade absoluta
+  const resolvedChronogram = useMemo(() => {
+    const chronogram: Record<number, any> = {};
+    const arenaConfig = arena?.config || {};
+    const arenaRoundRules = arena?.round_rules || {};
+    for (let r = 0; r <= 12; r++) {
+      chronogram[r] = {
+        ...(DEFAULT_INDUSTRIAL_CHRONOGRAM[r] || {}),
+        ...(arenaConfig?.round_rules?.[r] || {}),
+        ...(arenaConfig?.DEFAULT_INDUSTRIAL_CHRONOGRAM?.[r] || {}),
+        ...(arenaRoundRules?.[r] || {}),
+      };
+    }
+    return chronogram;
+  }, [arena]);
+
+  // Captura dos parâmetros macroeconômicos dinâmicos do round com herança de banco ou fallback
   const currentMacro = useMemo((): MacroIndicators => {
-    const rules =
-      arena.round_rules?.[round] || DEFAULT_INDUSTRIAL_CHRONOGRAM[round] || {};
-    const baseSettings = arena.general_settings || {};
+    const rules = resolvedChronogram[round] || {};
+    const baseSettings = arena?.general_settings || arena?.config?.general_settings || arena?.config || {};
     const maxShifts =
       rules.max_shifts ??
       rules.workforce?.max_shifts ??
@@ -156,32 +171,51 @@ const GazetteViewer: React.FC<GazetteViewerProps> = ({
       ...DEFAULT_MACRO,
       ...baseSettings,
       ...rules,
+      prices: {
+        ...DEFAULT_MACRO.prices,
+        ...(baseSettings.prices || {}),
+        ...(rules.prices || {}),
+      },
+      machinery_values: {
+        ...DEFAULT_MACRO.machinery_values,
+        ...(baseSettings.machinery_values || {}),
+        ...(rules.machinery_values || {}),
+      },
+      award_values: {
+        ...DEFAULT_MACRO.award_values,
+        ...(baseSettings.award_values || {}),
+        ...(rules.award_values || {}),
+      },
       max_shifts: Number(maxShifts),
       production_hours_period: Number(prodHours),
     } as MacroIndicators;
-  }, [arena, round]);
+  }, [arena, round, resolvedChronogram]);
 
   // Captura das configurações de regiões dinâmicas e ativas do campeonato
   const regionConfigs = useMemo(() => {
-    let list: any[] =
-      arena.round_rules?.[round]?.regions ||
-      arena.round_rules?.[round]?.region_configs ||
-      arena.config?.regions ||
-      arena.config?.region_configs ||
-      arena.region_configs ||
+    const rules = resolvedChronogram[round] || {};
+    let list: any =
+      rules.regions ||
+      rules.region_configs ||
+      arena?.config?.regions ||
+      arena?.config?.region_configs ||
+      arena?.region_configs ||
       [];
 
+    if (!Array.isArray(list)) {
+      list = [];
+    }
+
     // Filtrar apenas as regiões que já foram ativadas no round corrente (start_round <= round)
-    return list.filter((r: any) => !r.start_round || r.start_round <= round);
-  }, [arena, round]);
+    return list.filter((r: any) => r && typeof r === 'object' && (!r.start_round || r.start_round <= round));
+  }, [arena, round, resolvedChronogram]);
 
   const chronogramHistory = useMemo(() => {
     const list = [];
     const totalMax = 12;
     for (let r = 0; r <= totalMax; r++) {
-      const rules =
-        arena.round_rules?.[r] || DEFAULT_INDUSTRIAL_CHRONOGRAM[r] || {};
-      const baseSettings = arena.general_settings || {};
+      const rules = resolvedChronogram[r] || {};
+      const baseSettings = arena?.general_settings || arena?.config?.general_settings || arena?.config || {};
       const maxShifts =
         rules.max_shifts ??
         rules.workforce?.max_shifts ??
@@ -213,7 +247,7 @@ const GazetteViewer: React.FC<GazetteViewerProps> = ({
       });
     }
     return list;
-  }, [arena]);
+  }, [arena, resolvedChronogram]);
 
   const lineSeries = useMemo(() => {
     const roundsList = chronogramHistory;
@@ -700,13 +734,11 @@ const GazetteViewer: React.FC<GazetteViewerProps> = ({
                                 {region.name}
                               </td>
                               {Array.from({ length: 13 }).map((_, r) => {
-                                const rules =
-                                  arena.round_rules?.[r] ||
-                                  DEFAULT_INDUSTRIAL_CHRONOGRAM[r] ||
-                                  {};
+                                const rules = resolvedChronogram[r] || {};
+                                const baseSettings = arena?.general_settings || arena?.config?.general_settings || arena?.config || {};
                                 const activeMacro = {
                                   ...DEFAULT_MACRO,
-                                  ...arena.general_settings,
+                                  ...baseSettings,
                                   ...rules,
                                 };
                                 const val = Number(
@@ -1035,24 +1067,24 @@ const GazetteViewer: React.FC<GazetteViewerProps> = ({
                     <CostLedgerItem
                       label="Matéria-Prima A"
                       val={getAdjustedPrice(
-                        currentMacro.prices.mp_a,
+                        currentMacro.prices?.mp_a ?? DEFAULT_MACRO.prices.mp_a,
                         "raw_material_a_adjust",
                         round,
-                        arena.round_rules || DEFAULT_INDUSTRIAL_CHRONOGRAM,
+                        resolvedChronogram,
                       )}
                       icon={<Package className="text-blue-400" size={14} />}
-                      currency={arena.currency || "$"}
+                      currency={arena?.currency || "BRL"}
                     />
                     <CostLedgerItem
                       label="Matéria-Prima B"
                       val={getAdjustedPrice(
-                        currentMacro.prices.mp_b,
+                        currentMacro.prices?.mp_b ?? DEFAULT_MACRO.prices.mp_b,
                         "raw_material_b_adjust",
                         round,
-                        arena.round_rules || DEFAULT_INDUSTRIAL_CHRONOGRAM,
+                        resolvedChronogram,
                       )}
                       icon={<Package className="text-indigo-400" size={14} />}
-                      currency={arena.currency || "$"}
+                      currency={arena?.currency || "BRL"}
                     />
                   </div>
                 </div>
@@ -1068,24 +1100,24 @@ const GazetteViewer: React.FC<GazetteViewerProps> = ({
                     <CostLedgerItem
                       label="Armazenagem MP"
                       val={getAdjustedPrice(
-                        currentMacro.prices.storage_mp,
+                        currentMacro.prices?.storage_mp ?? DEFAULT_MACRO.prices.storage_mp,
                         "storage_cost_adjust",
                         round,
-                        arena.round_rules || DEFAULT_INDUSTRIAL_CHRONOGRAM,
+                        resolvedChronogram,
                       )}
                       icon={<Coins className="text-slate-400" size={14} />}
-                      currency={arena.currency || "$"}
+                      currency={arena?.currency || "BRL"}
                     />
                     <CostLedgerItem
                       label="Estoque Produto Acabado PA"
                       val={getAdjustedPrice(
-                        currentMacro.prices.storage_finished,
+                        currentMacro.prices?.storage_finished ?? DEFAULT_MACRO.prices.storage_finished,
                         "storage_cost_adjust",
                         round,
-                        arena.round_rules || DEFAULT_INDUSTRIAL_CHRONOGRAM,
+                        resolvedChronogram,
                       )}
                       icon={<Coins className="text-slate-400" size={14} />}
-                      currency={arena.currency || "$"}
+                      currency={arena?.currency || "BRL"}
                     />
                   </div>
                 </div>
@@ -1135,7 +1167,7 @@ const GazetteViewer: React.FC<GazetteViewerProps> = ({
                   const tariffVal = tariffKey
                     ? (currentMacro[tariffKey as keyof MacroIndicators] ?? 0)
                     : 0;
-                  const rCurrency = region.currency || arena.currency || "BRL";
+                  const rCurrency = region?.currency || arena?.currency || "BRL";
 
                   return (
                     <div
