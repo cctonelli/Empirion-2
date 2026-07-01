@@ -319,9 +319,9 @@ const TutorArenaControl: React.FC<{ championship: Championship; onUpdate: (confi
              className="min-h-[400px]"
           >
              {activeTab === 'conjuncture' && (
-                <div className="bg-slate-900 p-10 rounded-[4rem] border border-white/10 shadow-2xl space-y-12">
-                   <h3 className="text-2xl font-black text-white uppercase italic flex items-center gap-4"><TrendingUp className="text-orange-500"/> Conjuntura Macroeconômica</h3>
-                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-0.5">
+                <div className="bg-slate-900 p-4 rounded-[1rem] border border-white/10 shadow-lg space-y-1">
+                   <h3 className="text-lg font-black text-white uppercase italic flex items-center gap-1"><TrendingUp className="text-orange-500"/> Conjuntura Macroeconômica</h3>
+                   <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-0.5">
                       <ParamCard label="ICE (Confiança Empresarial)" val={macro.ice} onChange={(v: number) => setMacro({...macro, ice: v})} suffix="pts" icon={<Activity size={14}/>} />
                       <ParamCard label="Variação Demanda" val={macro.demand_variation} onChange={(v: number) => setMacro({...macro, demand_variation: v})} suffix="%" icon={<Flame size={14}/>} />
                       <ParamCard label="Taxa de Inflação" val={macro.inflation_rate} onChange={(v: number) => setMacro({...macro, inflation_rate: v})} suffix="%" icon={<Flame size={14}/>} />
@@ -352,7 +352,7 @@ const TutorArenaControl: React.FC<{ championship: Championship; onUpdate: (confi
                       <ParamCard label="Tarifa Importação CHINA" val={macro.import_tariff_china} onChange={(v: number) => setMacro({...macro, import_tariff_china: v})} suffix="%" icon={<Scale size={14}/>} />
                       <ParamCard label="Tarifa Importação BITCOIN" val={macro.import_tariff_btc} onChange={(v: number) => setMacro({...macro, import_tariff_btc: v})} suffix="%" icon={<Scale size={14}/>} />
                       <ParamCard label="Retorno dos Investimentos" val={macro.investment_return_rate} onChange={(v: number) => setMacro({...macro, investment_return_rate: v})} suffix="%" icon={<Percent size={14}/>} />
-                      <ParamCard label="Produtividade Média Trab." val={macro.labor_productivity || 1.0} onChange={(v: number) => setMacro({...macro, labor_productivity: v})} suffix="x" icon={<Cpu size={14}/>} />
+                      <ParamCard label="Produtividade Média Trab." val={macro.labor_productivity} onChange={(v: number) => setMacro({...macro, labor_productivity: v})} suffix="x" icon={<Cpu size={14}/>} />
                    </div>
                 </div>
              )}
@@ -363,9 +363,8 @@ const TutorArenaControl: React.FC<{ championship: Championship; onUpdate: (confi
                    <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
                       <MacroInput label={`Preço MP-A (Silício) (${championshipCurrency})`} val={macro.prices.mp_a} onChange={(v: number) => setMacro({...macro, prices: {...macro.prices, mp_a: v}})} suffix="un" icon={<Activity size={14}/>} />
                       <MacroInput label={`Preço MP-B (Germânio) (${championshipCurrency})`} val={macro.prices.mp_b} onChange={(v: number) => setMacro({...macro, prices: {...macro.prices, mp_b: v}})} />
-                      <MacroInput label="Compra Especial (%)" val={macro.special_purchase_premium} onChange={(v: number) => setMacro({...macro, special_purchase_premium: v})} />
-                      <MacroInput label={`Custo Unit. Estocagem MP (${championshipCurrency})`} val={macro.prices.storage_mp || 1.40} onChange={(v: number) => setMacro({...macro, prices: {...macro.prices, storage_mp: v}})} />
-                      <MacroInput label={`Custo Unit. Estocagem PA (${championshipCurrency})`} val={macro.prices.storage_finished || 20.00} onChange={(v: number) => setMacro({...macro, prices: {...macro.prices, storage_finished: v}})} />
+                      <MacroInput label={`Custo Estocagem MPs (un)(${championshipCurrency})`} val={macro.prices.storage_mp} onChange={(v: number) => setMacro({...macro, prices: {...macro.prices, storage_mp: v}})} />
+                      <MacroInput label={`Custo Estocagem PA (un)(${championshipCurrency})`} val={macro.prices.storage_finished} onChange={(v: number) => setMacro({...macro, prices: {...macro.prices, storage_finished: v}})} />
                    </div>
 
                    <div className="pt-8 border-t border-white/5 space-y-6">
