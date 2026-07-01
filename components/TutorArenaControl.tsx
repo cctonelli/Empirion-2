@@ -166,7 +166,7 @@ const TutorArenaControl: React.FC<{ championship: Championship; onUpdate: (confi
       suggested_price: newRegionSuggestedPrice,
       distribution_cost: newRegionDistributionCost,
       marketing_cost: newRegionMarketingCost,
-      start_round: nextRoundIdx + 1 // Vigorará na próxima rodada após TURNOVER do round atual sob intervenção
+      start_round: nextRoundIdx // Vigorará a partir da rodada sob intervenção (atualizada no próximo turnover)
     };
     setRegionsList([...regionsList, newReg]);
     setNewRegionName('');

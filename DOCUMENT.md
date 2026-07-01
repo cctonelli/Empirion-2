@@ -306,7 +306,7 @@
 - **Remoção de Timer Duplicado:**
   - Eliminado o componente `<ChampionshipTimer>` da tela de intervenção do Tutor para manter a interface limpa e focada.
 - **Sincronização e Gravação de Regiões Comerciais:**
-  - As novas regiões comerciais adicionadas pelo Tutor ganham o campo `start_round: nextRoundIdx + 1` (rodada seguinte à sob intervenção).
+  - As novas regiões comerciais adicionadas pelo Tutor ganham o campo `start_round: nextRoundIdx` (rodada sob intervenção), garantindo que estejam ativas na rodada correspondente para o envio de decisões e processamento de turnover.
   - O mapeamento de persistência de `handleSave` no `TutorArenaControl` foi corrigido para incluir explicitamente o campo `start_round` no payload das regiões, tanto na raiz de `config` (`regions` e `region_configs`) quanto no nó cronológico `round_rules?.[nextRoundIdx]`.
   - Isso garante que a região seja gravada de forma permanente no banco de dados e as equipes a enxerguem de forma automática e reativa somente a partir da rodada designada, graças à filtragem existente no Cockpit das Equipes (`!r.start_round || r.start_round <= round`).
 - **Filtragem Fiduciária no Processamento de Turnover:**
