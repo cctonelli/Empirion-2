@@ -1046,16 +1046,16 @@ export const MarketingStep: React.FC<MarketingStepProps> = ({
                 </div>
 
                 <div className="flex justify-between text-[10px] text-slate-500 uppercase tracking-wide font-mono leading-none">
-                  <span>Market Share:</span>
-                  <span className="text-emerald-400 font-bold">
-                    {stats.relativeSalesShare.toFixed(1)}%
+                  <span>Sales Volume:</span>
+                  <span className="text-slate-300 font-bold">
+                    {stats.activeTeamUnitsSold.toLocaleString("pt-BR")} un
                   </span>
                 </div>
 
                 <div className="flex justify-between text-[10px] text-slate-500 uppercase tracking-wide font-mono leading-none">
-                  <span>Sales Volume:</span>
-                  <span className="text-slate-300 font-bold">
-                    {stats.activeTeamUnitsSold.toLocaleString("pt-BR")} un
+                  <span>Market Share:</span>
+                  <span className="text-emerald-400 font-bold">
+                    {stats.relativeSalesShare.toFixed(1)}%
                   </span>
                 </div>
 
