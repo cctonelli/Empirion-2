@@ -85,7 +85,7 @@ typings/
 .env.production.local
 
 # Production build
-dist/
+# dist/
 dist-ssr/
 
 # Caches adicionais e arquivos temporários do compilador
