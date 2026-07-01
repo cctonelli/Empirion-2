@@ -211,22 +211,23 @@ const TutorDecisionMonitor: React.FC<MonitorProps> = ({ championshipId, round, i
       {currentIndicators && (
         <div className="px-0 space-y-1">
         <h3 className="text-xl font-black text-white uppercase italic tracking-tight">INDICADORES MACROECONÔMICOS</h3>
-        <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest leading-none mt-1">Indicadores macroeconômicos da rodada conforme definidos pelo Tutor ao criar o Torneio.</p>
-          <div className="grid grid-cols-2 md:grid-cols-6 lg:grid-cols-12 gap-1">
-             <QuickIndicator label="ICE" val={`${currentIndicators.ice}%`} />
+        <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest leading-none mt-1">Indicadores macroeconômicos do round em andamento </p>
+          <div className="grid grid-cols-1 md:grid-cols-6 lg:grid-cols-10 gap-0.5">
+             <QuickIndicator label="ICE (Confiança)" val={`${currentIndicators.ice}%`} highlight={currentIndicators.inflation_rate < 100} />
              <QuickIndicator label="Demanda" val={`${currentIndicators.demand_variation}%`} />
-             <QuickIndicator label="Inflação" val={`${currentIndicators.inflation_rate}%`}  highlight={currentIndicators.inflation_rate > 2} />
-             <QuickIndicator label="Inadimplência" val={`${currentIndicators.customer_default_rate}%`} />
+             <QuickIndicator label="Inflação" val={`${currentIndicators.inflation_rate}%`} highlight={currentIndicators.inflation_rate > 2} />
+             <QuickIndicator label="PECLD (Inadimplência)" val={`${currentIndicators.customer_default_rate}%`} />
              <QuickIndicator label="Renda Aplicação" val={`${currentIndicators.investment_return_rate}%`} />
              <QuickIndicator label="Juros+TR (BDI)" val={`${currentIndicators.interest_rate_tr}%`} />
              <QuickIndicator label="Empréstimo Compulsório" val={`${currentIndicators.compulsory_loan_agio}%`} highlight={currentIndicators.compulsory_loan_agio > 10} />
              <QuickIndicator label="Juros Fornecedor" val={`${currentIndicators.supplier_interest}%`} highlight={currentIndicators.supplier_interest > 2} />
-             <QuickIndicator label="Compra Extra" val={`${currentIndicators.special_purchase_premium}%`} highlight={currentIndicators.special_purchase_premium > 10} />
-             <QuickIndicator label="Venda Maquina" val={`${currentIndicators.machine_sale_discount}%`} highlight={currentIndicators.machine_sale_discount > 10} />
+             <QuickIndicator label="Ágio Compra Extra" val={`${currentIndicators.special_purchase_premium}%`} highlight={currentIndicators.special_purchase_premium > 10} />
+             <QuickIndicator label="Deságio Venda Maquina" val={`${currentIndicators.machine_sale_discount}%`} highlight={currentIndicators.machine_sale_discount > 10} />
              <QuickIndicator label="Multa Atrasos" val={`${currentIndicators.late_penalty_rate}%`} highlight={currentIndicators.late_penalty_rate > 5} />
              <QuickIndicator label="IVA s/COMPRA" val={`${currentIndicators.vat_purchases_rate}%`} />
              <QuickIndicator label="IVA s/VENDA" val={`${currentIndicators.vat_sales_rate}%`} />
              <QuickIndicator label="IRPJ" val={`${currentIndicators.tax_rate_ir}%`} />
+             <QuickIndicator label="Encargos Sociais" val={`${currentIndicators.social_charges}%`} />
              <QuickIndicator label="Reaj. MP-A" val={`${currentIndicators.raw_material_a_adjust}%`} />          
              <QuickIndicator label="Reaj. MP-B" val={`${currentIndicators.raw_material_b_adjust}%`} />
              <QuickIndicator label="Reaj. Máq. ALPHA" val={`${currentIndicators.machine_alpha_price_adjust}%`} />

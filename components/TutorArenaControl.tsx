@@ -139,10 +139,10 @@ const TutorArenaControl: React.FC<{ championship: Championship; onUpdate: (confi
        setRegionsList(list);
     } else {
        setRegionsList([
-         { id: 1, name: "BRASIL (LOCAL)", currency: "BRL", demand_weight: 40, suggested_price: 425.0, distribution_cost: 50.0, marketing_cost: 10000.0 },
-         { id: 2, name: "EUA (EXPORT)", currency: "USD", demand_weight: 20, suggested_price: 425.0, distribution_cost: 50.0, marketing_cost: 10000.0 },
-         { id: 3, name: "EUROPA (EXPORT)", currency: "EUR", demand_weight: 20, suggested_price: 425.0, distribution_cost: 50.0, marketing_cost: 10000.0 },
-         { id: 4, name: "CHINA (EXPORT)", currency: "CNY", demand_weight: 20, suggested_price: 425.0, distribution_cost: 50.0, marketing_cost: 10000.0 }
+         { id: 1, name: "BRASIL (LOCAL)", currency: "BRL", demand_weight: 40, suggested_price: 500.0, distribution_cost: 50.0, marketing_cost: 10000.0 },
+         { id: 2, name: "EUA (EXPORT)", currency: "USD", demand_weight: 20, suggested_price: 500.0, distribution_cost: 50.0, marketing_cost: 10000.0 },
+         { id: 3, name: "EUROPA (EXPORT)", currency: "EUR", demand_weight: 20, suggested_price: 500.0, distribution_cost: 50.0, marketing_cost: 10000.0 },
+         { id: 4, name: "CHINA (EXPORT)", currency: "CNY", demand_weight: 20, suggested_price: 500.0, distribution_cost: 50.0, marketing_cost: 10000.0 }
        ]);
     }
 
@@ -300,13 +300,13 @@ const TutorArenaControl: React.FC<{ championship: Championship; onUpdate: (confi
 
        {/* Menu de Abas de Intervenção */}
        <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-none">
-          <TabBtn active={activeTab === 'conjuncture'} onClick={() => setActiveTab('conjuncture')} label="Conjuntura" icon={<TrendingUp size={12}/>} />
-          <TabBtn active={activeTab === 'suppliers'} onClick={() => setActiveTab('suppliers')} label="Insumos & CAPEX" icon={<Package size={12}/>} />
-          <TabBtn active={activeTab === 'market'} onClick={() => setActiveTab('market')} label="Mercado & Regiões" icon={<ShoppingCart size={12}/>} />
-          <TabBtn active={activeTab === 'staffing'} onClick={() => setActiveTab('staffing')} label="Staffing" icon={<Briefcase size={12}/>} />
-          <TabBtn active={activeTab === 'international'} onClick={() => setActiveTab('international')} label="Câmbio Oracle" icon={<Coins size={12}/>} />
-          <TabBtn active={activeTab === 'awards'} onClick={() => setActiveTab('awards')} label="Premiações" icon={<Award size={12}/>} />
-          <TabBtn active={activeTab === 'observers'} onClick={() => setActiveTab('observers')} label="Observadores" icon={<Eye size={12}/>} />
+          <TabBtn active={activeTab === 'conjuncture'} onClick={() => setActiveTab('conjuncture')} label="Conjuntura" icon={<TrendingUp size={14}/>} />
+          <TabBtn active={activeTab === 'suppliers'} onClick={() => setActiveTab('suppliers')} label="Insumos & CAPEX" icon={<Package size={14}/>} />
+          <TabBtn active={activeTab === 'market'} onClick={() => setActiveTab('market')} label="Mercado & Regiões" icon={<ShoppingCart size={14}/>} />
+          <TabBtn active={activeTab === 'staffing'} onClick={() => setActiveTab('staffing')} label="Staffing" icon={<Briefcase size={14}/>} />
+          <TabBtn active={activeTab === 'international'} onClick={() => setActiveTab('international')} label="Câmbio Oracle" icon={<Coins size={14}/>} />
+          <TabBtn active={activeTab === 'awards'} onClick={() => setActiveTab('awards')} label="Premiações" icon={<Award size={14}/>} />
+          <TabBtn active={activeTab === 'observers'} onClick={() => setActiveTab('observers')} label="Observadores" icon={<Eye size={14}/>} />
        </div>
 
        <AnimatePresence mode="wait">
@@ -321,8 +321,8 @@ const TutorArenaControl: React.FC<{ championship: Championship; onUpdate: (confi
              {activeTab === 'conjuncture' && (
                 <div className="bg-slate-900 p-10 rounded-[4rem] border border-white/10 shadow-2xl space-y-12">
                    <h3 className="text-2xl font-black text-white uppercase italic flex items-center gap-4"><TrendingUp className="text-orange-500"/> Conjuntura Macroeconômica</h3>
-                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
-                      <ParamCard label="ICE (Índice de Confiança Empresarial)" val={macro.ice} onChange={(v: number) => setMacro({...macro, ice: v})} suffix="pts" icon={<Activity size={14}/>} />
+                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-0.5">
+                      <ParamCard label="ICE (Confiança Empresarial)" val={macro.ice} onChange={(v: number) => setMacro({...macro, ice: v})} suffix="pts" icon={<Activity size={14}/>} />
                       <ParamCard label="Variação Demanda" val={macro.demand_variation} onChange={(v: number) => setMacro({...macro, demand_variation: v})} suffix="%" icon={<Flame size={14}/>} />
                       <ParamCard label="Taxa de Inflação" val={macro.inflation_rate} onChange={(v: number) => setMacro({...macro, inflation_rate: v})} suffix="%" icon={<Flame size={14}/>} />
                       <ParamCard label="PECLD (Inadimplência)" val={macro.customer_default_rate} onChange={(v: number) => setMacro({...macro, customer_default_rate: v})} suffix="%" icon={<Flame size={14}/>} />
