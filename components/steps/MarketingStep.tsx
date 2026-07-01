@@ -11,6 +11,7 @@ import {
   TrendingDown,
   DollarSign,
   Coins,
+  Calculator,
 } from "lucide-react";
 import { WizardStepHeader, CurrencyInput } from "./shared";
 import { DecisionData, Championship, Team } from "../../types";
@@ -44,6 +45,23 @@ export const MarketingStep: React.FC<MarketingStepProps> = ({
   const [competitorsLog, setCompetitorsLog] = React.useState<any[]>([]);
   const [loadingIntel, setLoadingIntel] = React.useState(false);
   const [allRegionsExpanded, setAllRegionsExpanded] = React.useState(false);
+  const [calcValue, setCalcValue] = React.useState<number>(100);
+  const [calcFrom, setCalcFrom] = React.useState<string>("USD");
+  const [calcTo, setCalcTo] = React.useState<string>("BRL");
+
+  const availableCurrencies = React.useMemo(() => {
+    const list = new Set<string>();
+    list.add(activeArena?.currency || "BRL");
+    if (activeArena?.general_settings?.exchange_rates) {
+      Object.keys(activeArena.general_settings.exchange_rates).forEach((c) => list.add(c));
+    }
+    const roundExchangeRates = (activeArena?.round_rules as any)?.[targetRound]?.exchange_rates;
+    if (roundExchangeRates) {
+      Object.keys(roundExchangeRates).forEach((c) => list.add(c));
+    }
+    ["BRL", "USD", "EUR", "GBP", "CNY", "BTC"].forEach((c) => list.add(c));
+    return Array.from(list);
+  }, [activeArena, targetRound]);
 
   const toggleRegionProfitability = () => {
     setAllRegionsExpanded((prev) => !prev);
@@ -713,23 +731,31 @@ export const MarketingStep: React.FC<MarketingStepProps> = ({
         </div>
       </div>
 
-      {/* Configuração global: Juros */}
-      <div className="flex flex-col lg:flex-row items-start lg:items-end justify-between gap-8 bg-slate-900/60 p-6 lg:p-8 rounded-3xl border border-white/10 shadow-xl">
-        <div className="w-full lg:w-80 space-y-4">
-          <label className="text-sm font-semibold text-slate-300 uppercase tracking-wide flex items-center gap-3">
-            Juros de Venda a Prazo (%)
-            <HelpCircle
-              size={16}
-              className="text-slate-500 hover:text-orange-400 transition-colors cursor-help"
-            />
-          </label>
+      {/* Configuração global: Juros e Calculadora de Câmbio Oracle */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 bg-slate-900/60 p-6 lg:p-8 rounded-3xl border border-white/10 shadow-xl items-stretch">
+        {/* Lado Esquerdo: Campo de Juros de Venda a Prazo (%) */}
+        <div className="lg:col-span-4 flex flex-col justify-between space-y-4">
+          <div>
+            <label id="lbl-term-interest" className="text-sm font-semibold text-slate-300 uppercase tracking-wide flex items-center gap-3">
+              Juros de Venda a Prazo (%)
+              <HelpCircle
+                size={16}
+                className="text-slate-500 hover:text-orange-400 transition-colors cursor-help"
+              />
+            </label>
+            <p className="text-[11px] text-slate-500 mt-1">
+              Taxa de juros praticada nos parcelamentos das vendas das regiões.
+            </p>
+          </div>
           <div className="relative">
             <input
+              id="input-term-interest"
               type="number"
               step="0.01"
               min="0"
               max="20"
               disabled={isReadOnly}
+              aria-labelledby="lbl-term-interest"
               value={decisions.production.term_interest_rate}
               onChange={(e) =>
                 updateDecision(
@@ -743,6 +769,90 @@ export const MarketingStep: React.FC<MarketingStepProps> = ({
             <span className="absolute right-4 top-1/2 -translate-y-1/2 text-lg font-bold text-orange-400">
               %
             </span>
+          </div>
+        </div>
+
+        {/* Separador vertical sutil em telas grandes */}
+        <div className="hidden lg:flex lg:col-span-1 items-center justify-center">
+          <div className="h-full w-[1px] bg-white/5" />
+        </div>
+
+        {/* Lado Direito: Câmbio Oracle (Calculadora de Conversão) */}
+        <div className="lg:col-span-7 p-6 bg-slate-950/80 rounded-2xl border border-white/5 space-y-5 flex flex-col justify-between">
+          <div className="flex items-center gap-3">
+            <span className="p-2 bg-orange-600/10 rounded-xl text-orange-500 flex-shrink-0">
+              <Calculator size={18} />
+            </span>
+            <div>
+              <h4 className="text-sm font-bold text-white uppercase tracking-wide">Câmbio Oracle - Simulador de Conversão</h4>
+              <p className="text-[11px] text-slate-500">
+                Simule valores de câmbios cruzados com base na moeda padrão do torneio ({activeArena?.currency || "BRL"}).
+              </p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-12 gap-4 items-end">
+            {/* Montante */}
+            <div className="sm:col-span-3">
+              <label id="lbl-calc-value" className="text-[9px] font-black uppercase text-slate-500 block mb-1.5">Montante</label>
+              <input
+                id="input-calc-value"
+                type="number"
+                aria-labelledby="lbl-calc-value"
+                value={calcValue}
+                onChange={(e) => setCalcValue(parseFloat(e.target.value) || 0)}
+                className="w-full bg-slate-900 border border-white/10 rounded-xl px-3 py-2 text-xs text-white font-mono outline-none focus:border-orange-500 transition-colors"
+              />
+            </div>
+
+            {/* De */}
+            <div className="sm:col-span-3">
+              <label id="lbl-calc-from" className="text-[9px] font-black uppercase text-slate-500 block mb-1.5">De</label>
+              <select
+                id="select-calc-from"
+                aria-labelledby="lbl-calc-from"
+                value={calcFrom}
+                onChange={(e) => setCalcFrom(e.target.value)}
+                className="w-full bg-slate-900 border border-white/10 rounded-xl px-3 py-2 text-xs text-white font-bold outline-none focus:border-orange-500 transition-colors"
+              >
+                {availableCurrencies.map((c) => (
+                  <option key={c} value={c}>
+                    {c}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Para */}
+            <div className="sm:col-span-3">
+              <label id="lbl-calc-to" className="text-[9px] font-black uppercase text-slate-500 block mb-1.5">Para</label>
+              <select
+                id="select-calc-to"
+                aria-labelledby="lbl-calc-to"
+                value={calcTo}
+                onChange={(e) => setCalcTo(e.target.value)}
+                className="w-full bg-slate-900 border border-white/10 rounded-xl px-3 py-2 text-xs text-white font-bold outline-none focus:border-orange-500 transition-colors"
+              >
+                {availableCurrencies.map((c) => (
+                  <option key={c} value={c}>
+                    {c}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Resultado */}
+            <div className="sm:col-span-3 p-3 bg-orange-600/10 border border-orange-500/20 rounded-xl flex flex-col justify-center min-h-[58px]">
+              <span className="text-[8px] font-black uppercase text-orange-400 block mb-0.5">Resultado</span>
+              <span className="text-xs font-mono font-bold text-white truncate">
+                {(() => {
+                  const fromRate = getExchangeRateActive(calcFrom);
+                  const toRate = getExchangeRateActive(calcTo);
+                  const result = calcFrom === calcTo ? calcValue : (calcValue * fromRate) / toRate;
+                  return `${result.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 4 })} ${calcTo}`;
+                })()}
+              </span>
+            </div>
           </div>
         </div>
       </div>
@@ -916,12 +1026,7 @@ export const MarketingStep: React.FC<MarketingStepProps> = ({
                     {stats.totalRegionDemand.toLocaleString("pt-BR")} un
                   </span>
                 </div>
-                <div className="flex justify-between text-[10px] text-slate-500 uppercase tracking-wide font-mono leading-none">
-                  <span>Sales Volume:</span>
-                  <span className="text-slate-300 font-bold">
-                    {stats.activeTeamUnitsSold.toLocaleString("pt-BR")} un
-                  </span>
-                </div>
+
                 <div className="flex justify-between text-[10px] text-slate-500 uppercase tracking-wide font-mono leading-none">
                   <span>Market Demand:</span>
                   <span className="text-slate-300 font-semibold">
@@ -932,16 +1037,25 @@ export const MarketingStep: React.FC<MarketingStepProps> = ({
                     %
                   </span>
                 </div>
+
                 <div className="flex justify-between text-[10px] text-slate-500 uppercase tracking-wide font-mono leading-none">
                   <span>Market Volume:</span>
                   <span className="text-purple-400 font-semibold">
                     {stats.totalRegionUnitsSold.toLocaleString("pt-BR")} un
                   </span>
                 </div>
+
                 <div className="flex justify-between text-[10px] text-slate-500 uppercase tracking-wide font-mono leading-none">
                   <span>Market Share:</span>
                   <span className="text-emerald-400 font-bold">
                     {stats.relativeSalesShare.toFixed(1)}%
+                  </span>
+                </div>
+
+                <div className="flex justify-between text-[10px] text-slate-500 uppercase tracking-wide font-mono leading-none">
+                  <span>Sales Volume:</span>
+                  <span className="text-slate-300 font-bold">
+                    {stats.activeTeamUnitsSold.toLocaleString("pt-BR")} un
                   </span>
                 </div>
 
