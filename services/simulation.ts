@@ -134,40 +134,51 @@ export const calculateProjections = (
     return 1 + (fallback / 100);
   };
 
-  const getExchangeRate = (currencyCode: string | undefined): number => {
-    const normCurrency = currencyCode || 'BRL';
-    const baseCurrency = (ecosystem as any)?.currency || 'BRL';
-    
-    // Se a moeda da região/transação for idêntica à moeda-base consolidada da Holding, o fator é sempre 1.0.
-    if (normCurrency === baseCurrency) return 1.0;
-    
-    // 1. Tentar buscar nas regras customizadas do round atual
-    if (round_rules && round_rules[currentRound]) {
-      if (round_rules[currentRound][normCurrency] !== undefined) {
-        return sanitize(round_rules[currentRound][normCurrency], 1.0);
+  const getRateRelativeToAnchor = (curr: string, roundToUse: number): number => {
+    const norm = curr.toUpperCase();
+    if (norm === 'BRL') return 1.0;
+
+    // 1. Tentar buscar nas regras do round específico (suporte a indexadores de chaves string vs number)
+    const rRules = (round_rules as any)?.[roundToUse] || (round_rules as any)?.[String(roundToUse)];
+    if (rRules) {
+      if (rRules.exchange_rates?.[norm] !== undefined) {
+        return sanitize(rRules.exchange_rates[norm], 1.0);
       }
-      if (round_rules[currentRound].exchange_rates && round_rules[currentRound].exchange_rates[normCurrency] !== undefined) {
-        return sanitize(round_rules[currentRound].exchange_rates[normCurrency], 1.0);
+      if (rRules[norm] !== undefined) {
+        return sanitize(rRules[norm], 1.0);
       }
     }
 
-    // 1b. Tentar buscar no config/ecosystem do campeonato
+    // 2. Tentar buscar no config/ecosystem do campeonato
     const ecoExchangeRates = (ecosystem as any).exchange_rates || (ecosystem as any).config?.exchange_rates;
     if (ecoExchangeRates) {
-      if (ecoExchangeRates[normCurrency] !== undefined) {
-        return sanitize(ecoExchangeRates[normCurrency], 1.0);
+      if (ecoExchangeRates[norm] !== undefined) {
+        return sanitize(ecoExchangeRates[norm], 1.0);
       }
     }
-    
-    // 2. Tentar buscar nos indicadores de mercado do round atual
-    if (indicators && (indicators as any).exchange_rates && (indicators as any).exchange_rates[normCurrency] !== undefined) {
-      return sanitize((indicators as any).exchange_rates[normCurrency], 1.0);
+
+    // 3. Tentar buscar nos indicadores de mercado do round atual (ou iniciais se roundToUse for 0)
+    if (indicators && (indicators as any).exchange_rates && (indicators as any).exchange_rates[norm] !== undefined) {
+      return sanitize((indicators as any).exchange_rates[norm], 1.0);
     }
-    if (indicators && (indicators as any)[normCurrency] !== undefined) {
-      return sanitize((indicators as any)[normCurrency], 1.0);
+    if (indicators && (indicators as any)[norm] !== undefined) {
+      return sanitize((indicators as any)[norm], 1.0);
     }
-    
-    // 3. Mecanismo de Taxas de Câmbio Cruzadas Cruzadas (Base de Câmbio) para Fallbacks Seguros
+
+    // 4. Tentar buscar no Cronograma Industrial Padrão historizado para rounds anteriores
+    if (roundToUse > 0) {
+      const DEFAULT_CHRONO = DEFAULT_INDUSTRIAL_CHRONOGRAM as any;
+      if (DEFAULT_CHRONO[roundToUse]) {
+        if (DEFAULT_CHRONO[roundToUse].exchange_rates?.[norm] !== undefined) {
+          return sanitize(DEFAULT_CHRONO[roundToUse].exchange_rates[norm], 1.0);
+        }
+        if (DEFAULT_CHRONO[roundToUse][norm] !== undefined) {
+          return sanitize(DEFAULT_CHRONO[roundToUse][norm], 1.0);
+        }
+      }
+    }
+
+    // 5. Fallbacks calibrados
     const ratesInBrl: Record<string, number> = {
       'BRL': 1.0,
       'USD': 5.25,
@@ -176,65 +187,30 @@ export const calculateProjections = (
       'CNY': 0.72,
       'BTC': 0.00002
     };
+    return ratesInBrl[norm] || 1.0;
+  };
+
+  const getExchangeRate = (currencyCode: string | undefined): number => {
+    const normCurrency = (currencyCode || 'BRL').toUpperCase();
+    const baseCurrency = ((ecosystem as any)?.currency || 'BRL').toUpperCase();
     
-    const fromRate = ratesInBrl[normCurrency] || 1.0;
-    const toRate = ratesInBrl[baseCurrency] || 1.0;
-    return fromRate / toRate;
+    if (normCurrency === baseCurrency) return 1.0;
+
+    const rateFrom = getRateRelativeToAnchor(normCurrency, currentRound);
+    const rateTo = getRateRelativeToAnchor(baseCurrency, currentRound);
+    return rateFrom / rateTo;
   };
 
   const getExchangeRatePrev = (currencyCode: string | undefined, prevRound: number): number => {
-    const normCurrency = currencyCode || 'BRL';
-    const baseCurrency = (ecosystem as any)?.currency || 'BRL';
+    const normCurrency = (currencyCode || 'BRL').toUpperCase();
+    const baseCurrency = ((ecosystem as any)?.currency || 'BRL').toUpperCase();
     
     if (normCurrency === baseCurrency) return 1.0;
-    
-    if (prevRound < 1) {
-      if (indicators && (indicators as any).exchange_rates && (indicators as any).exchange_rates[normCurrency] !== undefined) {
-        return sanitize((indicators as any).exchange_rates[normCurrency], 1.0);
-      }
-      const ratesInBrl: Record<string, number> = {
-        'BRL': 1.0,
-        'USD': 5.25,
-        'EUR': 5.60,
-        'GBP': 6.50,
-        'CNY': 0.72,
-        'BTC': 0.00002
-      };
-      const fromRate = ratesInBrl[normCurrency] || 1.0;
-      const toRate = ratesInBrl[baseCurrency] || 1.0;
-      return fromRate / toRate;
-    }
-    
-    // 1. Tentar buscar nas regras do round anterior
-    if (round_rules && round_rules[prevRound]) {
-      if (round_rules[prevRound][normCurrency] !== undefined) {
-        return sanitize(round_rules[prevRound][normCurrency], 1.0);
-      }
-      if (round_rules[prevRound].exchange_rates && round_rules[prevRound].exchange_rates[normCurrency] !== undefined) {
-        return sanitize(round_rules[prevRound].exchange_rates[normCurrency], 1.0);
-      }
-    }
 
-    // 1b. Tentar buscar no config/ecosystem do campeonato
-    const ecoExchangeRates = (ecosystem as any).exchange_rates || (ecosystem as any).config?.exchange_rates;
-    if (ecoExchangeRates) {
-      if (ecoExchangeRates[normCurrency] !== undefined) {
-        return sanitize(ecoExchangeRates[normCurrency], 1.0);
-      }
-    }
-    
-    // 2. Tentar buscar no Cronograma Industrial Padrão historizado
-    const DEFAULT_CHRONO = DEFAULT_INDUSTRIAL_CHRONOGRAM as any;
-    if (DEFAULT_CHRONO[prevRound]) {
-      if (DEFAULT_CHRONO[prevRound][normCurrency] !== undefined) {
-        return sanitize(DEFAULT_CHRONO[prevRound][normCurrency], 1.0);
-      }
-      if (DEFAULT_CHRONO[prevRound].exchange_rates && DEFAULT_CHRONO[prevRound].exchange_rates[normCurrency] !== undefined) {
-        return sanitize(DEFAULT_CHRONO[prevRound].exchange_rates[normCurrency], 1.0);
-      }
-    }
-    
-    return getExchangeRate(normCurrency);
+    const roundToUse = prevRound < 1 ? 0 : prevRound;
+    const rateFrom = getRateRelativeToAnchor(normCurrency, roundToUse);
+    const rateTo = getRateRelativeToAnchor(baseCurrency, roundToUse);
+    return rateFrom / rateTo;
   };
 
   // Inflação geral afeta Manutenção e Despesas Fixas

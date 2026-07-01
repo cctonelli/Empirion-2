@@ -10,6 +10,7 @@ import {
   TrendingUp,
   TrendingDown,
   DollarSign,
+  Coins,
 } from "lucide-react";
 import { WizardStepHeader, CurrencyInput } from "./shared";
 import { DecisionData, Championship, Team } from "../../types";
@@ -48,12 +49,52 @@ export const MarketingStep: React.FC<MarketingStepProps> = ({
     setAllRegionsExpanded((prev) => !prev);
   };
 
+  const getExchangeRateActive = React.useCallback((curr: string | undefined): number => {
+    if (!curr) return 1.0;
+    const baseCurr = activeArena?.currency || "BRL";
+    if (curr === baseCurr) return 1.0;
+
+    const currentRound = targetRound;
+    const rRules = (activeArena?.round_rules as any)?.[currentRound] || (activeArena?.round_rules as any)?.[String(currentRound)];
+    
+    // 1. Tentar ler do sub-objeto exchange_rates ou de chaves diretas do round_rules da rodada ativa
+    if (rRules) {
+      if (rRules.exchange_rates?.[curr] !== undefined) {
+        return Number(rRules.exchange_rates[curr]);
+      }
+      if (rRules[curr] !== undefined) {
+        return Number(rRules[curr]);
+      }
+    }
+
+    // 2. Tentar buscar nas general_settings da arena (propriedades persistidas)
+    if (activeArena?.general_settings?.exchange_rates?.[curr] !== undefined) {
+      return Number(activeArena.general_settings.exchange_rates[curr]);
+    }
+    if (activeArena?.general_settings?.[curr] !== undefined) {
+      return Number(activeArena.general_settings[curr]);
+    }
+
+    // 3. Fallbacks estáticos calibrados em paridade com BRL (conversão cruzada)
+    const ratesInBrl: Record<string, number> = {
+      BRL: 1.0,
+      USD: 5.25,
+      EUR: 5.60,
+      GBP: 6.50,
+      CNY: 0.72,
+      BTC: 0.00002
+    };
+    const fromRate = ratesInBrl[curr] || 1.0;
+    const toRate = ratesInBrl[baseCurr] || 1.0;
+    return fromRate / toRate;
+  }, [activeArena, targetRound]);
+
   // Cálculo do Projeções em tempo real da equipe ativa com base nas decisões correntes
   const projection = React.useMemo(() => {
     if (!activeArena || !activeTeam) return null;
     try {
       const targetRound = round !== undefined ? round : ((activeArena.current_round || 0) + 1);
-      const currentRules = activeArena.round_rules?.[targetRound] || DEFAULT_INDUSTRIAL_CHRONOGRAM[targetRound] || activeArena.general_settings || {};
+      const currentRules = (activeArena.round_rules as any)?.[targetRound] || (DEFAULT_INDUSTRIAL_CHRONOGRAM as any)[targetRound] || activeArena.general_settings || {};
       const indicatorsForRound = {
         ...(activeArena.general_settings || {}),
         ...currentRules
@@ -778,6 +819,18 @@ export const MarketingStep: React.FC<MarketingStepProps> = ({
                 </div>
 
                 <div className="space-y-4">
+                  {currency !== (activeArena?.currency || "BRL") && (
+                    <div className="text-[10px] font-mono font-bold text-slate-400/80 mb-3 bg-slate-950/40 p-2.5 rounded-2xl border border-white/5 flex justify-between items-center shadow-inner">
+                      <span className="flex items-center gap-1 text-amber-500">
+                        <Coins size={12} className="animate-pulse" />
+                        Câmbio R-{round}:
+                      </span>
+                      <span className="text-amber-400 font-black">
+                        1 {currency} = {getExchangeRateActive(currency).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 4 })} {activeArena?.currency || "BRL"}
+                      </span>
+                    </div>
+                  )}
+
                   {/* Preço */}
                   <div className="space-y-1.5">
                     <label className="text-[11px] font-semibold text-slate-400 uppercase tracking-wide font-sans">
@@ -979,50 +1032,40 @@ export const MarketingStep: React.FC<MarketingStepProps> = ({
                         const getExchangeRateForRoundLocal = (
                           curr: string | undefined,
                         ): number => {
-                          if (!curr || curr === "BRL") return 1.0;
+                          if (!curr) return 1.0;
+                          const baseCurr = activeArena?.currency || "BRL";
+                          if (curr === baseCurr) return 1.0;
 
                           const closedRound = activeArena?.current_round || 0;
-                          if (
-                            activeArena?.round_rules?.[closedRound]?.[curr] !==
-                            undefined
-                          ) {
-                            return Number(
-                              activeArena.round_rules[closedRound][curr],
-                            );
+                          const rRules = (activeArena?.round_rules as any)?.[closedRound] || (activeArena?.round_rules as any)?.[String(closedRound)];
+                          
+                          if (rRules) {
+                            if (rRules.exchange_rates?.[curr] !== undefined) {
+                              return Number(rRules.exchange_rates[curr]);
+                            }
+                            if (rRules[curr] !== undefined) {
+                              return Number(rRules[curr]);
+                            }
                           }
 
-                          if (
-                            activeArena?.general_settings?.exchange_rates?.[
-                              curr
-                            ] !== undefined
-                          ) {
-                            return Number(
-                              activeArena.general_settings.exchange_rates[
-                                curr
-                              ],
-                            );
+                          if (activeArena?.general_settings?.exchange_rates?.[curr] !== undefined) {
+                            return Number(activeArena.general_settings.exchange_rates[curr]);
                           }
-
-                          if (
-                            activeArena?.general_settings?.[curr] !== undefined
-                          ) {
+                          if (activeArena?.general_settings?.[curr] !== undefined) {
                             return Number(activeArena.general_settings[curr]);
                           }
 
-                          switch (curr) {
-                            case "USD":
-                              return 5.25;
-                            case "EUR":
-                              return 5.6;
-                            case "GBP":
-                              return 6.5;
-                            case "CNY":
-                              return 0.72;
-                            case "BTC":
-                              return 0.00002;
-                            default:
-                              return 1.0;
-                          }
+                          const ratesInBrl: Record<string, number> = {
+                            BRL: 1.0,
+                            USD: 5.25,
+                            EUR: 5.60,
+                            GBP: 6.50,
+                            CNY: 0.72,
+                            BTC: 0.00002
+                          };
+                          const fromRate = ratesInBrl[curr] || 1.0;
+                          const toRate = ratesInBrl[baseCurr] || 1.0;
+                          return fromRate / toRate;
                         };
 
                         const rate = getExchangeRateForRoundLocal(currency);

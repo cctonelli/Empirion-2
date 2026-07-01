@@ -292,11 +292,16 @@ export const mapChampionshipSynthetically = (c: any) => {
   });
 
   // Harmonização polimórfica de round_rules para retrocompatibilidade perfeita na memória de runtime:
-  if (mapped.round_rules && (!mapped.config.round_rules || Object.keys(mapped.config.round_rules).length === 0)) {
-    mapped.config.round_rules = mapped.round_rules;
-  } else if (mapped.config.round_rules && (!mapped.round_rules || Object.keys(mapped.round_rules).length === 0)) {
-    mapped.round_rules = mapped.config.round_rules;
+  let rRules = mapped.round_rules || config.round_rules || {};
+  if (typeof rRules === "string") {
+    try {
+      rRules = JSON.parse(rRules);
+    } catch (e) {
+      rRules = {};
+    }
   }
+  mapped.round_rules = rRules;
+  mapped.config.round_rules = rRules;
 
   if (mapped.regions_count === undefined || mapped.regions_count === null || mapped.regions_count === 0) {
     const list = config.regions || config.region_configs || c.region_configs || [];
