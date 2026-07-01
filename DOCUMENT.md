@@ -2,10 +2,46 @@
  
 ## 📋 Controle de Governança
 - **Produto:** EMPIRION ORACLE
-- **Versão Ativa:** v2026.230 Alinhamento de Índices de IDs Regionais e Reconciliação do DRE Histórico Realizado das Novas Regiões
+- **Versão Ativa:** v2026.250 Resolução de Moeda-Padrão (USD vs BRL) e Harmonização Contábil de Conversão Cambial Cruzada Multimoeda no Simulador e Relatórios Contábeis (CPC 02 / IAS 21)
 - **Tipo de Documento:** Master Index & Diretrizes de Engenharia Contínua
 - **Status da Documentação:** Sincronizado com o PRD.md, BUSINESS_RULES.md & ROADMAP.md
  
+---
+
+## Decisão Arquitetural: Resolução de Moeda-Padrão (USD vs BRL) e Harmonização Contábil de Conversão Cambial Cruzada Multimoeda no Simulador e Relatórios Contábeis (CPC 02 / IAS 21) - v2026.250
+
+**Data:** 1 de Julho de 2026 às 13:00 UTC  
+**Motivo:** Corrigir a falha de leitura da moeda padrão do torneio (definida como USD pelo tutor), que vinha sendo incorretamente exibida como "R$" para as equipes. Além disso, harmonizar e garantir a exatidão técnica contábil e de simulação nas conversões de vendas multirregionais (vendas em moedas locais como EUR convertidas para a moeda consolidada USD da Holding) no DRE Histórico Realizado e na Matriz Financeira, em estrita conformidade com os princípios do CPC 02 e IAS 21 (Efeitos das Mudanças nas Taxas de Câmbio e Conversão de Demonstrações Contábeis).
+
+**Detalhamento Técnico de Planejamento e Modificações:**
+- **Extração Resiliente e Precoce da Moeda do Torneio (`services/supabase.ts` -> `mapChampionshipSynthetically`)**:
+  - Reestruturamos e antecipamos o parseamento da propriedade `general_settings` no mapeador central sintético de campeonatos.
+  - Implementamos a busca em cascata de forma que, se `config.currency` não estiver presente ou estiver vazio, a moeda do campeonato (`mapped.currency`) seja resolvida a partir de `general_settings.currency` (onde o tutor armazena a moeda padrão).
+  - Adicionamos um fallback padrão resiliente de `'BRL'` apenas na ausência absoluta de qualquer especificação. Isso resolve de forma sistêmica e imediata as exibições no cockpit (que passam a apresentar os símbolos do dólar americano `$` em vez de `R$`).
+- **Harmonização da Conversão Cruzada Multimoeda no Simulador (`services/simulation.ts` -> `getExchangeRate` / `calculateProjections`)**:
+  - Com a moeda-base da Holding (`activeArena.currency`) resolvida perfeitamente como `'USD'`, o motor de simulação agora calcula a taxa de câmbio cruzada de forma contábil rigorosa.
+  - Para regiões configuradas com moedas distintas (ex: vendas em EUR), o sistema calcula a taxa de translação direta `fromRate (EUR) / toRate (USD)` baseado nas cotações de mercado reais de cada round. Vendas em USD para holdings em USD são processadas com taxa neutra de `1.0`.
+  - Isso garante que os mini-DREs de cada região e a Matriz Financeira consolidada realizem a translação e consolidação fidedigna de receitas, sem distorcer o fluxo de caixa, caixa e lucro líquido do período.
+- **Formatação Localizada Contábil (`utils/formatters.ts`)**:
+  - Validamos a robustez das funções `formatCurrency` e `getCurrencySymbol`, confirmando que elas reagem de forma 100% dinâmica ao código `'USD'` repassado reativamente pelas interfaces do applet, invocando as regras regionais do `Intl.NumberFormat` para o locale `en-US` (exibindo valores fidedignos no formato `$ 1,234.56` com separadores de milhar internacionais).
+
+---
+
+## Decisão Arquitetural: Blindagem do Motor de Inteligência Artificial (JSON Parsing do ESDS) e Saneamento de Chaves de Listas no React (Deduplicação de Campeonatos e Equipes) - v2026.240
+
+**Data:** 1 de Julho de 2026 às 12:30 UTC  
+**Motivo:** Sanear falhas críticas de parseamento de respostas JSON da API do Gemini no cálculo projetado de ESDS (oráculo financeiro) e resolver avisos de chaves duplicadas no React que causavam lentidão e duplicidade visual de campeonatos/equipes nas interfaces do applet.
+
+**Detalhamento Técnico de Planejamento e Modificações:**
+- **Tratamento de Resiliência na API do Gemini (`services/gemini.ts`)**:
+  - Desenvolvemos a função utilitária soberana `safeJsonParse`, que higieniza e extrai o JSON puro de forma resiliente a partir de strings do modelo de linguagem (tratando marcas de markdown \`\`\`json, textos preliminares ou finais, e tratando vírgulas pendentes antes do encerramento de arrays ou objetos).
+  - Aplicamos o `safeJsonParse` para blindar os fluxos de cálculo do ESDS, Cisne Negro, e decisões de robôs (BOTs), eliminando qualquer interrupção na simulação por formatação de strings do LLM.
+- **Deduplicação de Entidades nas Consultas do Supabase (`services/supabase.ts`)**:
+  - Refatoramos a função central de listagem `getChampionships` para deduplicar campeonatos por ID na união de tabelas `live` e `trial` de forma robusta e transparente.
+  - Implementamos a limpeza e deduplicação inline de equipes aninhadas (`teams`) de cada campeonato, assegurando que o React receba somente identificadores exclusivos em todo o ciclo de vida dos componentes.
+- **Conformidade de Compilação**:
+  - Verificado via `lint_applet` e `compile_applet` com 100% de sucesso.
+
 ---
 
 ## Decisão Arquitetural: Alinhamento de Índices de IDs Regionais e Reconciliação do DRE Histórico Realizado - v2026.230

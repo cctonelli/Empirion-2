@@ -3,6 +3,38 @@ import { GoogleGenAI, GenerateContentResponse, Type } from "@google/genai";
 import { ScenarioType, DecisionData, MacroIndicators, AnalysisSource, Branch, RegionType, BlackSwanEvent, TransparencyLevel, GazetaMode, StrategicProfile } from "../types";
 import { computeESDSDeterministic } from "./simulation";
 
+export const safeJsonParse = (text: string | null | undefined): any => {
+  if (!text) return {};
+  let cleaned = text.trim();
+  
+  // Se estiver envolto em blocos de código markdown ```json ou ```, extraia
+  const markdownMatch = cleaned.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
+  if (markdownMatch) {
+    cleaned = markdownMatch[1].trim();
+  }
+  
+  // Encontra a primeira ocorrência de '{' e a última de '}' para garantir que isolamos apenas o objeto JSON
+  const firstBrace = cleaned.indexOf('{');
+  const lastBrace = cleaned.lastIndexOf('}');
+  if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+    cleaned = cleaned.substring(firstBrace, lastBrace + 1);
+  }
+  
+  try {
+    return JSON.parse(cleaned);
+  } catch (e) {
+    console.warn("safeJsonParse: falha ao analisar JSON padrão, tentando tratamento alternativo de vírgulas e aspas...", e);
+    try {
+      // Remove vírgulas extras no final antes de fechar colchetes ou chaves
+      const noTrailingCommas = cleaned.replace(/,\s*([\]}])/g, '$1');
+      return JSON.parse(noTrailingCommas);
+    } catch (e2) {
+      console.error("safeJsonParse: falha definitiva ao analisar JSON. Retornando objeto vazio. Texto bruto recebido:", text);
+      return {};
+    }
+  }
+};
+
 let cachedApiKey: string | null = null;
 
 export const getApiKey = async () => {
@@ -293,7 +325,7 @@ export const generateBotDecision = async (
       }
     });
 
-    return JSON.parse(response.text || '{}');
+    return safeJsonParse(response.text || '{}');
   } catch (error) {
     console.error(`Falha ao gerar decisão para BOT ${botName}:`, error);
     return fallback(regionCount);
@@ -398,7 +430,7 @@ export const generateBlackSwanEvent = async (branch: Branch): Promise<BlackSwanE
       }
     });
 
-    return JSON.parse(response.text || '{}');
+    return safeJsonParse(response.text || '{}');
   } catch (error) {
     console.error("Black Swan Generation error:", error);
     return {
@@ -477,7 +509,7 @@ Output JSON:
       }
     });
 
-    const aiResult = JSON.parse(response.text || '{}');
+    const aiResult = safeJsonParse(response.text || '{}');
     
     return {
       ...deterministicResult,

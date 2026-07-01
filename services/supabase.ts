@@ -163,21 +163,46 @@ export const getChampionships = async (isPublicOnly: boolean = false, forceTable
     }
     const { data, error } = await query;
     if (error) return [];
-    return (data || []).map(c => mapChampionshipSynthetically({ ...c, is_trial: type === 'trial' }));
+    
+    return (data || []).map(c => {
+      const mapped = mapChampionshipSynthetically({ ...c, is_trial: type === 'trial' });
+      // Deduplicar equipes aninhadas para evitar chaves duplicadas no React
+      if (mapped && Array.isArray(mapped.teams)) {
+        const teamSeen = new Set<string>();
+        mapped.teams = mapped.teams.filter((t: any) => {
+          if (!t || !t.id) return false;
+          if (teamSeen.has(t.id)) return false;
+          teamSeen.add(t.id);
+          return true;
+        });
+      }
+      return mapped;
+    });
   };
 
-  if (forceTable === 'live') return { data: await fetchFromTable('live'), error: null };
-  if (forceTable === 'trial') return { data: await fetchFromTable('trial'), error: null };
-
-  // Se não forçado, e estivermos em uma visualização de seleção (onde queremos ver tudo)
-  // ou se o isTrialSession for o critério
-  if (!isTrialSession) {
+  let resultData: any[] = [];
+  if (forceTable === 'live') {
+    resultData = await fetchFromTable('live');
+  } else if (forceTable === 'trial') {
+    resultData = await fetchFromTable('trial');
+  } else if (!isTrialSession) {
     // Tenta buscar de ambos para garantir que o Tutor veja tudo no Admin ou Seleção
     const [live, trial] = await Promise.all([fetchFromTable('live'), fetchFromTable('trial')]);
-    return { data: [...live, ...trial], error: null };
+    resultData = [...live, ...trial];
+  } else {
+    resultData = await fetchFromTable('trial');
   }
 
-  return { data: await fetchFromTable('trial'), error: null };
+  // Deduplicar campeonatos por ID para evitar chaves duplicadas no React
+  const champSeen = new Set<string>();
+  const uniqueChamps = resultData.filter(c => {
+    if (!c || !c.id) return false;
+    if (champSeen.has(c.id)) return false;
+    champSeen.add(c.id);
+    return true;
+  });
+
+  return { data: uniqueChamps, error: null };
 };
 
 export const deleteChampionship = async (id: string, isTrial: boolean) => {
@@ -282,10 +307,6 @@ export const mapChampionshipSynthetically = (c: any) => {
     }
   }
 
-  if (!mapped.currency && config.currency) {
-    mapped.currency = config.currency;
-  }
-
   // Harmonização Polimórfica e Sincronização Sênior de general_settings
   let genSettings = c.general_settings || config.general_settings || {};
   if (typeof genSettings === 'string') {
@@ -296,6 +317,16 @@ export const mapChampionshipSynthetically = (c: any) => {
     }
   } else {
     genSettings = { ...genSettings };
+  }
+
+  if (!mapped.currency) {
+    if (config.currency) {
+      mapped.currency = config.currency;
+    } else if (genSettings && genSettings.currency) {
+      mapped.currency = genSettings.currency;
+    } else {
+      mapped.currency = 'BRL';
+    }
   }
 
   // Centralização Soberana: Unificação e Fusão de todos os dados imutáveis do Round 0 de 'config' para 'general_settings'

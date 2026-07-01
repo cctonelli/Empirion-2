@@ -256,6 +256,17 @@ export const MarketingStep: React.FC<MarketingStepProps> = ({
             kpis: t.kpis || {},
           }));
 
+    // Parâmetros de contexto e regiões carregados previamente para evitar erros de Temporal Dead Zone (TDZ)
+    const regionConf =
+      activeArena?.config?.regions?.find((r: any) => r.id === regionId) ||
+      activeArena?.config?.region_configs?.find((r: any) => r.id === regionId) ||
+      activeArena?.config?.regions?.[regionId - 1] ||
+      activeArena?.config?.region_configs?.[regionId - 1];
+    const baseSuggestedPrice =
+      regionConf?.suggested_price !== undefined
+        ? Number(regionConf.suggested_price)
+        : activeArena?.general_settings?.avg_selling_price || 425;
+
     // 1. Preço médio regiao anterior (com blindagem fiduciária estrita para evitar vazamentos industriais)
     const prevPrices = rows
       .map((c) => {
@@ -308,16 +319,7 @@ export const MarketingStep: React.FC<MarketingStepProps> = ({
         ? prevPrices.reduce((sum, p) => sum + p, 0) / prevPrices.length
         : 0;
 
-    // 2. Parâmetros de contexto e regiões
-    const regionConf =
-      activeArena?.config?.regions?.find((r: any) => r.id === regionId) ||
-      activeArena?.config?.region_configs?.find((r: any) => r.id === regionId) ||
-      activeArena?.config?.regions?.[regionId - 1] ||
-      activeArena?.config?.region_configs?.[regionId - 1];
-    const baseSuggestedPrice =
-      regionConf?.suggested_price !== undefined
-        ? Number(regionConf.suggested_price)
-        : activeArena?.general_settings?.avg_selling_price || 425;
+    // 2. Parâmetros de contexto e variação da demanda
     const demandVariation =
       activeArena?.general_settings?.demand_variation || 0;
 
