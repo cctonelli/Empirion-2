@@ -23,6 +23,9 @@ const TutorArenaControl: React.FC<{ championship: Championship; onUpdate: (confi
   const [newObserverId, setNewObserverId] = useState('');
   const [observersList, setObserversList] = useState<string[]>(championship.observers || []);
 
+  // Moeda padrão do campeonato de forma dinâmica e reativa
+  const championshipCurrency = currentChampionship.currency || championship.currency || 'BRL';
+
   const [regionsList, setRegionsList] = useState<any[]>([]);
   const [newRegionName, setNewRegionName] = useState('');
   const [newRegionCurrency, setNewRegionCurrency] = useState('BRL');
@@ -37,60 +40,59 @@ const TutorArenaControl: React.FC<{ championship: Championship; onUpdate: (confi
     setNextRoundIdx((currentChampionship.current_round || 0) + 1);
   }, [currentChampionship.current_round]);
 
-  // 1. Memorizar as regras herdadas com mesclagem profunda segura
+  // 1. Memorizar as regras herdadas com mesclagem profunda segura (sem fallbacks cegos e com fidedignidade absoluta ao cronograma criado pelo tutor)
   const inheritedRules = useMemo(() => {
-     const rules = currentChampionship.round_rules?.[nextRoundIdx] || currentChampionship.config?.round_rules?.[nextRoundIdx] || {};
-     const chronogramRules = currentChampionship.config?.round_rules?.[nextRoundIdx] || 
-                             currentChampionship.config?.DEFAULT_INDUSTRIAL_CHRONOGRAM?.[nextRoundIdx] || 
-                             DEFAULT_INDUSTRIAL_CHRONOGRAM[nextRoundIdx] || {};
-     const baseIndicators = currentChampionship.general_settings || {};
+     const arenaConfig = currentChampionship.config || {};
+     const arenaRoundRules = currentChampionship.round_rules || {};
+
+     // Unificamos as regras da rodada sob intervenção seguindo a precedência fiduciária do GazetteViewer
+     const rules = {
+        ...(DEFAULT_INDUSTRIAL_CHRONOGRAM[nextRoundIdx] || {}),
+        ...(arenaConfig.round_rules?.[nextRoundIdx] || {}),
+        ...(arenaConfig.DEFAULT_INDUSTRIAL_CHRONOGRAM?.[nextRoundIdx] || {}),
+        ...(arenaRoundRules[nextRoundIdx] || {}),
+     };
+
+     const baseIndicators = currentChampionship.general_settings || arenaConfig.general_settings || arenaConfig || {};
 
      const merged: MacroIndicators = {
         ...DEFAULT_MACRO,
         ...baseIndicators,
-        ...chronogramRules,
         ...rules,
         
         prices: {
            ...DEFAULT_MACRO.prices,
            ...(baseIndicators.prices || {}),
-           ...(chronogramRules.prices || {}),
            ...(rules.prices || {})
         },
         machinery_values: {
            ...DEFAULT_MACRO.machinery_values,
            ...(baseIndicators.machinery_values || {}),
-           ...(chronogramRules.machinery_values || {}),
            ...(rules.machinery_values || {})
         },
         staffing: {
            ...DEFAULT_MACRO.staffing,
            ...(baseIndicators.staffing || {}),
-           ...(chronogramRules.staffing || {}),
            ...(rules.staffing || {})
         },
         hr_base: {
            ...DEFAULT_MACRO.hr_base,
            ...(baseIndicators.hr_base || {}),
-           ...(chronogramRules.hr_base || {}),
            ...(rules.hr_base || {})
         },
         award_values: {
            ...DEFAULT_MACRO.award_values,
            ...(baseIndicators.award_values || {}),
-           ...(chronogramRules.award_values || {}),
            ...(rules.award_values || {})
         },
         exchange_rates: {
            ...DEFAULT_MACRO.exchange_rates,
            ...(baseIndicators.exchange_rates || {}),
-           ...(chronogramRules.exchange_rates || {}),
            ...(rules.exchange_rates || {})
         },
         machine_specs: {
            ...DEFAULT_MACRO.machine_specs,
            ...(baseIndicators.machine_specs || {}),
-           ...(chronogramRules.machine_specs || {}),
            ...(rules.machine_specs || {})
         }
      };
@@ -334,19 +336,19 @@ const TutorArenaControl: React.FC<{ championship: Championship; onUpdate: (confi
                 <div className="bg-slate-900 p-10 rounded-[4rem] border border-white/10 shadow-2xl space-y-12">
                    <h3 className="text-2xl font-black text-white uppercase italic flex items-center gap-4"><Package className="text-orange-500"/> Insumos & CAPEX Máquinas</h3>
                    <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
-                      <MacroInput label="Preço Unit. MP-A ($)" val={macro.prices.mp_a} onChange={(v: number) => setMacro({...macro, prices: {...macro.prices, mp_a: v}})} />
-                      <MacroInput label="Preço Unit. MP-B ($)" val={macro.prices.mp_b} onChange={(v: number) => setMacro({...macro, prices: {...macro.prices, mp_b: v}})} />
+                      <MacroInput label={`Preço Unit. MP-A (${championshipCurrency})`} val={macro.prices.mp_a} onChange={(v: number) => setMacro({...macro, prices: {...macro.prices, mp_a: v}})} />
+                      <MacroInput label={`Preço Unit. MP-B (${championshipCurrency})`} val={macro.prices.mp_b} onChange={(v: number) => setMacro({...macro, prices: {...macro.prices, mp_b: v}})} />
                       <MacroInput label="Compra Especial (%)" val={macro.special_purchase_premium} onChange={(v: number) => setMacro({...macro, special_purchase_premium: v})} />
-                      <MacroInput label="Custo Unit. Estocagem MP ($)" val={macro.prices.storage_mp || 1.40} onChange={(v: number) => setMacro({...macro, prices: {...macro.prices, storage_mp: v}})} />
-                      <MacroInput label="Custo Unit. Estocagem PA ($)" val={macro.prices.storage_finished || 20.00} onChange={(v: number) => setMacro({...macro, prices: {...macro.prices, storage_finished: v}})} />
+                      <MacroInput label={`Custo Unit. Estocagem MP (${championshipCurrency})`} val={macro.prices.storage_mp || 1.40} onChange={(v: number) => setMacro({...macro, prices: {...macro.prices, storage_mp: v}})} />
+                      <MacroInput label={`Custo Unit. Estocagem PA (${championshipCurrency})`} val={macro.prices.storage_finished || 20.00} onChange={(v: number) => setMacro({...macro, prices: {...macro.prices, storage_finished: v}})} />
                    </div>
 
                    <div className="pt-8 border-t border-white/5 space-y-6">
                       <h4 className="text-lg font-bold text-white uppercase tracking-wider">Investimento em Ativos Fixos (CAPEX Máquinas)</h4>
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                         <MacroInput label="Preço Máquina Alpha ($)" val={macro.machinery_values.alpha} onChange={(v: number) => setMacro({...macro, machinery_values: {...macro.machinery_values, alpha: v}})} />
-                         <MacroInput label="Preço Máquina Beta ($)" val={macro.machinery_values.beta} onChange={(v: number) => setMacro({...macro, machinery_values: {...macro.machinery_values, beta: v}})} />
-                         <MacroInput label="Preço Máquina Gamma ($)" val={macro.machinery_values.gamma} onChange={(v: number) => setMacro({...macro, machinery_values: {...macro.machinery_values, gamma: v}})} />
+                         <MacroInput label={`Preço Máquina Alpha (${championshipCurrency})`} val={macro.machinery_values.alpha} onChange={(v: number) => setMacro({...macro, machinery_values: {...macro.machinery_values, alpha: v}})} />
+                         <MacroInput label={`Preço Máquina Beta (${championshipCurrency})`} val={macro.machinery_values.beta} onChange={(v: number) => setMacro({...macro, machinery_values: {...macro.machinery_values, beta: v}})} />
+                         <MacroInput label={`Preço Máquina Gamma (${championshipCurrency})`} val={macro.machinery_values.gamma} onChange={(v: number) => setMacro({...macro, machinery_values: {...macro.machinery_values, gamma: v}})} />
                       </div>
                    </div>
                 </div>
@@ -437,15 +439,15 @@ const TutorArenaControl: React.FC<{ championship: Championship; onUpdate: (confi
 
                                <div className="space-y-4 pt-2">
                                   <div>
-                                     <label className="text-[9px] font-black uppercase text-slate-500 block mb-1">Preço Sugerido ($)</label>
+                                     <label className="text-[9px] font-black uppercase text-slate-500 block mb-1">{`Preço Sugerido (${championshipCurrency})`}</label>
                                      <input type="number" step="0.1" value={r.suggested_price ?? 425.0} onChange={e => handleUpdateRegionField(r.id, 'suggested_price', parseFloat(e.target.value) || 0)} className="w-full bg-slate-900 border border-white/5 rounded-xl px-3 py-1.5 font-mono font-bold text-xs text-white outline-none focus:border-orange-500 transition-colors" />
                                   </div>
                                   <div>
-                                     <label className="text-[9px] font-black uppercase text-slate-500 block mb-1">Custo Frete ($)</label>
+                                     <label className="text-[9px] font-black uppercase text-slate-500 block mb-1">{`Custo Frete (${championshipCurrency})`}</label>
                                      <input type="number" step="0.1" value={r.distribution_cost ?? 50.0} onChange={e => handleUpdateRegionField(r.id, 'distribution_cost', parseFloat(e.target.value) || 0)} className="w-full bg-slate-900 border border-white/5 rounded-xl px-3 py-1.5 font-mono font-bold text-xs text-white outline-none focus:border-orange-500 transition-colors" />
                                   </div>
                                   <div>
-                                     <label className="text-[9px] font-black uppercase text-slate-500 block mb-1">MKT Base ($)</label>
+                                     <label className="text-[9px] font-black uppercase text-slate-500 block mb-1">{`MKT Base (${championshipCurrency})`}</label>
                                      <input type="number" step="100" value={r.marketing_cost ?? 10000.0} onChange={e => handleUpdateRegionField(r.id, 'marketing_cost', parseFloat(e.target.value) || 0)} className="w-full bg-slate-900 border border-white/5 rounded-xl px-3 py-1.5 font-mono font-bold text-xs text-white outline-none focus:border-orange-500 transition-colors" />
                                   </div>
                                   <div>
@@ -492,15 +494,15 @@ const TutorArenaControl: React.FC<{ championship: Championship; onUpdate: (confi
 
                                <div className="grid grid-cols-3 gap-2">
                                   <div>
-                                     <label className="text-[8px] font-black uppercase text-slate-500 block mb-1">Preço Sugerido ($)</label>
+                                     <label className="text-[8px] font-black uppercase text-slate-500 block mb-1">{`Preço Sugerido (${championshipCurrency})`}</label>
                                      <input type="number" step="0.1" value={newRegionSuggestedPrice} onChange={e => setNewRegionSuggestedPrice(parseFloat(e.target.value) || 0)} className="w-full bg-slate-900 border border-white/5 rounded-xl px-2 py-1.5 text-[10px] font-mono font-bold text-white outline-none focus:border-orange-500 transition-colors" />
                                   </div>
                                   <div>
-                                     <label className="text-[8px] font-black uppercase text-slate-500 block mb-1">Custo Frete ($)</label>
+                                     <label className="text-[8px] font-black uppercase text-slate-500 block mb-1">{`Custo Frete (${championshipCurrency})`}</label>
                                      <input type="number" step="0.1" value={newRegionDistributionCost} onChange={e => setNewRegionDistributionCost(parseFloat(e.target.value) || 0)} className="w-full bg-slate-900 border border-white/5 rounded-xl px-2 py-1.5 text-[10px] font-mono font-bold text-white outline-none focus:border-orange-500 transition-colors" />
                                   </div>
                                   <div>
-                                     <label className="text-[8px] font-black uppercase text-slate-500 block mb-1">Mkt Base ($)</label>
+                                     <label className="text-[8px] font-black uppercase text-slate-500 block mb-1">{`Mkt Base (${championshipCurrency})`}</label>
                                      <input type="number" step="100" value={newRegionMarketingCost} onChange={e => setNewRegionMarketingCost(parseFloat(e.target.value) || 0)} className="w-full bg-slate-900 border border-white/5 rounded-xl px-2 py-1.5 text-[10px] font-mono font-bold text-white outline-none focus:border-orange-500 transition-colors" />
                                   </div>
                                </div>
@@ -519,7 +521,7 @@ const TutorArenaControl: React.FC<{ championship: Championship; onUpdate: (confi
                 <div className="bg-slate-900 p-10 rounded-[4rem] border border-white/10 shadow-2xl space-y-12">
                    <h3 className="text-2xl font-black text-white uppercase italic flex items-center gap-4"><Briefcase className="text-orange-500"/> Força de Trabalho (Staffing)</h3>
                    <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-                      <MacroInput label="Salário Base Operacional ($)" val={macro.hr_base.salary} onChange={(v: number) => setMacro({...macro, hr_base: {...macro.hr_base, salary: v}})} />
+                      <MacroInput label={`Salário Base Operacional (${championshipCurrency})`} val={macro.hr_base.salary} onChange={(v: number) => setMacro({...macro, hr_base: {...macro.hr_base, salary: v}})} />
                       <MacroInput label="Máximo Turnos Permitidos" val={macro.max_shifts || 1} onChange={(v: number) => setMacro({...macro, max_shifts: v})} />
                    </div>
 
@@ -556,6 +558,7 @@ const TutorArenaControl: React.FC<{ championship: Championship; onUpdate: (confi
                 <div className="bg-slate-900 p-10 rounded-[4rem] border border-white/10 shadow-2xl space-y-12">
                    <h3 className="text-2xl font-black text-white uppercase italic flex items-center gap-4"><Coins className="text-orange-500"/> Paridade Cambial e Taxas de Câmbio</h3>
                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+                      <ParamCard label="Taxa Câmbio BRL" val={macro.exchange_rates.BRL} onChange={(v: number) => setMacro({...macro, exchange_rates: {...macro.exchange_rates, BRL: v}})} suffix="BRL" icon={<Coins size={16}/>} />
                       <ParamCard label="Taxa Câmbio USD" val={macro.exchange_rates.USD} onChange={(v: number) => setMacro({...macro, exchange_rates: {...macro.exchange_rates, USD: v}})} suffix="BRL" icon={<Coins size={16}/>} />
                       <ParamCard label="Taxa Câmbio EUR" val={macro.exchange_rates.EUR} onChange={(v: number) => setMacro({...macro, exchange_rates: {...macro.exchange_rates, EUR: v}})} suffix="BRL" icon={<Coins size={16}/>} />
                       <ParamCard label="Taxa Câmbio GBP" val={macro.exchange_rates.GBP} onChange={(v: number) => setMacro({...macro, exchange_rates: {...macro.exchange_rates, GBP: v}})} suffix="BRL" icon={<Coins size={16}/>} />
