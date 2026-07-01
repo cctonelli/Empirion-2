@@ -331,9 +331,28 @@ const TutorArenaControl: React.FC<{ championship: Championship; onUpdate: (confi
                       <ParamCard label="Ágio Emprest. Compulsório" val={macro.compulsory_loan_agio} onChange={(v: number) => setMacro({...macro, compulsory_loan_agio: v})} suffix="%" icon={<Landmark size={14}/>} />
                       <ParamCard label="Juros Fornecedor" val={macro.supplier_interest} onChange={(v: number) => setMacro({...macro, supplier_interest: v})} suffix="%" icon={<Landmark size={14}/>} />
                       <ParamCard label="Ágio Compras Extras" val={macro.special_purchase_premium} onChange={(v: number) => setMacro({...macro, special_purchase_premium: v})} suffix="%" icon={<Landmark size={14}/>} />
+                      <ParamCard label="Deságio Venda Máquina" val={macro.machine_sale_discount} onChange={(v: number) => setMacro({...macro, machine_sale_discount: v})} suffix="%" icon={<Scale size={14}/>} />
+                      <ParamCard label="Multa por Atraso" val={macro.late_penalty_rate} onChange={(v: number) => setMacro({...macro, late_penalty_rate: v})} suffix="%" icon={<Scale size={14}/>} />
+                      <ParamCard label="VAT s/ Compras" val={macro.vat_purchases_rate} onChange={(v: number) => setMacro({...macro, vat_purchases_rate: v})} suffix="%" icon={<Scale size={14}/>} />
+                      <ParamCard label="VAT s/ Vendas" val={macro.vat_sales_rate} onChange={(v: number) => setMacro({...macro, vat_sales_rate: v})} suffix="%" icon={<Scale size={14}/>} />
+                      <ParamCard label="IRPJ" val={macro.tax_rate_ir} onChange={(v: number) => setMacro({...macro, tax_rate_ir: v})} suffix="%" icon={<Scale size={14}/>} />
+                      <ParamCard label="Encargos Sociais" val={macro.social_charges} onChange={(v: number) => setMacro({...macro, social_charges: v})} suffix="%" icon={<Scale size={14}/>} />
+                      <ParamCard label="Reaj. MP-A (Silício)" val={macro.raw_material_a_adjust} onChange={(v: number) => setMacro({...macro, raw_material_a_adjust: v})} suffix="%" icon={<Scale size={14}/>} />
+                      <ParamCard label="Reaj. MP-B (Germânio)" val={macro.raw_material_b_adjust} onChange={(v: number) => setMacro({...macro, raw_material_b_adjust: v})} suffix="%" icon={<Scale size={14}/>} />
+                      <ParamCard label="Reaj. Máquina Alpha" val={macro.machine_alpha_price_adjust} onChange={(v: number) => setMacro({...macro, machine_alpha_price_adjust: v})} suffix="%" icon={<Scale size={14}/>} />
+                      <ParamCard label="Reaj. Máquina Beta" val={macro.machine_beta_price_adjust} onChange={(v: number) => setMacro({...macro, machine_beta_price_adjust: v})} suffix="%" icon={<Scale size={14}/>} />
+                      <ParamCard label="Reaj. Máquina Gamma" val={macro.machine_gamma_price_adjust} onChange={(v: number) => setMacro({...macro, machine_gamma_price_adjust: v})} suffix="%" icon={<Scale size={14}/>} />
+                      <ParamCard label="Reaj. Campanha Marketing" val={macro.marketing_campaign_adjust} onChange={(v: number) => setMacro({...macro, marketing_campaign_adjust: v})} suffix="%" icon={<Scale size={14}/>} />
+                      <ParamCard label="Reaj. Custo Logística" val={macro.distribution_cost_adjust} onChange={(v: number) => setMacro({...macro, distribution_cost_adjust: v})} suffix="%" icon={<Scale size={14}/>} />
+                      <ParamCard label="Reaj. Custo Estocagem" val={macro.storage_cost_adjust} onChange={(v: number) => setMacro({...macro, storage_cost_adjust: v})} suffix="%" icon={<Scale size={14}/>} />
+                      <ParamCard label="Tarifa Importação BRAZIL" val={macro.import_tariff_brazil} onChange={(v: number) => setMacro({...macro, import_tariff_brazil: v})} suffix="%" icon={<Scale size={14}/>} />
+                      <ParamCard label="Tarifa Importação USA" val={macro.import_tariff_usa} onChange={(v: number) => setMacro({...macro, import_tariff_usa: v})} suffix="%" icon={<Scale size={14}/>} />
+                      <ParamCard label="Tarifa Importação EURO" val={macro.import_tariff_euro} onChange={(v: number) => setMacro({...macro, import_tariff_euro: v})} suffix="%" icon={<Scale size={14}/>} />
+                      <ParamCard label="Tarifa Importação UK" val={macro.import_tariff_uk} onChange={(v: number) => setMacro({...macro, import_tariff_uk: v})} suffix="%" icon={<Scale size={14}/>} />
+                      <ParamCard label="Tarifa Importação CHINA" val={macro.import_tariff_china} onChange={(v: number) => setMacro({...macro, import_tariff_china: v})} suffix="%" icon={<Scale size={14}/>} />
+                      <ParamCard label="Tarifa Importação BITCOIN" val={macro.import_tariff_btc} onChange={(v: number) => setMacro({...macro, import_tariff_btc: v})} suffix="%" icon={<Scale size={14}/>} />
                       <ParamCard label="Retorno dos Investimentos" val={macro.investment_return_rate} onChange={(v: number) => setMacro({...macro, investment_return_rate: v})} suffix="%" icon={<Percent size={14}/>} />
                       <ParamCard label="Produtividade Média Trab." val={macro.labor_productivity || 1.0} onChange={(v: number) => setMacro({...macro, labor_productivity: v})} suffix="x" icon={<Cpu size={14}/>} />
-                      <ParamCard label="Encargos Sociais" val={macro.social_charges} onChange={(v: number) => setMacro({...macro, social_charges: v})} suffix="%" icon={<Scale size={14}/>} />
                    </div>
                 </div>
              )}
@@ -342,8 +361,8 @@ const TutorArenaControl: React.FC<{ championship: Championship; onUpdate: (confi
                 <div className="bg-slate-900 p-10 rounded-[4rem] border border-white/10 shadow-2xl space-y-12">
                    <h3 className="text-2xl font-black text-white uppercase italic flex items-center gap-4"><Package className="text-orange-500"/> Insumos & CAPEX Máquinas</h3>
                    <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
-                      <MacroInput label={`Preço Unit. MP-A (Silício) (${championshipCurrency})`} val={macro.prices.mp_a} onChange={(v: number) => setMacro({...macro, prices: {...macro.prices, mp_a: v}})} />
-                      <MacroInput label={`Preço Unit. MP-B (Germânio) (${championshipCurrency})`} val={macro.prices.mp_b} onChange={(v: number) => setMacro({...macro, prices: {...macro.prices, mp_b: v}})} />
+                      <MacroInput label={`Preço MP-A (Silício) (${championshipCurrency})`} val={macro.prices.mp_a} onChange={(v: number) => setMacro({...macro, prices: {...macro.prices, mp_a: v}})} suffix="un" icon={<Activity size={14}/>} />
+                      <MacroInput label={`Preço MP-B (Germânio) (${championshipCurrency})`} val={macro.prices.mp_b} onChange={(v: number) => setMacro({...macro, prices: {...macro.prices, mp_b: v}})} />
                       <MacroInput label="Compra Especial (%)" val={macro.special_purchase_premium} onChange={(v: number) => setMacro({...macro, special_purchase_premium: v})} />
                       <MacroInput label={`Custo Unit. Estocagem MP (${championshipCurrency})`} val={macro.prices.storage_mp || 1.40} onChange={(v: number) => setMacro({...macro, prices: {...macro.prices, storage_mp: v}})} />
                       <MacroInput label={`Custo Unit. Estocagem PA (${championshipCurrency})`} val={macro.prices.storage_finished || 20.00} onChange={(v: number) => setMacro({...macro, prices: {...macro.prices, storage_finished: v}})} />
@@ -373,12 +392,6 @@ const TutorArenaControl: React.FC<{ championship: Championship; onUpdate: (confi
                       </div>
                    </div>
 
-                   <div className="grid grid-cols-1 md:grid-cols-3 gap-10 pb-8 border-b border-white/5">
-                      <MacroInput label="Ágio Emprest. Compulsório (%)" val={macro.compulsory_loan_agio || 3.0} onChange={(v: number) => setMacro({...macro, compulsory_loan_agio: v})} />
-                      <MacroInput label="Multa Atraso Fornecedor (%)" val={macro.late_penalty_rate || 5.0} onChange={(v: number) => setMacro({...macro, late_penalty_rate: v})} />
-                      <MacroInput label="Alíquota IRPJ (%)" val={macro.tax_rate_ir || 25.0} onChange={(v: number) => setMacro({...macro, tax_rate_ir: v})} />
-                   </div>
-
                    {/* Lista de Regiões Comerciais */}
                    {totalDemandWeights !== 100 && (
                       <div className="bg-amber-500/10 border border-amber-500/20 text-amber-200 p-6 rounded-[2.5rem] flex items-start gap-4 shadow-lg animate-fadeIn text-left mb-6">
@@ -406,7 +419,7 @@ const TutorArenaControl: React.FC<{ championship: Championship; onUpdate: (confi
                    )}
                    <div className="space-y-6">
                       <div className="flex items-center justify-between">
-                         <h4 className="text-lg font-bold text-white uppercase tracking-wider flex items-center gap-2"><Globe size={18} className="text-orange-500"/> Rergiões Comerciais Ativas</h4>
+                         <h4 className="text-lg font-bold text-white uppercase tracking-wider flex items-center gap-2"><Globe size={18} className="text-orange-500"/> Regiões Comerciais Ativas</h4>
                          <span className="text-xs font-mono text-slate-400">{regionsList.length} Regiões Ativas</span>
                       </div>
 

@@ -222,11 +222,11 @@ export const DEFAULT_MACRO: MacroIndicators = {
   hr_base: { salary: 2500.00 },
   exchange_rates: { 
     BRL: 1.0, 
-    USD: 5.25, 
-    EUR: 5.60, 
-    GBP: 6.50,
-    CNY: 0.72,
-    BTC: 0.00002
+    USD: 1.0, 
+    EUR: 1.0, 
+    GBP: 1.0,
+    CNY: 1.0,
+    BTC: 1.0
   },
 };
 
