@@ -1080,7 +1080,7 @@ export const EmpirionDashboards: React.FC<EmpirionDashboardsProps> = ({
                       <thead>
                         <tr className="border-b border-white/5 text-slate-500 text-[8px] uppercase tracking-widest">
                           <th className="py-2">Região</th>
-                          {roundsCategories.slice(0, 5).map(c => <th className="text-center py-2" key={c}>{c}</th>)}
+                          {roundsCategories.slice(0, 5).map((c, idx) => <th className="text-center py-2" key={`${c}-${idx}`}>{c}</th>)}
                         </tr>
                       </thead>
                       <tbody>
@@ -1705,7 +1705,7 @@ export const EmpirionDashboards: React.FC<EmpirionDashboardsProps> = ({
                       <thead>
                         <tr className="text-slate-500 text-[8px] uppercase tracking-widest">
                           <th className="pb-2 text-left font-sans font-bold text-slate-400">Indicador</th>
-                          {roundsCategories.map(c => <th className="pb-2 font-black font-mono text-slate-400 text-center w-12" key={c}>{c}</th>)}
+                          {roundsCategories.map((c, idx) => <th className="pb-2 font-black font-mono text-slate-400 text-center w-12" key={`${c}-${idx}`}>{c}</th>)}
                         </tr>
                       </thead>
                       <tbody>
@@ -2105,7 +2105,7 @@ export const EmpirionDashboards: React.FC<EmpirionDashboardsProps> = ({
                       <thead>
                         <tr className="text-slate-500 text-[8px] uppercase tracking-widest">
                           <th className="pb-1 text-left font-sans font-bold text-slate-400">Marca</th>
-                          {roundsCategories.map(c => <th className="pb-1 font-black font-mono text-slate-400 text-center w-8" key={c}>{c}</th>)}
+                          {roundsCategories.map((c, idx) => <th className="pb-1 font-black font-mono text-slate-400 text-center w-8" key={`${c}-${idx}`}>{c}</th>)}
                         </tr>
                       </thead>
                       <tbody>
@@ -2273,7 +2273,7 @@ export const EmpirionDashboards: React.FC<EmpirionDashboardsProps> = ({
                       <thead>
                         <tr className="text-slate-500 text-[8px] uppercase tracking-widest">
                           <th className="pb-2 text-left font-sans font-bold text-slate-400">Insumo</th>
-                          {roundsCategories.map(c => <th className="pb-2 font-black font-mono text-slate-400 text-center w-12" key={c}>{c}</th>)}
+                          {roundsCategories.map((c, idx) => <th className="pb-2 font-black font-mono text-slate-400 text-center w-12" key={`${c}-${idx}`}>{c}</th>)}
                         </tr>
                       </thead>
                       <tbody>

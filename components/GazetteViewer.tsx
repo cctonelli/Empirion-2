@@ -212,7 +212,7 @@ const GazetteViewer: React.FC<GazetteViewerProps> = ({
 
   const chronogramHistory = useMemo(() => {
     const list = [];
-    const totalMax = 12;
+    const totalMax = round;
     for (let r = 0; r <= totalMax; r++) {
       const rules = resolvedChronogram[r] || {};
       const baseSettings = arena?.general_settings || arena?.config?.general_settings || arena?.config || {};
@@ -247,7 +247,7 @@ const GazetteViewer: React.FC<GazetteViewerProps> = ({
       });
     }
     return list;
-  }, [arena, resolvedChronogram]);
+  }, [arena, resolvedChronogram, round]);
 
   const lineSeries = useMemo(() => {
     const roundsList = chronogramHistory;
@@ -714,7 +714,7 @@ const GazetteViewer: React.FC<GazetteViewerProps> = ({
                             <th className="p-2 text-left sticky left-0 bg-slate-900 z-10 border-r border-slate-800/60 font-black">
                               Mkt
                             </th>
-                            {Array.from({ length: 13 }).map((_, r) => (
+                            {Array.from({ length: round + 1 }).map((_, r) => (
                               <th
                                 key={r}
                                 className={`p-2 text-center text-slate-300 min-w-[34px] font-bold text-[9px] ${r === round ? "bg-amber-500/20 text-amber-300 border border-amber-500/30" : ""}`}
@@ -733,7 +733,7 @@ const GazetteViewer: React.FC<GazetteViewerProps> = ({
                               <td className="p-2 text-left sticky left-0 bg-slate-950 z-10 border-r border-slate-800/80 text-[9.5px] font-extrabold text-slate-300 font-mono uppercase">
                                 {region.name}
                               </td>
-                              {Array.from({ length: 13 }).map((_, r) => {
+                              {Array.from({ length: round + 1 }).map((_, r) => {
                                 const rules = resolvedChronogram[r] || {};
                                 const baseSettings = arena?.general_settings || arena?.config?.general_settings || arena?.config || {};
                                 const activeMacro = {

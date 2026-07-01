@@ -88,6 +88,16 @@ typings/
 dist/
 dist-ssr/
 
+# Caches adicionais e arquivos temporários do compilador
+.cache/
+.vite/
+.parcel-cache/
+.eslintcache
+.stylelintcache
+*.tsbuildinfo
+temp/
+tmp/
+
 # Empirion Assets Protocol
 # Assegura que a pasta public nunca seja ignorada, 
 # mesmo que regras de pastas temporárias sejam adicionadas.
