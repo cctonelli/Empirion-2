@@ -849,7 +849,7 @@ export const MarketingStep: React.FC<MarketingStepProps> = ({
                   const fromRate = getExchangeRateActive(calcFrom);
                   const toRate = getExchangeRateActive(calcTo);
                   const result = calcFrom === calcTo ? calcValue : (calcValue * fromRate) / toRate;
-                  return `${result.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 4 })} ${calcTo}`;
+                  return `${result.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${calcTo}`;
                 })()}
               </span>
             </div>
