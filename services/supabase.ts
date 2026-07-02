@@ -303,27 +303,6 @@ export const mapChampionshipSynthetically = (c: any) => {
   mapped.round_rules = rRules;
   mapped.config.round_rules = rRules;
 
-  // Harmonização polimórfica de region_configs para retrocompatibilidade perfeita na memória de runtime:
-  let rConfigs = mapped.region_configs || config.region_configs || [];
-  if (typeof rConfigs === "string") {
-    try {
-      rConfigs = JSON.parse(rConfigs);
-    } catch (e) {
-      rConfigs = [];
-    }
-  }
-  mapped.region_configs = rConfigs;
-  mapped.config.region_configs = rConfigs;
-
-  if (mapped.regions_count === undefined || mapped.regions_count === null || mapped.regions_count === 0) {
-    const list = config.regions || config.region_configs || c.region_configs || [];
-    if (Array.isArray(list) && list.length > 0) {
-      mapped.regions_count = list.length;
-    } else {
-      mapped.regions_count = 1;
-    }
-  }
-
   // Harmonização Polimórfica e Sincronização Sênior de general_settings
   let genSettings = c.general_settings || config.general_settings || {};
   if (typeof genSettings === 'string') {
@@ -334,6 +313,64 @@ export const mapChampionshipSynthetically = (c: any) => {
     }
   } else {
     genSettings = { ...genSettings };
+  }
+
+  // Harmonização polimórfica de region_configs para retrocompatibilidade perfeita na memória de runtime:
+  let rConfigs = mapped.region_configs || config.region_configs || [];
+  if (typeof rConfigs === "string") {
+    try {
+      rConfigs = JSON.parse(rConfigs);
+    } catch (e) {
+      rConfigs = [];
+    }
+  }
+
+  // FUSÃO POLIMÓRFICA DUPLO-SEGURO (Double-Safe Fusion): se region_configs ou regions existirem no general_settings
+  // (porque foram migrados de config devido à higienização de payload), usamos para preencher ou complementar.
+  const gsRegions = genSettings.regions || genSettings.region_configs || config.regions || config.region_configs || [];
+  if (Array.isArray(gsRegions) && gsRegions.length > 0) {
+    if (!rConfigs || rConfigs.length === 0) {
+      rConfigs = [...gsRegions];
+    } else {
+      rConfigs = rConfigs.map((rc: any) => {
+        const gsReg = gsRegions.find((r: any) => r.id === rc.id || r.name?.toUpperCase() === rc.name?.toUpperCase());
+        if (gsReg) {
+          return {
+            ...gsReg,
+            ...rc,
+            suggested_price: rc.suggested_price !== undefined && rc.suggested_price !== null ? Number(rc.suggested_price) : (gsReg.suggested_price !== undefined ? Number(gsReg.suggested_price) : 425.0),
+            distribution_cost: rc.distribution_cost !== undefined && rc.distribution_cost !== null ? Number(rc.distribution_cost) : (gsReg.distribution_cost !== undefined ? Number(gsReg.distribution_cost) : 50.0),
+            marketing_cost: rc.marketing_cost !== undefined && rc.marketing_cost !== null ? Number(rc.marketing_cost) : (gsReg.marketing_cost !== undefined ? Number(gsReg.marketing_cost) : 10000.0),
+          };
+        }
+        return {
+          suggested_price: 425.0,
+          distribution_cost: 50.0,
+          marketing_cost: 10000.0,
+          ...rc
+        };
+      });
+    }
+  } else {
+    // Fallback básico caso não exista em lugar nenhum
+    rConfigs = rConfigs.map((rc: any) => ({
+      suggested_price: 425.0,
+      distribution_cost: 50.0,
+      marketing_cost: 10000.0,
+      ...rc
+    }));
+  }
+
+  mapped.region_configs = rConfigs;
+  mapped.config.region_configs = rConfigs;
+
+  if (mapped.regions_count === undefined || mapped.regions_count === null || mapped.regions_count === 0) {
+    const list = rConfigs || config.regions || config.region_configs || c.region_configs || [];
+    if (Array.isArray(list) && list.length > 0) {
+      mapped.regions_count = list.length;
+    } else {
+      mapped.regions_count = 1;
+    }
   }
 
   if (!mapped.currency) {

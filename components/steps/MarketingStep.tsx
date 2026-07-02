@@ -77,7 +77,6 @@ export const MarketingStep: React.FC<MarketingStepProps> = ({
 
     const getRateRelativeToAnchorLocal = (c: string): number => {
       const norm = c.toUpperCase();
-      if (norm === "BRL") return 1.0;
 
       if (rRules) {
         if (rRules.exchange_rates?.[norm] !== undefined) {
@@ -94,6 +93,8 @@ export const MarketingStep: React.FC<MarketingStepProps> = ({
       if (activeArena?.general_settings?.[norm] !== undefined) {
         return Number(activeArena.general_settings[norm]);
       }
+
+      if (norm === "BRL") return 1.0;
 
       const ratesInBrl: Record<string, number> = {
         BRL: 1.0,
@@ -1176,7 +1177,6 @@ export const MarketingStep: React.FC<MarketingStepProps> = ({
 
                           const getRateRelativeToAnchorLocal = (c: string): number => {
                             const norm = c.toUpperCase();
-                            if (norm === "BRL") return 1.0;
 
                             if (rRules) {
                               if (rRules.exchange_rates?.[norm] !== undefined) {
@@ -1193,6 +1193,8 @@ export const MarketingStep: React.FC<MarketingStepProps> = ({
                             if (activeArena?.general_settings?.[norm] !== undefined) {
                               return Number(activeArena.general_settings[norm]);
                             }
+
+                            if (norm === "BRL") return 1.0;
 
                             const ratesInBrl: Record<string, number> = {
                               BRL: 1.0,
