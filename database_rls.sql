@@ -751,4 +751,24 @@ BEGIN
     END IF;
 END $$;
 
+-- ==============================================================================
+-- 18. ALINHAMENTO DE COLUNAS FÍSICAS DE INTERVENÇÃO DO TUTOR (v2026.204)
+-- ==============================================================================
+ALTER TABLE public.championships ADD COLUMN IF NOT EXISTS region_configs JSONB;
+ALTER TABLE public.championships ADD COLUMN IF NOT EXISTS round_rules JSONB;
+ALTER TABLE public.trial_championships ADD COLUMN IF NOT EXISTS region_configs JSONB;
+ALTER TABLE public.trial_championships ADD COLUMN IF NOT EXISTS round_rules JSONB;
+
+-- ÍNDICES GIN PARA PESQUISAS RÁPIDAS EM ESTRUTURAS JSONB DE PARÂMETROS
+CREATE INDEX IF NOT EXISTS idx_championships_region_configs ON public.championships USING gin (region_configs);
+CREATE INDEX IF NOT EXISTS idx_championships_round_rules ON public.championships USING gin (round_rules);
+CREATE INDEX IF NOT EXISTS idx_trial_championships_region_configs ON public.trial_championships USING gin (region_configs);
+CREATE INDEX IF NOT EXISTS idx_trial_championships_round_rules ON public.trial_championships USING gin (round_rules);
+
+-- COMENTÁRIOS EXPLICATIVOS COM SINTAXE FIDUCIÁRIA CORRETA (COMMENT ON COLUMN)
+COMMENT ON COLUMN public.championships.region_configs IS 'Configuração física de regiões vigentes por campeonato oficial para intervenção do Tutor.';
+COMMENT ON COLUMN public.championships.round_rules IS 'Regras customizadas de rodadas configuradas pelo Tutor em campeonatos oficiais.';
+COMMENT ON COLUMN public.trial_championships.region_configs IS 'Configuração física de regiões vigentes em campeonatos do tipo Sandbox / Trial.';
+COMMENT ON COLUMN public.trial_championships.round_rules IS 'Regras customizadas de rodadas configuradas pelo Tutor em campeonatos Sandbox / Trial.';
+
 COMMIT;

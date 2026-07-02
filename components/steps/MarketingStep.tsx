@@ -70,41 +70,45 @@ export const MarketingStep: React.FC<MarketingStepProps> = ({
   const getExchangeRateActive = React.useCallback((curr: string | undefined): number => {
     if (!curr) return 1.0;
     const baseCurr = activeArena?.currency || "BRL";
-    if (curr === baseCurr) return 1.0;
+    if (curr.toUpperCase() === baseCurr.toUpperCase()) return 1.0;
 
     const currentRound = targetRound;
     const rRules = (activeArena?.round_rules as any)?.[currentRound] || (activeArena?.round_rules as any)?.[String(currentRound)];
-    
-    // 1. Tentar ler do sub-objeto exchange_rates ou de chaves diretas do round_rules da rodada ativa
-    if (rRules) {
-      if (rRules.exchange_rates?.[curr] !== undefined) {
-        return Number(rRules.exchange_rates[curr]);
-      }
-      if (rRules[curr] !== undefined) {
-        return Number(rRules[curr]);
-      }
-    }
 
-    // 2. Tentar buscar nas general_settings da arena (propriedades persistidas)
-    if (activeArena?.general_settings?.exchange_rates?.[curr] !== undefined) {
-      return Number(activeArena.general_settings.exchange_rates[curr]);
-    }
-    if (activeArena?.general_settings?.[curr] !== undefined) {
-      return Number(activeArena.general_settings[curr]);
-    }
+    const getRateRelativeToAnchorLocal = (c: string): number => {
+      const norm = c.toUpperCase();
+      if (norm === "BRL") return 1.0;
 
-    // 3. Fallbacks estáticos calibrados em paridade com BRL (conversão cruzada)
-    const ratesInBrl: Record<string, number> = {
-      BRL: 1.0,
-      USD: 5.25,
-      EUR: 5.60,
-      GBP: 6.50,
-      CNY: 0.72,
-      BTC: 0.00002
+      if (rRules) {
+        if (rRules.exchange_rates?.[norm] !== undefined) {
+          return Number(rRules.exchange_rates[norm]);
+        }
+        if (rRules[norm] !== undefined) {
+          return Number(rRules[norm]);
+        }
+      }
+
+      if (activeArena?.general_settings?.exchange_rates?.[norm] !== undefined) {
+        return Number(activeArena.general_settings.exchange_rates[norm]);
+      }
+      if (activeArena?.general_settings?.[norm] !== undefined) {
+        return Number(activeArena.general_settings[norm]);
+      }
+
+      const ratesInBrl: Record<string, number> = {
+        BRL: 1.0,
+        USD: 5.25,
+        EUR: 5.60,
+        GBP: 6.50,
+        CNY: 0.72,
+        BTC: 0.00002
+      };
+      return ratesInBrl[norm] || 1.0;
     };
-    const fromRate = ratesInBrl[curr] || 1.0;
-    const toRate = ratesInBrl[baseCurr] || 1.0;
-    return fromRate / toRate;
+
+    const rateFrom = getRateRelativeToAnchorLocal(curr);
+    const rateTo = getRateRelativeToAnchorLocal(baseCurr);
+    return rateFrom / rateTo;
   }, [activeArena, targetRound]);
 
   // Cálculo do Projeções em tempo real da equipe ativa com base nas decisões correntes
@@ -187,12 +191,12 @@ export const MarketingStep: React.FC<MarketingStepProps> = ({
         const historyTable = activeArena.is_trial
           ? "trial_companies"
           : "companies";
-        const targetRound = activeArena.current_round || 0;
+        const histRoundToFetch = round !== undefined ? Math.max(0, round - 1) : (activeArena.current_round || 0);
         const { data, error } = await supabase
           .from(historyTable)
           .select("*")
           .eq("championship_id", activeArena.id)
-          .eq("round", targetRound);
+          .eq("round", histRoundToFetch);
 
         if (error) {
           console.error("Error fetching competitor history:", error);
@@ -207,7 +211,7 @@ export const MarketingStep: React.FC<MarketingStepProps> = ({
     };
 
     fetchCompetitors();
-  }, [activeArena]);
+  }, [activeArena, round]);
 
   const getTeamCapacity = (c: any) => {
     const kpis = c.kpis || {};
@@ -859,7 +863,7 @@ export const MarketingStep: React.FC<MarketingStepProps> = ({
 
       {/* Cards de regiões */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-6 lg:gap-8">
-        {Object.entries(decisions.regions).map(([id, reg]: [string, any]) => {
+        {Object.entries(decisions.regions).filter(([id, reg]: [string, any]) => {
           const regId = Number(id);
           const rRules = activeArena?.round_rules?.[targetRound] || {};
           const regionConf =
@@ -869,6 +873,23 @@ export const MarketingStep: React.FC<MarketingStepProps> = ({
             activeArena?.config?.region_configs?.find(
               (r: any) => r.id === regId,
             ) ||
+            activeArena?.region_configs?.find((r: any) => r.id === regId) ||
+            activeArena?.config?.regions?.[regId - 1] ||
+            activeArena?.config?.region_configs?.[regId - 1];
+            
+          const startRound = regionConf?.start_round || 1;
+          return startRound <= targetRound;
+        }).map(([id, reg]: [string, any]) => {
+          const regId = Number(id);
+          const rRules = activeArena?.round_rules?.[targetRound] || {};
+          const regionConf =
+            rRules.regions?.find((r: any) => r.id === regId) ||
+            rRules.region_configs?.find((r: any) => r.id === regId) ||
+            activeArena?.config?.regions?.find((r: any) => r.id === regId) ||
+            activeArena?.config?.region_configs?.find(
+              (r: any) => r.id === regId,
+            ) ||
+            activeArena?.region_configs?.find((r: any) => r.id === regId) ||
             activeArena?.config?.regions?.[regId - 1] ||
             activeArena?.config?.region_configs?.[regId - 1];
           const demandWeight =
@@ -1148,38 +1169,45 @@ export const MarketingStep: React.FC<MarketingStepProps> = ({
                         ): number => {
                           if (!curr) return 1.0;
                           const baseCurr = activeArena?.currency || "BRL";
-                          if (curr === baseCurr) return 1.0;
+                          if (curr.toUpperCase() === baseCurr.toUpperCase()) return 1.0;
 
-                          const closedRound = activeArena?.current_round || 0;
+                          const closedRound = round !== undefined ? Math.max(0, round - 1) : (activeArena?.current_round || 0);
                           const rRules = (activeArena?.round_rules as any)?.[closedRound] || (activeArena?.round_rules as any)?.[String(closedRound)];
-                          
-                          if (rRules) {
-                            if (rRules.exchange_rates?.[curr] !== undefined) {
-                              return Number(rRules.exchange_rates[curr]);
-                            }
-                            if (rRules[curr] !== undefined) {
-                              return Number(rRules[curr]);
-                            }
-                          }
 
-                          if (activeArena?.general_settings?.exchange_rates?.[curr] !== undefined) {
-                            return Number(activeArena.general_settings.exchange_rates[curr]);
-                          }
-                          if (activeArena?.general_settings?.[curr] !== undefined) {
-                            return Number(activeArena.general_settings[curr]);
-                          }
+                          const getRateRelativeToAnchorLocal = (c: string): number => {
+                            const norm = c.toUpperCase();
+                            if (norm === "BRL") return 1.0;
 
-                          const ratesInBrl: Record<string, number> = {
-                            BRL: 1.0,
-                            USD: 5.25,
-                            EUR: 5.60,
-                            GBP: 6.50,
-                            CNY: 0.72,
-                            BTC: 0.00002
+                            if (rRules) {
+                              if (rRules.exchange_rates?.[norm] !== undefined) {
+                                return Number(rRules.exchange_rates[norm]);
+                              }
+                              if (rRules[norm] !== undefined) {
+                                return Number(rRules[norm]);
+                              }
+                            }
+
+                            if (activeArena?.general_settings?.exchange_rates?.[norm] !== undefined) {
+                              return Number(activeArena.general_settings.exchange_rates[norm]);
+                            }
+                            if (activeArena?.general_settings?.[norm] !== undefined) {
+                              return Number(activeArena.general_settings[norm]);
+                            }
+
+                            const ratesInBrl: Record<string, number> = {
+                              BRL: 1.0,
+                              USD: 5.25,
+                              EUR: 5.60,
+                              GBP: 6.50,
+                              CNY: 0.72,
+                              BTC: 0.00002
+                            };
+                            return ratesInBrl[norm] || 1.0;
                           };
-                          const fromRate = ratesInBrl[curr] || 1.0;
-                          const toRate = ratesInBrl[baseCurr] || 1.0;
-                          return fromRate / toRate;
+
+                          const rateFrom = getRateRelativeToAnchorLocal(curr);
+                          const rateTo = getRateRelativeToAnchorLocal(baseCurr);
+                          return rateFrom / rateTo;
                         };
 
                         const rate = getExchangeRateForRoundLocal(currency);

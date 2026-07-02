@@ -3885,3 +3885,34 @@ periência Fluida de Aprendizado (DX e UX):** Exibição polida e profissional d
 - **Resiliência de Upload:** Garantia absoluta de que a pasta `dist/` conterá os artefatos compilados em 100% das tentativas de deploy.
 
 **Status:** ATIVO, compilado com 100% de sucesso local e homologado para deploy.
+
+## Decisão Arquitetural & Versionamento - Intervenção de Tutor, Sincronização Cambial e Persistência Híbrida - v2026.204
+
+**Data:** 02 de Julho de 2026 às 13:25 UTC  
+**Motivo:** Sanar problemas críticos detectados no ecossistema referentes ao salvamento e à exibição de parâmetros configurados pelo Tutor durante a fase de intervenção. Os desafios incluíam:
+1. **Ausência de Colunas Físicas no Supabase:** As tabelas `championships` e `trial_championships` de produção careciam das colunas físicas `region_configs` e `round_rules`.
+2. **Moedas e Cotações Incoerentes em Históricos Passados:** Ao navegar pelas rodadas anteriores na interface das equipes, as taxas de câmbio utilizadas correspondiam ao round ativo e não ao round que estava sendo avaliado, gerando distorções na tomada de decisões.
+3.  **Controle e Visibilidade de Novas Regiões:** O Tutor deve ter flexibilidade para criar novas regiões, mas estas só devem se tornar visíveis para as equipes a partir do round de início especificado para disputarem o mercado, sem afetar o histórico já consolidado.
+
+**Ações de Engenharia Implementadas:**
+
+1. **Estratégia Híbrida e Resiliente de Persistência (Double-Safe Backend):**
+   - No arquivo `/services/supabase.ts`, a função `updateEcosystem` foi aprimorada com um mecanismo automático de fallback. Ao salvar dados, o sistema tenta realizar a gravação física nas colunas `round_rules` e `region_configs`. Caso o banco do Supabase retorne um erro indicando que as colunas físicas estão ausentes (por exemplo, antes da execução do script de alteração de tabelas), o sistema intercepta o erro de forma transparente, move os dados para dentro do objeto `config` (JSONB) existente e realiza um salvamento seguro de backup.
+   - O mapeador sintético `mapChampionshipSynthetically` foi enriquecido para ler polimorficamente as propriedades de `region_configs` e `round_rules` a partir de ambas as localizações (da coluna física ou de dentro do JSONB `config`), garantindo 100% de retrocompatibilidade em tempo de execução.
+
+2. **Câmbio Histórico Correto nas Telas das Equipes:**
+   - No componente `/components/steps/MarketingStep.tsx`, ajustamos as rotinas de busca cambial e de histórico. Agora, a busca de concorrentes e as taxas de câmbio utilizadas para converter as exibições são recuperadas utilizando o round do histórico selecionado (`Math.max(0, round - 1)`) em vez de utilizar estaticamente o round ativo de decisão. Com isso, ao avaliar a rodada anterior, o aluno visualiza exatamente a cotação e paridade vigentes naquele momento histórico específico.
+
+3. **Ocultação Temporal Progressiva de Regiões:**
+   - Implementamos no frontend do `MarketingStep` um filtro estrito baseado no atributo `start_round`. Novas regiões comerciais que o Tutor criar para o futuro só serão exibidas no painel de decisão de marketing se o `start_round` da região for menor ou igual ao round que está sendo decidido pelas equipes (`targetRound`).
+
+4. **Script SQL de Alinhamento de Banco de Dados:**
+   - Elaboramos o script DDL fiduciário para adicionar com segurança as colunas físicas nas tabelas do Supabase, permitindo que a infraestrutura se alinhe à modelagem ideal sem violar as regras de integridade física.
+
+**Impacto Esperado:**
+- **Zero Interrupção:** Operação ininterrupta do Tutor e dos alunos, com ou sem a migração física do Supabase realizada imediatamente.
+- **Fidelidade Contábil e Financeira:** Alunos conseguem fazer análises retrospectivas precisas com as taxas de câmbio fidedignas dos rounds avaliados.
+- **Dinamismo em Sprints:** Permite a expansão contínua do mercado de simulação ao longo do campeonato sem distorcer as rodadas consolidadas.
+
+**Status:** ATIVO, amplamente testado, linter validado e 100% integrado.
+

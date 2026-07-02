@@ -45,12 +45,17 @@ const TutorArenaControl: React.FC<{ championship: Championship; onUpdate: (confi
      const arenaConfig = currentChampionship.config || {};
      const arenaRoundRules = currentChampionship.round_rules || {};
 
+     const rRulesFromChrono = DEFAULT_INDUSTRIAL_CHRONOGRAM[nextRoundIdx] || (DEFAULT_INDUSTRIAL_CHRONOGRAM as any)[String(nextRoundIdx)] || {};
+     const rRulesFromConfig = arenaConfig.round_rules?.[nextRoundIdx] || arenaConfig.round_rules?.[String(nextRoundIdx)] || {};
+     const rRulesFromConfigChrono = arenaConfig.DEFAULT_INDUSTRIAL_CHRONOGRAM?.[nextRoundIdx] || arenaConfig.DEFAULT_INDUSTRIAL_CHRONOGRAM?.[String(nextRoundIdx)] || {};
+     const rRulesFromArena = (arenaRoundRules as any)[nextRoundIdx] || (arenaRoundRules as any)[String(nextRoundIdx)] || {};
+
      // Unificamos as regras da rodada sob intervenção seguindo a precedência fiduciária do GazetteViewer
      const rules = {
-        ...(DEFAULT_INDUSTRIAL_CHRONOGRAM[nextRoundIdx] || {}),
-        ...(arenaConfig.round_rules?.[nextRoundIdx] || {}),
-        ...(arenaConfig.DEFAULT_INDUSTRIAL_CHRONOGRAM?.[nextRoundIdx] || {}),
-        ...(arenaRoundRules[nextRoundIdx] || {}),
+        ...rRulesFromChrono,
+        ...rRulesFromConfig,
+        ...rRulesFromConfigChrono,
+        ...rRulesFromArena,
      };
 
      const baseIndicators = currentChampionship.general_settings || arenaConfig.general_settings || arenaConfig || {};
@@ -574,12 +579,12 @@ const TutorArenaControl: React.FC<{ championship: Championship; onUpdate: (confi
                 <div className="bg-slate-900 p-10 rounded-[4rem] border border-white/10 shadow-2xl space-y-12">
                    <h3 className="text-2xl font-black text-white uppercase italic flex items-center gap-4"><Coins className="text-orange-500"/> Paridade Cambial e Taxas de Câmbio</h3>
                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
-                      <ParamCard label="Taxa Câmbio BRL" val={macro.exchange_rates.BRL} onChange={(v: number) => setMacro({...macro, exchange_rates: {...macro.exchange_rates, BRL: v}})} suffix="BRL" icon={<Coins size={16}/>} />
-                      <ParamCard label="Taxa Câmbio USD" val={macro.exchange_rates.USD} onChange={(v: number) => setMacro({...macro, exchange_rates: {...macro.exchange_rates, USD: v}})} suffix="BRL" icon={<Coins size={16}/>} />
-                      <ParamCard label="Taxa Câmbio EUR" val={macro.exchange_rates.EUR} onChange={(v: number) => setMacro({...macro, exchange_rates: {...macro.exchange_rates, EUR: v}})} suffix="BRL" icon={<Coins size={16}/>} />
-                      <ParamCard label="Taxa Câmbio GBP" val={macro.exchange_rates.GBP} onChange={(v: number) => setMacro({...macro, exchange_rates: {...macro.exchange_rates, GBP: v}})} suffix="BRL" icon={<Coins size={16}/>} />
-                      <ParamCard label="Taxa Câmbio CNY" val={macro.exchange_rates.CNY} onChange={(v: number) => setMacro({...macro, exchange_rates: {...macro.exchange_rates, CNY: v}})} suffix="BRL" icon={<Coins size={16}/>} />
-                      <ParamCard label="Taxa Câmbio BTC" val={macro.exchange_rates.BTC} onChange={(v: number) => setMacro({...macro, exchange_rates: {...macro.exchange_rates, BTC: v}})} suffix="BRL" icon={<Coins size={16}/>} />
+                      <ParamCard label="Taxa Câmbio BRL" val={macro.exchange_rates.BRL} onChange={(v: number) => setMacro({...macro, exchange_rates: {...macro.exchange_rates, BRL: v}})} suffix={championshipCurrency} icon={<Coins size={16}/>} />
+                      <ParamCard label="Taxa Câmbio USD" val={macro.exchange_rates.USD} onChange={(v: number) => setMacro({...macro, exchange_rates: {...macro.exchange_rates, USD: v}})} suffix={championshipCurrency} icon={<Coins size={16}/>} />
+                      <ParamCard label="Taxa Câmbio EUR" val={macro.exchange_rates.EUR} onChange={(v: number) => setMacro({...macro, exchange_rates: {...macro.exchange_rates, EUR: v}})} suffix={championshipCurrency} icon={<Coins size={16}/>} />
+                      <ParamCard label="Taxa Câmbio GBP" val={macro.exchange_rates.GBP} onChange={(v: number) => setMacro({...macro, exchange_rates: {...macro.exchange_rates, GBP: v}})} suffix={championshipCurrency} icon={<Coins size={16}/>} />
+                      <ParamCard label="Taxa Câmbio CNY" val={macro.exchange_rates.CNY} onChange={(v: number) => setMacro({...macro, exchange_rates: {...macro.exchange_rates, CNY: v}})} suffix={championshipCurrency} icon={<Coins size={16}/>} />
+                      <ParamCard label="Taxa Câmbio BTC" val={macro.exchange_rates.BTC} onChange={(v: number) => setMacro({...macro, exchange_rates: {...macro.exchange_rates, BTC: v}})} suffix={championshipCurrency} icon={<Coins size={16}/>} />
                    </div>
 
                    {/* Simulador Cross-Rate */}

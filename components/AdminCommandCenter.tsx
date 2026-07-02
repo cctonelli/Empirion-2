@@ -713,7 +713,7 @@ const AdminCommandCenter: React.FC<{ preTab?: string }> = ({ preTab = 'tournamen
                            <div className="bg-emerald-500/5 border border-emerald-500/20 p-4 rounded-xl flex items-center justify-center gap-2">
                              <CheckCircle2 size={16} className="text-emerald-400 animate-bounce" />
                              <span className="text-[10px] text-emerald-400 font-black uppercase tracking-wider">
-                               Selo de Conformidade Geral • 100% de Conclusão IP
+                               Selo de Conformidade Geral • Decisões em 100%
                              </span>
                            </div>
                          </div>

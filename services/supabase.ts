@@ -303,6 +303,18 @@ export const mapChampionshipSynthetically = (c: any) => {
   mapped.round_rules = rRules;
   mapped.config.round_rules = rRules;
 
+  // Harmonização polimórfica de region_configs para retrocompatibilidade perfeita na memória de runtime:
+  let rConfigs = mapped.region_configs || config.region_configs || [];
+  if (typeof rConfigs === "string") {
+    try {
+      rConfigs = JSON.parse(rConfigs);
+    } catch (e) {
+      rConfigs = [];
+    }
+  }
+  mapped.region_configs = rConfigs;
+  mapped.config.region_configs = rConfigs;
+
   if (mapped.regions_count === undefined || mapped.regions_count === null || mapped.regions_count === 0) {
     const list = config.regions || config.region_configs || c.region_configs || [];
     if (Array.isArray(list) && list.length > 0) {
@@ -602,7 +614,7 @@ export const createChampionshipWithTeams = async (config: any, teams: any[], isT
     'initial_financials', 'general_settings', 'tutor_id',
     'deadline_value', 'deadline_unit', 'description', 'gazeta_mode', 'transparency_level',
     'observers', 'round_started_at', 'is_public', 'ecosystem_config',
-    'is_trial', 'starting_mode', 'round_rules'
+    'is_trial', 'starting_mode', 'round_rules', 'region_configs'
   ];
   
   const validLiveCols = [...validTrialCols, 'products', 'resources', 'team_fee', 'start_date', 'end_date', 'sector', 'master_key_enabled', 'kpis'];
@@ -859,7 +871,7 @@ export const updateEcosystem = async (id: string, data: any, isTrial?: boolean) 
     'initial_financials', 'general_settings', 'tutor_id',
     'deadline_value', 'deadline_unit', 'description', 'gazeta_mode', 'transparency_level',
     'observers', 'round_started_at', 'is_public', 'ecosystem_config',
-    'is_trial', 'starting_mode', 'round_rules',
+    'is_trial', 'starting_mode', 'round_rules', 'region_configs',
     'products', 'resources', 'team_fee', 'start_date', 'end_date', 'sector', 'master_key_enabled', 'kpis'
   ];
 
@@ -944,7 +956,30 @@ export const updateEcosystem = async (id: string, data: any, isTrial?: boolean) 
   finalPayload.config = newConfig;
   finalPayload.general_settings = newGenSettings;
 
-  return await supabase.from(table).update(finalPayload).eq('id', id);
+  // Tentativa primária de gravação física das colunas reais
+  const result = await supabase.from(table).update(finalPayload).eq('id', id);
+  if (result.error) {
+    const errorMsg = result.error.message || "";
+    const isMissingColumn = errorMsg.includes("column") || errorMsg.includes("coluna") || errorMsg.includes("does not exist");
+    
+    if (isMissingColumn) {
+      console.warn(`[SUPABASE FALLBACK UPDATE] Colunas físicas ausentes nas tabelas ${table}. Executando higienização e gravação no config JSONB.`);
+      
+      // Movemos as colunas problemáticas de volta para dentro do config JSONB para salvar com sucesso
+      const columnsToFallback = ['round_rules', 'region_configs'];
+      columnsToFallback.forEach(col => {
+        if (finalPayload[col] !== undefined) {
+          newConfig[col] = finalPayload[col];
+          delete finalPayload[col];
+        }
+      });
+      
+      finalPayload.config = newConfig;
+      // Re-tentativa secundária segura livre de erros físicos
+      return await supabase.from(table).update(finalPayload).eq('id', id);
+    }
+  }
+  return result;
 };
 
 export const updatePageContent = async (slug: string, lang: string, content: any) => {

@@ -71,7 +71,7 @@ const TutorDecisionMonitor: React.FC<MonitorProps> = ({ championshipId, round, i
             currency: synthArena?.currency 
           } as EcosystemConfig;
           
-          const currentRules = synthArena?.round_rules?.[targetNode] || DEFAULT_INDUSTRIAL_CHRONOGRAM[targetNode] || synthArena?.general_settings;
+          const currentRules = (synthArena?.round_rules as any)?.[targetNode] || (synthArena?.round_rules as any)?.[String(targetNode)] || DEFAULT_INDUSTRIAL_CHRONOGRAM[targetNode] || (DEFAULT_INDUSTRIAL_CHRONOGRAM as any)[String(targetNode)] || synthArena?.general_settings;
           const indicatorsForNode = { ...synthArena?.general_settings, ...currentRules };
           
           const proj = decision ? calculateProjections(
@@ -169,7 +169,7 @@ const TutorDecisionMonitor: React.FC<MonitorProps> = ({ championshipId, round, i
 
   const currentIndicators = useMemo(() => {
     if (!arena) return null;
-    const rules = arena.round_rules?.[activeTimelineNode] || DEFAULT_INDUSTRIAL_CHRONOGRAM[activeTimelineNode] || arena.general_settings;
+    const rules = (arena.round_rules as any)?.[activeTimelineNode] || (arena.round_rules as any)?.[String(activeTimelineNode)] || DEFAULT_INDUSTRIAL_CHRONOGRAM[activeTimelineNode] || (DEFAULT_INDUSTRIAL_CHRONOGRAM as any)[String(activeTimelineNode)] || arena.general_settings;
     return { ...arena.general_settings, ...rules } as MacroIndicators;
   }, [arena, activeTimelineNode]);
 
@@ -296,7 +296,7 @@ const TutorDecisionMonitor: React.FC<MonitorProps> = ({ championshipId, round, i
          <div className="max-w-7xl w-full flex items-center justify-between relative">
             <div className="absolute top-1/2 left-0 right-0 h-1 bg-slate-800 -translate-y-1/2 z-0" />
             {Array.from({ length: (arena?.total_rounds || 12) + 1 }).map((_, i) => {
-               const rules = arena?.round_rules?.[i] || DEFAULT_INDUSTRIAL_CHRONOGRAM[i] || arena?.general_settings;
+               const rules = (arena?.round_rules as any)?.[i] || (arena?.round_rules as any)?.[String(i)] || DEFAULT_INDUSTRIAL_CHRONOGRAM[i] || (DEFAULT_INDUSTRIAL_CHRONOGRAM as any)[String(i)] || arena?.general_settings;
                const hasBP = rules?.require_business_plan;
                const canBuy = rules?.allow_machine_sale;
                
